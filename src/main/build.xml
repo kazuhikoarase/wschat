@@ -1,0 +1,12 @@
+<project default="dist" basedir="../../">
+  <property name="build" location="build"/>
+  <property name="dist" location="dist"/>
+  <target name="dist">
+    <mkdir dir="${dist}"/>
+    <jar destfile="${dist}/wschat.jar">
+      <zipfileset dir="${build}/java" >
+        <include name="**/*"/>
+      </zipfileset>
+  	</jar>
+  </target>
+</project>

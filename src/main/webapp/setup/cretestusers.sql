@@ -1,0 +1,21 @@
+insert into USERS (UID,JSON_DATA) values ('testuser001', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser002', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser003', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser004', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser005', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser006', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser007', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser008', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser009', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser010', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser021', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser022', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser023', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser024', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser025', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser026', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser027', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser028', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser029', '{}');
+insert into USERS (UID,JSON_DATA) values ('testuser030', '{}');
+

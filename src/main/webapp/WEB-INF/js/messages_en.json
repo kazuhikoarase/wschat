@@ -1,0 +1,54 @@
+{
+  "OK": "OK",
+  "CANCEL": "Cancel",
+  "YES": "Yes",
+  "NO": "No",
+  "SUBMIT": "Submit",
+  "APPROVE": "Approve",
+
+  "USERS": "Contacts",
+  "GROUPS": "Latest",
+  "NOTIFY_NEW_MESSAGE": "Got a new message",
+  "TODAY": "Today",
+  "YESTERDAY": "Yesterday",
+  "TODAYS_FEELING": "Today's feeling...?",
+  "ENTER_HERE_A_MESSAGE": "Enter here a message",
+  "ADD_TO_GROUP": "{0} added {1}",
+  "REMOVE_FROM_GROUP": "{0} remove {1}",
+  "EXIT_FROM_GROUP": "{0} exit",
+  "EXIT_FROM_THIS_GROUP": "Exit from this group chat",
+  "COMFIRM_EXIT_FROM_THIS_GROUP": "Do you exit from this group chat?",
+
+  "SEARCH_CONTACT": "Search contacts",
+  "SEARCH_RESULT": "Result:{0}",
+  "SEND_CONTACT_ADD_REQUEST": "Send a contact adding request",
+  "CONTACT_ADD_REQUEST":
+    "Hello, {0}. Please approve me to add you to my contacts.",
+  "DBLCLICK_TO_SEND_CONTACT_ADD_REQUEST": 
+    "Double click to send a contact adding request",
+
+  "SELECT_CONTACT": "Select a contact",
+  "DELETE_CONTACT": "Remove a contact",
+  "CONFIRM_DELETE_CONTACT": "Do you remove {0} from your contacts?",
+
+  "SHOW_MESSAGE_FROM": "Show message from",
+  "SEVEN_DAYS": "7days",
+  "THIRTY_DAYS": "30days",
+  "THREE_MONTHS": "3months",
+  "SIX_MONTHS": "6months",
+  "ONE_YEAR": "1year",
+  "FROM_FIRST": "from first",
+
+  "PREVIOUS_MESSAGE": "old messages",
+
+  "EDIT": "Edit",
+  "DELETE": "Delete",
+  "MODIFIED": "Modified",
+  "DELETED": "Message deleted.",
+  "QUOTE": "Quote",
+
+  "DROP_HERE_A_FILE": "Drop here a file",
+  "FILE_NOT_AVAILABLE": "Not available",
+
+  "TRAILER": ""
+}

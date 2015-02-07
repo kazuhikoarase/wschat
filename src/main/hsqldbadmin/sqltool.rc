@@ -1,0 +1,4 @@
+urlid chatdb
+url jdbc:hsqldb:hsql://localhost/chatdb
+username SA
+password

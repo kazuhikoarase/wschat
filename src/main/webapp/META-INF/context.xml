@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="Utf-8" ?>
+<Context>
+  <ResourceLink global="jdbc/GLOBAL_WSCHAT_DS" 
+    name="jdbc/WSCHAT_DS"
+    type="javax.sql.DataSource"/>
+</Context>

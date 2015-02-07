@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project default="help">
+
+  <target name="help">
+  	<echo message="hsqldbadmin" />
+  	<echo message="" />
+  	<echo message="*Startup Database" />
+  	<echo message="  ant startup" />
+  	<echo message="*Shutdown Database" />
+  	<echo message="  ant shutdown" />
+  	<echo message="*Execute Sql" />
+  	<echo message="  ant sql -Dsql=[sql statement] " />
+  	<echo message=" Example" />
+  	<echo message="  ant sql -Dsql=&quot;select count(*) from USERS;&quot; " />
+  </target>
+
+  <target name="init">
+    <loadproperties srcfile="config.properties"/>
+    <property environment="env" />
+    <fail unless="env.HSQLDB_HOME" 
+      message="environment variable HSQLDB_HOME not set."/>
+    <property name="HSQLDB_HOME" value="${env.HSQLDB_HOME}"/>
+  </target>
+
+  <target name="startup" depends="init">
+    <java classpath="${HSQLDB_HOME}/lib/hsqldb.jar"
+        classname="org.hsqldb.server.Server" fork="true">
+      <arg value="-database.0" />
+      <arg value="${CHAT_DB}" />
+      <arg value="-dbname.0" />
+      <arg value="chatdb" />
+  	</java>
+  </target>
+
+  <target name="shutdown" depends="init">
+    <java jar="${HSQLDB_HOME}/lib/sqltool.jar" fork="true">
+      <arg value="--rcFile" />
+      <arg value="${RC_FILE}" />
+      <arg value="--sql" />
+      <arg value="shutdown;" />
+      <arg value="chatdb" />
+  	</java>
+  </target>
+
+  <target name="sql" depends="init">
+    <java jar="${HSQLDB_HOME}/lib/sqltool.jar" fork="true">
+      <arg value="--rcFile" />
+      <arg value="${RC_FILE}" />
+      <arg value="--sql" />
+      <arg value="${sql}" />
+      <arg value="chatdb" />
+  	</java>
+  </target>
+
+  <target name="dist">
+    <property name="target.name" value="hsqldbadmin"/>
+    <property name="target.file" value="${target.name}.zip"/>
+    <zip destfile="${target.file}">
+      <zipfileset dir="." prefix="${target.name}" >
+        <include name="*"/>
+        <exclude name="${target.file}" />
+      </zipfileset>
+    </zip>
+  </target>
+
+</project>

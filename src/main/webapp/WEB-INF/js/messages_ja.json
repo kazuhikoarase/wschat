@@ -1,0 +1,52 @@
+{
+  "OK": "OK",
+  "CANCEL": "キャンセル",
+  "YES": "はい",
+  "NO": "いいえ",
+  "SUBMIT": "送信",
+  "APPROVE": "承認",
+
+  "USERS": "連絡先",
+  "GROUPS": "最近",
+  "NOTIFY_NEW_MESSAGE": "新着メッセージがあります",
+  "TODAY": "今日",
+  "YESTERDAY": "昨日",
+  "TODAYS_FEELING": "今日の気分は...?",
+  "ENTER_HERE_A_MESSAGE": "ここにメッセージを入力",
+  "ADD_TO_GROUP": "{0} が {1} を追加しました。",
+  "REMOVE_FROM_GROUP": "{0} が {1} を退出させました。",
+  "EXIT_FROM_GROUP": "{0} が退出しました。",
+  "EXIT_FROM_THIS_GROUP": "このグループチャットから退出",
+  "COMFIRM_EXIT_FROM_THIS_GROUP": "このグループチャットから退出しますか？",
+
+  "SEARCH_CONTACT": "連絡先を検索",
+  "SEARCH_RESULT": "検索結果:{0}件",
+  "SEND_CONTACT_ADD_REQUEST": "連絡先追加リクエストを送信",
+  "CONTACT_ADD_REQUEST": "{0} さん、連絡先に追加させてください。",
+  "DBLCLICK_TO_SEND_CONTACT_ADD_REQUEST": "ダブルクリックして連絡先追加リクエストを送信",
+
+  "SELECT_CONTACT": "連絡先を選択してください。",
+  "DELETE_CONTACT": "連絡先を削除",
+  "CONFIRM_DELETE_CONTACT": "{0} を連絡先から削除しますか？",
+
+  "SHOW_MESSAGE_FROM": "次のユーザからのメッセージを表示",
+  "SEVEN_DAYS": "7日間",
+  "THIRTY_DAYS": "30日間",
+  "THREE_MONTHS": "3ヶ月",
+  "SIX_MONTHS": "6ヶ月",
+  "ONE_YEAR": "1年",
+  "FROM_FIRST": "最初から",
+
+  "PREVIOUS_MESSAGE": "以前のメッセージ",
+
+  "EDIT": "編集",
+  "DELETE": "削除",
+  "MODIFIED": "編集済",
+  "DELETED": "メッセージは削除されました。",
+  "QUOTE": "引用",
+
+  "DROP_HERE_A_FILE": "ここにファイルをドロップ",
+  "FILE_NOT_AVAILABLE": "このファイルは利用できません。",
+
+  "TRAILER": ""
+}

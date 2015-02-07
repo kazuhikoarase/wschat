@@ -1,0 +1,26 @@
+
+apply plugin: 'war'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 1.7
+
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    providedCompile 'javax.servlet:javax.servlet-api:3.0.1'
+    //providedCompile 'javax.websocket:javax.websocket-api:1.1'
+    compile 'commons-fileupload:commons-fileupload:1.0'
+}
