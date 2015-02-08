@@ -50,7 +50,7 @@
   };
 
   var loadMessage = function(lang) {
-    var filename = this['javax.script.filename'];
+    var filename = context.getAttribute('javax.script.filename');
     var index = filename.lastIndexOf('/');
     if (index == -1) {
       throw 'bad filename:' + filename;
