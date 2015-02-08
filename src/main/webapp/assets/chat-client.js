@@ -138,7 +138,11 @@ var wschat = function(opts) {
         var close = function() {
           ntf = null;
         };
-        ntf = new Notification(chat.messages.NOTIFY_NEW_MESSAGE);
+        var options = {};
+        if (opts.icon) {
+          options.icon = opts.icon;
+        }
+        ntf = new Notification(chat.messages.NOTIFY_NEW_MESSAGE, options);
         ntf.onshow = function() {
           open();
         };
@@ -702,8 +706,6 @@ var wschat = function(opts) {
         location.href = url;
       }
     }
-
-    //console.log('<=' + JSON.stringify(chat, null, 2) );
   };
 
   var onerror = function(event) {
