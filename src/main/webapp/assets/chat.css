@@ -244,3 +244,9 @@
   border-color: #ccccff;
   background-color: #eeeeff;
 }
+
+.wschat-input-assist {
+  -webkit-box-shadow: 0px 0px 2px 0px rgba(63, 63, 63, 0.5);
+     -moz-box-shadow: 0px 0px 2px 0px rgba(63, 63, 63, 0.5);
+          box-shadow: 0px 0px 2px 0px rgba(63, 63, 63, 0.5);
+}

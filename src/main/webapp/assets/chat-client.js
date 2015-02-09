@@ -82,6 +82,22 @@ var wschat = function(opts) {
     };
   }();
 
+  var replaceText = function(target, replacement) {
+    if (document.selection) {
+      var range = document.selection.createRange();
+      if (range.parentElement() == target) {
+        range.text = replacement;
+        range.scrollIntoView();
+      }
+    } else if (typeof target.selectionStart != 'undefined') {
+      var pos = target.selectionStart + replacement.length;
+      target.value = target.value.substring(0, target.selectionStart) +
+        replacement +
+        target.value.substring(target.selectionEnd);
+      target.setSelectionRange(pos, pos);
+    }
+  };
+
   var timer = function(task, interval, reset) {
     var tid = null;
     var start = function() {
@@ -1068,6 +1084,46 @@ var wschat = function(opts) {
   $groupsFrame.append($groups);
   $threadFrame.append($thread);
 
+  $threadFrame.on('click', function(event) {
+    var helper = function(event) {
+      var off = $msg.offset();
+      var mx = off.left + $msg.outerWidth();
+      var my = off.top;
+      var dx = event.pageX - mx;
+      var dy = event.pageY - my;
+      var r = 4;
+      return {
+        mx: mx,
+        my: my,
+        enable: 0 <= dx && dx <= r && 0 <= dy && dy <= r
+      };
+      
+    };
+    var h = helper(event);
+    if (h.enable) {
+        if (opts.inputAssist) {
+          var $ia = $('<div></div>').
+            addClass('wschat-input-assist').
+            css('position', 'absolute').
+            append(opts.inputAssist().on('textinput', function(event, data) {
+              replaceText($msg[0], data.text);
+              $msg.focus();
+            }) );
+          $chatUI.append($ia);
+          $ia.css('left', h.mx - $ia.outerWidth() ).
+            css('top', h.my - $ia.outerHeight() );
+          var clickHandler = function(event) {
+            if (!helper(event).enable) {
+              $ia.remove();
+              $(document).off('click', clickHandler);
+            }
+          };
+          $(document).on('click', clickHandler);
+        }
+    }
+  });
+
+  
   var $threadUsers = $('<div></div>').
     addClass('wschat-thread-users').
     css('text-align', 'center').
@@ -1132,16 +1188,6 @@ var wschat = function(opts) {
           typing(gid, 'end');
         }
       }
-    }).
-    on('dblclick', function(event) {
-      /*
-      if (opts.inputAssist) {
-        var $ia = $('<div></div>').
-          css('position', 'absolute').
-          append(opts.inputAssist() );
-        $chatUI.append($ia);
-      }
-      */
     }).
     on('focus', function(event) {
       $(this).attr('hasFocus', 'hasFocus');
