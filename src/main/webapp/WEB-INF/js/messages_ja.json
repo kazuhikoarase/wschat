@@ -48,5 +48,10 @@
   "DROP_HERE_A_FILE": "ここにファイルをドロップ",
   "FILE_NOT_AVAILABLE": "このファイルは利用できません。",
 
+  "DAY_LABELS": "日,月,火,水,木,金,土",
+  "MONTH_LABELS": "1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月",
+  "SHORT_DATE_FORMAT": "{0}{1}日({2})",
+  "FULL_DATE_FORMAT": "{0}年{1}{2}日({3})",
+
   "TRAILER": ""
 }

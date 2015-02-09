@@ -50,5 +50,10 @@
   "DROP_HERE_A_FILE": "Drop here a file",
   "FILE_NOT_AVAILABLE": "Not available",
 
+  "DAY_LABELS": "Sun,Mon,Tue,Wed,Thu,Fri,Sat",
+  "MONTH_LABELS": "Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec",
+  "SHORT_DATE_FORMAT": "{2}, {1} {0}",
+  "FULL_DATE_FORMAT": "{3}, {2} {1} {0}",
+
   "TRAILER": ""
 }

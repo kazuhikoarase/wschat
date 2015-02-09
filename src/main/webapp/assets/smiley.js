@@ -29,9 +29,16 @@ var smiley = function() {
     }
     handler.text(s.substring(start) );
   };
-
+  var createSmiley = function($target, key) {
+    return $('<img/>').attr('src', 'data:image/png;base64,' + map[key]).
+      on('click', function(event) {
+        $target.trigger('textinput', {text: key});
+      });
+  };
   var getSmileys = function() {
-    
+    var $target = $('<div></div>');
+    $target.append(createSmiley($target, ':)') );
+    return $target;
   };
 
   var map = function() {

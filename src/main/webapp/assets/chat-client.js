@@ -32,6 +32,8 @@ var wschat = function(opts) {
     dayInMillis: 24 * 3600 * 1000,
     date: 0,
     lastActiveTime: 0,
+    dayLabels: null,
+    monthLabels: null,
     selectedView: null,
     selectedUids: {},
     selectedGid: null,
@@ -53,6 +55,14 @@ var wschat = function(opts) {
     barWidth: 48,
     avatarSize: 120,
     smallAvatarSize: 36
+  };
+
+  var console = {
+    log: function(msg) {
+      if (location.hostname == 'localhost') {
+        window.console.log(msg);
+      }
+    }
   };
 
   var xhr = function(uploadProgressHandler, downloadProgressHandler) {
@@ -360,6 +370,26 @@ var wschat = function(opts) {
     return date;
   };
 
+  var getMonthLabel = function(month) {
+    if (chat.monthLabels == null) {
+      chat.monthLabels = chat.messages.MONTH_LABELS.split(/,/g);
+      if (chat.monthLabels.length != 12) {
+        throw chat.messages.MONTH_LABELS;
+      }
+    }
+    return chat.monthLabels[month];
+  };
+
+  var getDayLabel = function(day) {
+    if (chat.dayLabels == null) {
+      chat.dayLabels = chat.messages.DAY_LABELS.split(/,/g);
+      if (chat.dayLabels.length != 7) {
+        throw chat.messages.DAY_LABELS;
+      }
+    }
+    return chat.dayLabels[day];
+  };
+
   var getDateLabel = function(d) {
     var now = new Date();
     var date = new Date();
@@ -370,13 +400,17 @@ var wschat = function(opts) {
       return chat.messages.TODAY;
     } else if ( (now.getTime() - date.getTime() ) < 24 * 3600 * 1000) {
       return chat.messages.YESTERDAY;
-    } else if (now.getFullYear() == date.getFullYear() &&
-        now.getMonth() == date.getMonth() ) {
-      return (date.getMonth() + 1) + '/' + date.getDate();
+    } else if (now.getFullYear() == date.getFullYear() ) {
+      return messageFormat(chat.messages.SHORT_DATE_FORMAT, 
+          getMonthLabel(date.getMonth() ),
+          date.getDate(),
+          getDayLabel(date.getDay() ) );
     } else {
-      return date.getFullYear() + '/' + 
-        (date.getMonth() + 1) + '/' + 
-        date.getDate();
+      return messageFormat(chat.messages.FULL_DATE_FORMAT, 
+          date.getFullYear(),
+          getMonthLabel(date.getMonth() ),
+          date.getDate(),
+          getDayLabel(date.getDay() ) );
     }
   };
 
