@@ -1,5 +1,5 @@
 {
-  "OK": "OK",
+  "OK": "\u3000OK\u3000",
   "CANCEL": "キャンセル",
   "YES": "はい",
   "NO": "いいえ",
@@ -28,6 +28,8 @@
   "SELECT_CONTACT": "連絡先を選択してください。",
   "DELETE_CONTACT": "連絡先を削除",
   "CONFIRM_DELETE_CONTACT": "{0} を連絡先から削除しますか？",
+
+  "CONFIRM_ATTACH_IMAGE": "この画像を添付しますか？",
 
   "SHOW_MESSAGE_FROM": "次のユーザからのメッセージを表示",
   "SEVEN_DAYS": "7日間",

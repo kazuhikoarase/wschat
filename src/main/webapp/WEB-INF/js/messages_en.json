@@ -31,6 +31,8 @@
   "DELETE_CONTACT": "Remove a contact",
   "CONFIRM_DELETE_CONTACT": "Do you remove {0} from your contacts?",
 
+  "CONFIRM_ATTACH_IMAGE": "Do you attach this image?",
+
   "SHOW_MESSAGE_FROM": "Show message from",
   "SEVEN_DAYS": "7days",
   "THIRTY_DAYS": "30days",

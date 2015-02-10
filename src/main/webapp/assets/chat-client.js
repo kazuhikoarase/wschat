@@ -1234,48 +1234,97 @@ var wschat = function(opts) {
       $(this).attr('hasFocus', '');
     });
 
-  attachDnD($msg,
-    function(event){
-      var $msg = $(this);
-      $msg.addClass('wschat-file-dragenter');
-      $msg.data('lastPlh', $msg.attr('placeholder') );
-      $msg.data('lastVal', $msg.val() );
-      $msg.attr('placeholder', chat.messages.DROP_HERE_A_FILE);
-      $msg.val('');
-    },
-    function(event){
-      var $msg = $(this);
-      $msg.removeClass('wschat-file-dragenter');
-      $msg.attr('placeholder', $msg.data('lastPlh') );
-      $msg.val($msg.data('lastVal') );
-    },
-    function(event){
-      var files = event.originalEvent.dataTransfer.files;
-      if (files.length == 0) {
-        return;
+  $(document).on('paste', function(event) {
+    if (event.originalEvent.clipboardData) {
+      var items = event.originalEvent.clipboardData.items;
+      if (items.length > 0) {
+        var item = items[0];
+        if (item.kind == 'file') {
+          if (item.type == 'image/png') {
+            event.preventDefault();
+            uploadImage(item.getAsFile() );
+          }
+        }
       }
-      var file = files[0];
-      var fd = new FormData();
+    }
+  });
+
+  var uploadImage = function(file) {
+
+    var date = new Date();
+    var base = date.getFullYear() +
+      fillZero(date.getMonth() + 1, 2) +
+      fillZero(date.getDate(), 2) +
+      fillZero(date.getHours(), 2) +
+      fillZero(date.getMinutes(), 2) +
+      fillZero(date.getSeconds(), 2);
+    
+    var fr = new FileReader();
+    fr.onload = function(event){
+      var $img = $('<img/>').
+        attr('src', event.target.result).
+        css('display', 'none');
+      $chatUI.append($img);
+      var w = $img.width();
+      var h = $img.height();
+      var size = 300;
+      if (w > size || h > size) {
+        if (w > h) {
+          $img.css('width', size);
+          $img.css('height', size / w * h);
+        } else {
+          $img.css('width', size / h * w);
+          $img.css('height', size);
+        }
+      }
+      $img.css('display', 'inline-block').remove();
+
+      var dlg = createDialog();
+      dlg.showDialog($('<div></div>').
+        append($('<div></div>').
+            text(chat.messages.CONFIRM_ATTACH_IMAGE) ).
+        append($('<div></div>').css('padding', '4px').append($img) ).
+        append(createButton(chat.messages.CANCEL).
+          on('click', function(event) {
+            dlg.hideDialog();
+          }) ).
+        append(createButton(chat.messages.OK).
+          css('margin-right', '2px').
+          on('click', function(event) {
+            dlg.hideDialog();
+            uploadFile(file, base + '.png');
+          }) ) );
+    };
+    fr.readAsDataURL(file);
+  };
+
+  var uploadFile = function(file, name) {
+
+    var fd = new FormData();
+    if (name) {
+      fd.append("file", file, name);
+    } else {
       fd.append("file", file);
+    }
 
-      var start = getTime();
-      var gid = getThreadGid();
-      var fid = chat.fid;
-      chat.fid += 1;
-      var update = function(progress) {
-        updateUploadProgress({
-            gid: gid,
-            fid: fid,
-            progress: progress
-          }, $xhr);
-      };
-      var getProgress = function(event) {
-        return 'Uploading ' + file.name + ' ' +
-          formatTime(getTime() - start) + ' ' +
-          ~~(100 * event.loaded / event.total) + '%';
-      };
+    var start = getTime();
+    var gid = getThreadGid();
+    var fid = chat.fid;
+    chat.fid += 1;
+    var update = function(progress) {
+      updateUploadProgress({
+          gid: gid,
+          fid: fid,
+          progress: progress
+        }, $xhr);
+    };
+    var getProgress = function(event) {
+      return 'Uploading ' + (name || file.name) + ' ' +
+        formatTime(getTime() - start) + ' ' +
+        ~~(100 * event.loaded / event.total) + '%';
+    };
 
-      var $xhr = $.ajax({
+    var $xhr = $.ajax({
         xhr: xhr(function(event) {
           if (event.lengthComputable) {
             update(getProgress(event) );
@@ -1294,7 +1343,28 @@ var wschat = function(opts) {
       }).fail(function() {
         update(null);
       });
-
+  };
+  
+  attachDnD($msg,
+    function(event){
+      var $msg = $(this);
+      $msg.addClass('wschat-file-dragenter');
+      $msg.data('lastPlh', $msg.attr('placeholder') );
+      $msg.data('lastVal', $msg.val() );
+      $msg.attr('placeholder', chat.messages.DROP_HERE_A_FILE);
+      $msg.val('');
+    },
+    function(event){
+      var $msg = $(this);
+      $msg.removeClass('wschat-file-dragenter');
+      $msg.attr('placeholder', $msg.data('lastPlh') );
+      $msg.val($msg.data('lastVal') );
+    },
+    function(event){
+      var files = event.originalEvent.dataTransfer.files;
+      if (files.length > 0) {
+        uploadFile(files[0]);
+      }
     });
 
   $threadFrame.append($msg);
@@ -2348,7 +2418,7 @@ var wschat = function(opts) {
       } else {
         s += '> ' + message.file.name + '\n';
       }
-      $msg.val($msg.val() + s);
+      replaceText($msg[0], s);
       $msg.focus();
       msgMenu.hideMenu();
     };
