@@ -394,23 +394,27 @@ var wschat = function(opts) {
     var now = new Date();
     var date = new Date();
     date.setTime(d);
-    if (now.getFullYear() == date.getFullYear() &&
-        now.getMonth() == date.getMonth() &&
-        now.getDate() == date.getDate() ) {
-      return chat.messages.TODAY;
-    } else if ( (now.getTime() - date.getTime() ) < 24 * 3600 * 1000) {
-      return chat.messages.YESTERDAY;
-    } else if (now.getFullYear() == date.getFullYear() ) {
+    var getShortLabel = function() {
       return messageFormat(chat.messages.SHORT_DATE_FORMAT, 
           getMonthLabel(date.getMonth() ),
           date.getDate(),
           getDayLabel(date.getDay() ) );
-    } else {
+    };
+    var getFullLabel = function() {
       return messageFormat(chat.messages.FULL_DATE_FORMAT, 
           date.getFullYear(),
           getMonthLabel(date.getMonth() ),
           date.getDate(),
           getDayLabel(date.getDay() ) );
+    };
+    if ( (now.getTime() - date.getTime() ) < chat.dayInMillis) {
+      return chat.messages.TODAY + ' ' + getShortLabel();
+    } else if ( (now.getTime() - date.getTime() ) < 2 * chat.dayInMillis) {
+      return chat.messages.YESTERDAY + ' ' + getShortLabel();
+    } else if (now.getFullYear() == date.getFullYear() ) {
+      return getShortLabel();
+    } else {
+      return getFullLabel();
     }
   };
 
@@ -2731,6 +2735,8 @@ var wschat = function(opts) {
           $btn.addClass('ws-prev-button').
             on('click', function() {
               chat.groupPrevs[gid] = i + 1;
+              group.messages = {};
+              threadUI.invalidate();
               fetchMessages(gid, {lastDays: prevMessage.lastDays});
               updateSearchHeader();
             });
