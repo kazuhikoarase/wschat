@@ -34,8 +34,8 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUpload;
 import org.apache.commons.fileupload.FileUploadException;
 
+import wschat.ChatServiceHolder;
 import wschat.IChatService;
-import wschat.IChatServiceFactory;
 import wschat.Message;
 
 /**
@@ -60,8 +60,9 @@ public class FileServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        service = IChatServiceFactory.Builder.newFactory(
-                getServletContext() ).getInstance();
+
+        service = ChatServiceHolder.getInstance(getServletContext() );
+
         doGetScript = buildDoGetScript();
         doPostScript = buildDoPostScript();
         

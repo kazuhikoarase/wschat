@@ -3,4 +3,9 @@
   <ResourceLink global="jdbc/GLOBAL_WSCHAT_DS" 
     name="jdbc/WSCHAT_DS"
     type="javax.sql.DataSource"/>
+  <!--
+  <ResourceLink global="jdbc/GLOBAL_POSTGRES_DS" 
+    name="jdbc/WSCHAT_DS"
+    type="javax.sql.DataSource"/>
+  -->
 </Context>

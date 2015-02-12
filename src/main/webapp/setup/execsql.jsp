@@ -1,3 +1,4 @@
+<%@page import="wschat.sql.ConnManager"%>
 <%@page contentType="text/html;charset=UTF-8" session="false" %>
 <%@page import="java.io.InputStream" %>
 <%@page import="java.io.FileInputStream" %>
@@ -7,14 +8,14 @@
 <%@page import="java.sql.Connection" %>
 <%@page import="java.sql.Statement" %>
 <%@page import="java.sql.ResultSet" %>
-<%@page import="wschat.impl.JDBCConnManager" %>
+<%@page import="wschat.sql.ConnManager" %>
 
 <%
 response.setHeader("Cache-Control", "no-cache");
 response.setHeader("Pragma", "no-cache");
 response.setIntHeader("Expires", 0);
 
-Connection conn = JDBCConnManager.getInstance().getConnection();
+Connection conn = ConnManager.getInstance().getConnection();
 
 try {
 

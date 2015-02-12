@@ -1,4 +1,4 @@
-package wschat.impl;
+package wschat.sql;
 
 import java.sql.Connection;
 
@@ -7,16 +7,16 @@ import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
 /**
- * JDBCConnManager
+ * ConnManager
  * @author Kazuhiko Arase
  */
-public class JDBCConnManager {
+public class ConnManager {
 
-    private static JDBCConnManager instance = null;
+    private static ConnManager instance = null;
 
-    public static JDBCConnManager getInstance() {
+    public static ConnManager getInstance() {
         if (instance == null) {
-            instance = new JDBCConnManager();
+            instance = new ConnManager();
         }
         return instance;
     }
@@ -25,7 +25,7 @@ public class JDBCConnManager {
 
     private final DataSource dataSource;
 
-    private JDBCConnManager() {
+    private ConnManager() {
         try {
             Context context = new InitialContext();
             dataSource = (DataSource)context.lookup("java:comp/env/jdbc/WSCHAT_DS");

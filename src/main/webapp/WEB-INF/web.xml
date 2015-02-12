@@ -24,8 +24,11 @@
     <param-value>/WEB-INF/js/chat-server.js</param-value>
   </context-param>
   <context-param>
-    <param-name>wschat.serviceFactory</param-name>
-    <param-value>wschat.impl.JDBCChatServiceFactory</param-value>
+    <param-name>wschat.service</param-name>
+    <param-value>wschat.impl.DefaultChatService</param-value>
+    <!-- 
+    <param-value>wschat.impl.PgSQLChatService</param-value>
+     -->
   </context-param>
   <resource-ref>
     <description>WSCHAT_DS</description>

@@ -95,8 +95,7 @@
   var chatService = function() {
 
     var wschat = Packages.wschat;
-    var service = wschat.IChatServiceFactory.
-      Builder.newFactory($servletContext).getInstance();
+    var service = wschat.ChatServiceHolder.getInstance($servletContext);
 
     var toJavaOpts = function(opts) {
       var javaOpts = new java.util.HashMap();

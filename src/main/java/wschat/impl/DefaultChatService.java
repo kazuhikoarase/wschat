@@ -1,8 +1,5 @@
 package wschat.impl;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,17 +11,18 @@ import java.util.Map;
 import wschat.Contact;
 import wschat.Group;
 import wschat.GroupUser;
-import wschat.IChatService;
 import wschat.Message;
 import wschat.User;
+import wschat.sql.ConnManager;
 
 /**
- * JDBCChatService
+ * DefaultChatService
+ * default chat service for HSQLDB
  * @author Kazuhiko Arase
  */
-public class JDBCChatService extends AbstractChatService {
+public class DefaultChatService extends AbstractChatService {
 
-    protected JDBCChatService() {
+    public DefaultChatService() {
     }
 
     protected String getNextValue(final String seq) throws Exception {
@@ -191,7 +189,7 @@ public class JDBCChatService extends AbstractChatService {
         final Group group = new Group();
         group.setGid(gid);
         int count = executeQuery("select JSON_DATA from GROUPS where UID=? and GID=?",
-                new Object[]{uid, gid}, new ResultHandler() {
+                new Object[]{uid, stringToLong(gid)}, new ResultHandler() {
             @Override
             public void handle(ResultSet rs) throws Exception {
                 group.setJsonData(rs.getString(1));
@@ -203,7 +201,7 @@ public class JDBCChatService extends AbstractChatService {
             throw new IllegalStateException();
         }
         executeQuery("select min(DATE),max(DATE) from MESSAGES where UID=? and GID=?",
-                new Object[]{uid, gid}, new ResultHandler() {
+                new Object[]{uid, stringToLong(gid)}, new ResultHandler() {
             @Override
             public void handle(ResultSet rs) throws Exception {
                 group.setMinDate(rs.getLong(1) );
@@ -211,7 +209,7 @@ public class JDBCChatService extends AbstractChatService {
             }
         });
         executeQuery("select GROUP_UID,JSON_DATA from GROUP_USERS where UID=? and GID=?",
-                new Object[]{uid, gid}, new ResultHandler() {
+                new Object[]{uid, stringToLong(gid)}, new ResultHandler() {
             @Override
             public void handle(ResultSet rs) throws Exception {
                 GroupUser user = new GroupUser();
@@ -267,7 +265,12 @@ public class JDBCChatService extends AbstractChatService {
                 new ResultHandler() {
                     @Override
                     public void handle(ResultSet rs) throws Exception {
-                        Group group = getGroup(uid, longToString(rs.getLong(1) ));
+                        Group group = getGroup(uid,
+                                longToString(rs.getLong(1) ) );
+                        if (group == null) {
+                            // group dropped...
+                            return;
+                        }
                         group.setMinDate(rs.getLong(2) );
                         group.setMaxDate(rs.getLong(3) );
                         groups.add(group);
@@ -287,7 +290,7 @@ public class JDBCChatService extends AbstractChatService {
         message.setUid(uid);
         message.setMid(mid);
         int count = executeQuery("select GID,DATE,JSON_DATA from MESSAGES where UID=? and MID=?",
-                new Object[]{uid, mid}, new ResultHandler() {
+                new Object[]{uid, stringToLong(mid)}, new ResultHandler() {
             @Override
             public void handle(ResultSet rs) throws Exception {
                 message.setGid(longToString(rs.getLong(1) ) );
@@ -307,7 +310,8 @@ public class JDBCChatService extends AbstractChatService {
     public void updateMessage(Message message) throws Exception {
 
         int count = executeQuery("select UID from MESSAGES where UID=? and MID=? for update",
-                new Object[]{message.getUid(), message.getMid()}, null);
+                new Object[]{message.getUid(), 
+                    stringToLong(message.getMid() )}, null);
         if (count == 0) {
             executeUpdate("insert into MESSAGES (UID,MID,GID,DATE,JSON_DATA) values (?,?,?,?,?)",
                     new Object[]{message.getUid(),
@@ -339,7 +343,7 @@ public class JDBCChatService extends AbstractChatService {
         final List<Message> messages = new ArrayList<Message>();
         executeQuery("select UID,MID,GID,DATE,JSON_DATA from MESSAGES" +
                     " where UID=? and GID=? and DATE>=? order by DATE desc",
-                new Object[]{uid, gid, date},
+                new Object[]{uid, stringToLong(gid), date},
                 new ResultHandler() {
                     @Override
                     public void handle(ResultSet rs) throws Exception {
@@ -419,32 +423,7 @@ public class JDBCChatService extends AbstractChatService {
     }
 
     protected Connection current() {
-        return JDBCConnManager.getInstance().current();
-    }
-
-    public IChatService wrap() {
-        return (IChatService)Proxy.newProxyInstance(
-                JDBCChatService.class.getClassLoader(),
-            new Class[]{IChatService.class}, new TranProxy(this) );
-    }
-
-    protected class TranProxy implements InvocationHandler {
-        private IChatService target;
-        public TranProxy(IChatService target) {
-            this.target = target;
-        }
-        @Override
-        public Object invoke(Object proxy,
-                final Method method, final Object[] args)
-                throws Throwable {
-            return JDBCConnManager.getInstance().
-                    tran(new JDBCConnManager.Task() {
-                @Override
-                public Object invoke() throws Exception {
-                    return method.invoke(target, args);
-                }
-            });
-        }
+        return ConnManager.getInstance().current();
     }
 
     protected long getToday() {
