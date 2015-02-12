@@ -48,8 +48,8 @@ public class WSEndpoint extends Endpoint {
         try {
             ServletContext servletContext = (ServletContext)config.
                     getUserProperties().get("servletContext");
-            String scriptPath = (String)config.
-                    getUserProperties().get("scriptPath");
+            String scriptPath = 
+                    servletContext.getInitParameter("ws.scriptPath");
             String src = servletContext.getRealPath(scriptPath);
             ScriptEngineManager sem = new ScriptEngineManager(
                     getClass().getClassLoader() );

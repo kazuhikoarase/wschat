@@ -24,7 +24,6 @@ implements ServletContextListener {
         ServletContext servletContext = event.getServletContext();
 
         String path = servletContext.getInitParameter("ws.path");
-        String scriptPath = servletContext.getInitParameter("ws.scriptPath");
 
         ServerContainer serverContainer = 
                 (ServerContainer)servletContext.getAttribute(
@@ -36,7 +35,6 @@ implements ServletContextListener {
                     configurator(new WSConfigurator() ).
                     build();
             config.getUserProperties().put("servletContext", servletContext);
-            config.getUserProperties().put("scriptPath", scriptPath);
             serverContainer.addEndpoint(config);
         } catch(DeploymentException e) {
             throw new RuntimeException(e);
