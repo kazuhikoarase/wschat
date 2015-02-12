@@ -6,7 +6,6 @@ import java.lang.reflect.Proxy;
 
 import javax.servlet.ServletContext;
 
-import wschat.impl.ChatService;
 import wschat.sql.ConnManager;
 
 public class ChatServiceHolder {
@@ -29,7 +28,7 @@ public class ChatServiceHolder {
 
     protected static IChatService wrap(IChatService service) {
         return (IChatService)Proxy.newProxyInstance(
-                ChatService.class.getClassLoader(),
+                IChatService.class.getClassLoader(),
             new Class[]{IChatService.class}, new TranProxy(service) );
     }
 
