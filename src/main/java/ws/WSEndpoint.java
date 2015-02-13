@@ -7,13 +7,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.servlet.ServletContext;
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
 import javax.websocket.MessageHandler;
 import javax.websocket.Session;
+
+import ws.util.ScriptUtil;
 
 /**
  * WSEndpoint
@@ -49,9 +50,7 @@ public class WSEndpoint extends Endpoint {
                     getUserProperties().get("servletContext");
             String scriptPath = 
                     servletContext.getInitParameter("ws.scriptPath");
-            ScriptEngineManager sem = new ScriptEngineManager(
-                    getClass().getClassLoader() );
-            ScriptEngine se = sem.getEngineByName("javascript");
+            ScriptEngine se = ScriptUtil.newScriptEngine();
             se.put(ScriptEngine.FILENAME, scriptPath);
             se.put("$global", global);
             se.put("$logger", logger);

@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -34,6 +33,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUpload;
 import org.apache.commons.fileupload.FileUploadException;
 
+import ws.util.ScriptUtil;
 import wschat.ChatServiceHolder;
 import wschat.IChatService;
 import wschat.Message;
@@ -137,8 +137,7 @@ public class FileServlet extends HttpServlet {
 
         Message message = service.getMessage(uid, mid);
 
-        ScriptEngineManager sem = new ScriptEngineManager();
-        ScriptEngine se = sem.getEngineByName("javascript");
+        ScriptEngine se = ScriptUtil.newScriptEngine();
 
         se.put("javaMessage", message);
         se.eval(doGetScript);
@@ -206,8 +205,7 @@ public class FileServlet extends HttpServlet {
             fileList.add(fileInfo);
         }
 
-        ScriptEngineManager sem = new ScriptEngineManager();
-        ScriptEngine se = sem.getEngineByName("javascript");
+        ScriptEngine se = ScriptUtil.newScriptEngine();
         se.put("fileList", fileList);
         Object result;
         try {
