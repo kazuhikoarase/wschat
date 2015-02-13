@@ -24,9 +24,10 @@ try {
 	if (index == -1) {
 	    throw new Exception();
 	}
-    String[] sqls = readString((String)application.getRealPath(
-            path.substring(0, index + 1) + request.getParameter("sql") ) ).
-            split("\\s*;\\s*");
+	String sqlPath = path.substring(0, index + 1) +
+	        request.getParameter("sql");
+    String[] sqls = readString(application.getResourceAsStream(sqlPath) ).
+	    split("\\s*;\\s*");
     %><table><%
     for (String sql : sqls) {
         if (sql.length() == 0) {
@@ -82,9 +83,8 @@ try {
 
 <%!
 
-protected String readString(String path) throws Exception {
-    InputStream in = new  BufferedInputStream(new FileInputStream(
-            path ) );
+protected String readString(InputStream stream) throws Exception {
+    InputStream in = new BufferedInputStream(stream);
     try {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
@@ -101,7 +101,6 @@ protected String readString(String path) throws Exception {
     } finally {
         in.close();
     }
-    
 }
 
 %>

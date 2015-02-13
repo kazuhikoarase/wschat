@@ -28,11 +28,10 @@
     }
   };
 
-  var loadFile = function(file) {
+  var loadStream = function(stream) {
     var bout = new java.io.ByteArrayOutputStream();
     try {
-      var fin = new java.io.BufferedInputStream(
-          new java.io.FileInputStream(file) );
+      var fin = new java.io.BufferedInputStream(stream);
       try {
         var buf = java.lang.reflect.Array.newInstance(
               java.lang.Byte.TYPE, 4096);
@@ -55,19 +54,20 @@
     if (index == -1) {
       throw 'bad filename:' + filename;
     }
-    var buildFile = function(lang) {
-      return new java.io.File($servletContext.getRealPath(
+    var getResIn = function(lang) {
+      return $servletContext.getResourceAsStream(
           filename.substring(0, index + 1) +
-          'messages_' + lang + '.json') );
+          'messages_' + lang + '.json');
     };
-    var file = buildFile(lang);
-    if (!file.exists() && lang.indexOf('-') != -1) {
-      file = buildFile(lang.replace(/\-.+$/, '') );
+    var resIn = getResIn(lang);
+    if (resIn == null && lang.indexOf('-') != -1) {
+      resIn = getResIn(lang.replace(/\-.+$/, '') );
     }
-    if (!file.exists() ) {
+    if (resIn == null) {
       file = buildFile('en');
     }
-    return JSON.parse('' + new java.lang.String(loadFile(file), 'UTF-8') );
+    return JSON.parse('' + new java.lang.String(
+        loadStream(resIn), 'UTF-8') );
   };
 
   var messageFormat = function() {

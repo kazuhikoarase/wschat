@@ -1,6 +1,5 @@
 package ws;
 
-import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,7 +49,6 @@ public class WSEndpoint extends Endpoint {
                     getUserProperties().get("servletContext");
             String scriptPath = 
                     servletContext.getInitParameter("ws.scriptPath");
-            String src = servletContext.getRealPath(scriptPath);
             ScriptEngineManager sem = new ScriptEngineManager(
                     getClass().getClassLoader() );
             ScriptEngine se = sem.getEngineByName("javascript");
@@ -62,7 +60,7 @@ public class WSEndpoint extends Endpoint {
             se.put("$request", config.getUserProperties().get("request") );
             se.put(ScriptEngine.FILENAME, scriptPath);
             Reader in = new InputStreamReader(
-                    new FileInputStream(src), "UTF-8");
+                servletContext.getResourceAsStream(scriptPath), "UTF-8");
             try {
                 return (IServerEndpoint)se.eval(in);
             } finally {
