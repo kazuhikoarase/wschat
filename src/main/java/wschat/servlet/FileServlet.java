@@ -260,7 +260,6 @@ public class FileServlet extends HttpServlet {
         File tmpfile = File.createTempFile(
                 getTempFilePrefix(),
                 getTempFileSuffix(), repository);
-        tmpfile.deleteOnExit();
         InputStream in = new BufferedInputStream(item.getInputStream() );
         try {
             OutputStream out = new BufferedOutputStream(
