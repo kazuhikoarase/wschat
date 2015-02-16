@@ -8,7 +8,10 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
+import javax.script.ScriptEngine;
+
 import ws.util.ImageUtil;
+import ws.util.ScriptUtil;
 import wschat.Contact;
 import wschat.Group;
 import wschat.GroupUser;
@@ -107,6 +110,7 @@ public class DefaultChatService extends AbstractChatService {
         if (keyword.length() == 0) {
             return users;
         }
+        final ScriptEngine se = ScriptUtil.newScriptEngine();
         executeQuery("select UID,JSON_DATA from USERS order by UID",
             new Object[]{},
             new ResultHandler() {
@@ -114,8 +118,11 @@ public class DefaultChatService extends AbstractChatService {
                 public void handle(ResultSet rs) throws Exception {
                     String uid = rs.getString(1);
                     String jsonData = rs.getString(2);
+                    se.put("jsonData", jsonData);
+                    String nickname = se.eval(
+                        "JSON.parse(jsonData).nickname || ''").toString();
                     if (uid.indexOf(keyword) != -1 ||
-                            jsonData.indexOf(keyword) != -1) {
+                            nickname.indexOf(keyword) != -1) {
                         User user = new User();
                         user.setUid(uid);
                         user.setJsonData(jsonData);
