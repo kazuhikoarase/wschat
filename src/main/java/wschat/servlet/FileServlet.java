@@ -45,11 +45,11 @@ import wschat.Message;
 @SuppressWarnings("serial")
 public class FileServlet extends HttpServlet {
 
+    protected final Logger logger = Logger.getLogger(getClass().getName() );
+
     private IChatService service;
     private String doGetScript;
     private String doPostScript;
-
-    protected final Logger log = Logger.getLogger(getClass().getName() );
 
     private long ticks;
     private long interval;
@@ -289,7 +289,7 @@ public class FileServlet extends HttpServlet {
                 task();
             }
         });
-        log.info("cleanup service startup");
+        logger.info("cleanup service startup");
     }
 
     protected void task() {
@@ -318,7 +318,7 @@ public class FileServlet extends HttpServlet {
         }) ) {
             if (System.currentTimeMillis() - file.lastModified() >
                     tempFileExpireInMillis) {
-                log.info("expired: " + file.getName() );
+                logger.info("expired: " + file.getName() );
                 file.delete();
             }
         }
@@ -332,6 +332,6 @@ public class FileServlet extends HttpServlet {
         } catch(InterruptedException e) {
             throw new RuntimeException(e);
         }
-        log.info("cleanup service shutdown");
+        logger.info("cleanup service shutdown");
     }
 }
