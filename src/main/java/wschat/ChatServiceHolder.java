@@ -8,10 +8,17 @@ import javax.servlet.ServletContext;
 
 import wschat.sql.ConnManager;
 
+/**
+ * ChatServiceHolder
+ * @author Kazuhiko Arase
+ */
 public class ChatServiceHolder {
+
     private ChatServiceHolder() {
     }
+
     private static IChatService instance = null;
+
     public static IChatService getInstance(ServletContext sc) {
         if (instance == null) {
             try {
@@ -19,6 +26,8 @@ public class ChatServiceHolder {
                         sc.getInitParameter("wschat.service") );
                 instance = wrap(
                         (IChatService)clazz.newInstance() );
+            } catch(RuntimeException e) {
+                throw e;
             } catch(Exception e) {
                 throw new RuntimeException(e);
             }

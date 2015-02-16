@@ -10,10 +10,8 @@ Licensed under the MIT license:
 
 -- System Requirements
 
+Modern browser
+
 Apache Tomcat 7
 
-Apache Ant
-
-HSQLDB
-
-Modern browser
+HSQLDB + Apache Ant or PostgreSQL

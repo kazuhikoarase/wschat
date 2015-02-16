@@ -26,7 +26,7 @@ public class WSEndpoint extends Endpoint {
     protected static final Logger logger;
 
     static {
-        global =  new ConcurrentHashMap<String,Object>();
+        global = new ConcurrentHashMap<String,Object>();
         global.put("contextMap", new ConcurrentHashMap<String,Context>() );
         logger = Logger.getLogger(WSEndpoint.class.getName() );
     }
