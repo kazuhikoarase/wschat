@@ -12,8 +12,10 @@ import javax.script.ScriptEngineManager;
  * @author Kazuhiko Arase
  */
 public class ScriptUtil {
+
     private ScriptUtil() {
     }
+
     public static ScriptEngine newScriptEngine() {
         ScriptEngineManager sem = new ScriptEngineManager();
         ScriptEngine se = sem.getEngineByName("javascript");

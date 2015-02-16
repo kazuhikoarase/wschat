@@ -8,6 +8,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
+import ws.util.ImageUtil;
 import wschat.Contact;
 import wschat.Group;
 import wschat.GroupUser;
@@ -140,7 +141,7 @@ public class DefaultChatService extends AbstractChatService {
         } else if (count != 1) {
             throw new IllegalStateException();
         }
-        return resizeImage(data[0], size, false);
+        return ImageUtil.resizeImage(data[0], size, false);
     }
 
     @Override
@@ -148,7 +149,7 @@ public class DefaultChatService extends AbstractChatService {
         int count = executeQuery("select UID from AVATARS where UID=? for update",
                 new Object[]{uid}, null);
         if (data.length() > 0) {
-            data = resizeImage(data, size, true);
+            data = ImageUtil.resizeImage(data, size, true);
         }
         if (count == 0) {
             executeUpdate("insert into AVATARS (UID,DATA) values (?,?)",
