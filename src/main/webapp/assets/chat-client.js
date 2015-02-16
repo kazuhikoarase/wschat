@@ -1870,6 +1870,7 @@ var wschat = function(opts) {
       css('width', ui.avatarSize + 'px').
       css('height', ui.avatarSize + 'px').
       css('text-align', 'center').
+      css('vertical-align', 'top').
       css('display', 'inline-block');
   };
 
@@ -2624,7 +2625,8 @@ var wschat = function(opts) {
     var nickname = chat.users[uid]?
       chat.users[uid].nickname :
       group.users[uid].nickname;
-    var $label = $('<div></div>');
+    var $label = $('<div></div>').
+      css('vertical-align', 'top');
     $label.append(createUserState(chat.users[uid]) );
     $label.append($('<span></span>').
       css('display', 'inline-block').
