@@ -2,16 +2,16 @@
 <project default="help">
 
   <target name="help">
-  	<echo message="hsqldbadmin" />
-  	<echo message="" />
-  	<echo message="*Startup Database" />
-  	<echo message="  ant startup" />
-  	<echo message="*Shutdown Database" />
-  	<echo message="  ant shutdown" />
-  	<echo message="*Execute Sql" />
-  	<echo message="  ant sql -Dsql=[sql statement] " />
-  	<echo message=" Example" />
-  	<echo message="  ant sql -Dsql=&quot;select count(*) from USERS;&quot; " />
+    <echo message="hsqldbadmin" />
+    <echo message="" />
+    <echo message="*Startup Database" />
+    <echo message="  ant startup" />
+    <echo message="*Shutdown Database" />
+    <echo message="  ant shutdown" />
+    <echo message="*Execute Sql" />
+    <echo message="  ant sql -Dsql=[sql statement] " />
+    <echo message=" Example" />
+    <echo message="  ant sql -Dsql=&quot;select count(*) from USERS;&quot; " />
   </target>
 
   <target name="init">
@@ -29,7 +29,7 @@
       <arg value="${CHAT_DB}" />
       <arg value="-dbname.0" />
       <arg value="chatdb" />
-  	</java>
+    </java>
   </target>
 
   <target name="shutdown" depends="init">
@@ -39,7 +39,7 @@
       <arg value="--sql" />
       <arg value="shutdown;" />
       <arg value="chatdb" />
-  	</java>
+    </java>
   </target>
 
   <target name="sql" depends="init">
@@ -49,7 +49,7 @@
       <arg value="--sql" />
       <arg value="${sql}" />
       <arg value="chatdb" />
-  	</java>
+    </java>
   </target>
 
   <target name="dist">
