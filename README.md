@@ -26,6 +26,7 @@ Edit chat-server.js.
     data.uid = '' + $request.getHttpSession().getAttribute('userId');
     chat.user = chatService.getUser(data.uid);
     if (chat.user == null) {
+      // TODO dynamically create a user.
       chatService.newUser({
         uid: data.uid,
         nickname: data.uid
