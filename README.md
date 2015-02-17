@@ -34,7 +34,7 @@ Edit chat-server.js.
     }
 ```
 
-Create a servlet extends FileServlet.
+Create a servlet extends FileServlet and modify web.xml with your servlet.
 
 ```java
 public class MyFileServlet extends wschat.servlet.FileServlet {
