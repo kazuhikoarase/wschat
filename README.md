@@ -1,4 +1,4 @@
-wschat
+# wschat
 
 Copyright (c) 2015 Kazuhiko Arase
 
@@ -8,10 +8,20 @@ Licensed under the MIT license:
   http://www.opensource.org/licenses/mit-license.php
 
 
--- System Requirements
+### System Requirements
 
 Modern browser
 
 Apache Tomcat 7
 
 HSQLDB + Apache Ant or PostgreSQL
+
+### Embedding in your webapp
+
+```javascript
+// 
+```
+
+```java
+// 
+```
