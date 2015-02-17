@@ -634,6 +634,129 @@ var wschat = function(opts) {
     userUpdate();
   }, chat.heartBeatInterval);
 
+  var actions = {};
+
+  actions.login = function(data) {
+    if (data.status == 'success') {
+      chat.user = data.user;
+      chat.messages = data.messages;
+      updateActiveTime();
+      userUI.invalidate();
+      tabUI.invalidate();
+      msgUI.invalidate();
+      userUpdate();
+      heartBeat.start();
+      fetchGroups({lastDays: 30});
+    }
+  };
+
+  actions.user = function(data) {
+
+    chat.date = data.user.date;
+    data.user.idleTime = getIdleTime(data.user);
+
+    if (chat.user.uid == data.user.uid) {
+      var changed = userChanged(chat.user, data.user);
+      chat.user = data.user;
+      if (changed) {
+        userUI.invalidate();
+        //userUpdate();
+      }
+    } else {
+
+      var changed = !chat.users[data.user.uid] ||
+        userChanged(chat.users[data.user.uid], data.user);
+      chat.users[data.user.uid] = data.user;
+
+      var stateChanged = false;
+      $.each(chat.users, function(uid, user) {
+        var state = getUserState(user);
+        if (chat.userStates[uid] != state) {
+          stateChanged = true;
+        }
+        chat.userStates[uid] = state;
+      });
+
+      if (changed || stateChanged) {
+        usersUI.invalidate();
+        groupsUI.invalidate();
+        threadUsersUI.invalidate();
+      }
+    }
+  };
+
+  actions.avatar = function(data) {
+    chat.avatars[data.uid] = data.data;
+    if (chat.user.uid == data.uid) {
+      userUI.invalidate();
+    } else {
+      usersUI.invalidate();
+      threadUsersUI.invalidate();
+    }
+  };
+
+  actions.searchUsers = function(data) {
+    $chatUI.trigger('searchUsers', data);
+  };
+
+  actions.requestAddToContacts = function(data) {
+    setThreadGid(data.gid);
+  };
+
+  actions.acceptContact = function(data) {
+  };
+
+  actions.removeContact = function(data) {
+    delete chat.users[data.uid];
+    usersUI.invalidate();
+  };
+
+  actions.group = function(data) {
+    var group = data.group;
+    group.messages = chat.groups[group.gid]?
+        chat.groups[group.gid].messages : {};
+    chat.groups[group.gid] = group;
+    groupsUI.invalidate();
+    threadUsersUI.invalidate();
+    threadUI.invalidate();
+    fetchMessages(group.gid, {});
+  };
+
+  actions.addToGroup = function(data) {
+    setThreadGid(data.group.gid);
+  };
+
+  actions.removeFromGroup = function(data) {
+  };
+
+  actions.exitFromGroup = function(data) {
+  };
+
+  actions.message = function(data) {
+    putMessage(data.gid, data.message);
+  };
+
+  actions.newGroup = function(data) {
+    setSelectedGid(data.gid);
+  };
+
+  actions.typing = function(data) {
+    updateTyping(data);
+  };
+
+  actions.download = function(data) {
+    if (data.message.file.deleted) {
+      putMessage(data.gid, data.message);
+    } else {
+      var url = opts.fileuploadUrl +
+        '?mid=' + encodeURIComponent(data.mid);
+      if (opts.uid) {
+        url += '&uid=' + encodeURIComponent(opts.uid);
+      }
+      location.href = url;
+    }
+  };
+
   var onopen = function(event) {
     console.log(event.type);
     send({
@@ -644,8 +767,8 @@ var wschat = function(opts) {
   };
 
   var onclose = function(event) {
-    heartBeat.stop();
     console.log(event.type);
+    heartBeat.stop();
     if (chat.user != null) {
       chat.user.date = 0;
       $.each(chat.users, function(uid, user) {
@@ -664,101 +787,9 @@ var wschat = function(opts) {
 
   var onmessage = function(event) {
     var data = JSON.parse(event.data);
-    if (data.action == 'login') {
-      if (data.status == 'success') {
-        chat.user = data.user;
-        chat.messages = data.messages;
-        updateActiveTime();
-        userUI.invalidate();
-        tabUI.invalidate();
-        msgUI.invalidate();
-        userUpdate();
-        heartBeat.start();
-        fetchGroups({lastDays: 30});
-      }
-    } else if (data.action == 'user') {
-
-      chat.date = data.user.date;
-      data.user.idleTime = getIdleTime(data.user);
-
-      if (chat.user.uid == data.user.uid) {
-        var changed = userChanged(chat.user, data.user);
-        chat.user = data.user;
-        if (changed) {
-          userUI.invalidate();
-          //userUpdate();
-        }
-      } else {
-
-        var changed = !chat.users[data.user.uid] ||
-          userChanged(chat.users[data.user.uid], data.user);
-        chat.users[data.user.uid] = data.user;
-
-        var stateChanged = false;
-        $.each(chat.users, function(uid, user) {
-          var state = getUserState(user);
-          if (chat.userStates[uid] != state) {
-            stateChanged = true;
-          }
-          chat.userStates[uid] = state;
-        });
-
-        if (changed || stateChanged) {
-          usersUI.invalidate();
-          groupsUI.invalidate();
-          threadUsersUI.invalidate();
-        }
-      }
-    } else if (data.action == 'avatar') {
-
-      chat.avatars[data.uid] = data.data;
-      if (chat.user.uid == data.uid) {
-        userUI.invalidate();
-      } else {
-        usersUI.invalidate();
-        threadUsersUI.invalidate();
-      }
-
-    } else if (data.action == 'searchUsers') {
-
-      $chatUI.trigger('searchUsers', data);
-
-    } else if (data.action == 'requestAddToContacts') {
-      setThreadGid(data.gid);
-    } else if (data.action == 'acceptContact') {
-    } else if (data.action == 'removeContact') {
-      delete chat.users[data.uid];
-      usersUI.invalidate();
-    } else if (data.action == 'group') {
-      var group = data.group;
-      group.messages = chat.groups[group.gid]?
-          chat.groups[group.gid].messages : {};
-      chat.groups[group.gid] = group;
-      groupsUI.invalidate();
-      threadUsersUI.invalidate();
-      threadUI.invalidate();
-      fetchMessages(group.gid, {});
-    } else if (data.action == 'addToGroup') {
-      setThreadGid(data.group.gid);
-    } else if (data.action == 'removeFromGroup') {
-    } else if (data.action == 'exitFromGroup') {
-    } else if (data.action == 'message') {
-      putMessage(data.gid, data.message);
-    } else if (data.action == 'newGroup') {
-      setSelectedGid(data.gid);
-    } else if (data.action == 'typing') {
-      updateTyping(data);
-    } else if (data.action == 'download') {
-      if (data.message.file.deleted) {
-        putMessage(data.gid, data.message);
-      } else {
-        var url = opts.fileuploadUrl +
-          '?mid=' + encodeURIComponent(data.mid);
-        if (opts.uid) {
-          url += '&uid=' + encodeURIComponent(opts.uid);
-        }
-        location.href = url;
-      }
+    var action = actions[data.action];
+    if (action) {
+      action(data);
     }
   };
 
@@ -990,7 +1021,7 @@ var wschat = function(opts) {
       var time = getTime();
       if (time - lastTime > 300) {
         if (state == 0) {
-          text = 'Typing';
+          text = chat.messages.TYPING;
         } else {
           text += '.';
         }
@@ -1082,9 +1113,8 @@ var wschat = function(opts) {
     }
     groupsUI.invalidate();
     updateThreadMessage(gid, message);
-    
   };
-  
+
   var uiList = [];
 
   var baseUI = function() {
@@ -1135,7 +1165,6 @@ var wschat = function(opts) {
         my: my,
         enable: 0 <= dx && dx <= r && 0 <= dy && dy <= r
       };
-      
     };
     var h = helper(event);
     if (h.enable) {
@@ -1319,7 +1348,8 @@ var wschat = function(opts) {
         }, $xhr);
     };
     var getProgress = function(event) {
-      return 'Uploading ' + (name || file.name) + ' ' +
+      return chat.messages.UPLOADING + ' ' +
+        (name || file.name) + ' ' +
         formatTime(getTime() - start) + ' ' +
         ~~(100 * event.loaded / event.total) + '%';
     };
@@ -1907,7 +1937,7 @@ var wschat = function(opts) {
           updateAvatar('');
           return;
         }
-        if (file.size > 1024 * 1024) {
+        if (file.size > 5 * 1024 * 1024) {
           return;
         }
         var fd = new FormData();

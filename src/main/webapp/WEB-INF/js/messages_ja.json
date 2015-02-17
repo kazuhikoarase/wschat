@@ -55,5 +55,8 @@
   "SHORT_DATE_FORMAT": "{0}{1}日({2})",
   "FULL_DATE_FORMAT": "{0}年{1}{2}日({3})",
 
+  "TYPING": "Typing",
+  "UPLOADING": "Uploading",
+
   "TRAILER": ""
 }

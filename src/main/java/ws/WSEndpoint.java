@@ -2,6 +2,7 @@ package ws;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.SocketException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -95,6 +96,10 @@ public class WSEndpoint extends Endpoint {
 
     @Override
     public void onError(Session session, Throwable t) {
-        logger.log(Level.SEVERE, t.getMessage(), t);
+        if (t instanceof SocketException) {
+            // ignore
+        } else {
+            logger.log(Level.SEVERE, t.getMessage(), t);
+        }
     }
 }

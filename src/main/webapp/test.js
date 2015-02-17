@@ -1,4 +1,3 @@
-
 $(function() {
   var buildUrl = function(path) {
     var url = location.href;

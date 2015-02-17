@@ -533,6 +533,365 @@
     });
   };
 
+  var actions = {};
+
+  actions.login = function(data) {
+
+    chat.user = chatService.getUser(data.uid);
+    if (chat.user == null) {
+      data.status = 'failure';
+      send(data);
+      return;
+    }
+    chat.messages = loadMessage(data.lang || 'en');
+    data.user = {
+      uid: chat.user.uid,
+      nickname: chat.user.nickname,
+      message: chat.user.message
+    };
+    data.status = 'success';
+    data.messages = chat.messages;
+    send(data);
+
+    send({
+      action: 'avatar',
+      uid: chat.user.uid,
+      data: chatService.getAvatar(chat.user.uid)
+    });
+
+    $.each(chat.user.contacts, function(uid, contact) {
+      var user = chatService.getUser(uid);
+      send({
+        action: 'user',
+        user:{
+          uid: user.uid,
+          gid: contact.gid,
+          nickname: user.nickname,
+          message: user.message,
+          date: 0
+        }
+      });
+      var group = chatService.getGroup(chat.user.uid, contact.gid);
+      send({
+        action: 'group',
+        group: group
+      });
+
+      send({
+        action: 'avatar',
+        uid: user.uid,
+        data: chatService.getAvatar(user.uid)
+      });
+    });
+  };
+
+  actions.user = function(data) {
+
+    if (data.user.date == null) {
+      data.user.date = getTime();
+    }
+    chatService.updateUser(data.user);
+    chatService.putUserSession(chat.user.uid, $session.getId(), data);
+    chat.user = chatService.getUser(chat.user.uid);
+    send(data, chat.user.uid);
+    $.each(chat.user.contacts, function(uid, contact) {
+      if (chatService.containsUser(chat.user.uid, uid) ) {
+        data.user.gid = contact.gid;
+        send(data, uid);
+      }
+    });
+  };
+
+  actions.updateAvatar = function(data) {
+
+    chatService.updateAvatar(chat.user.uid, data.file);
+    var avatarData = {
+      action: 'avatar',
+      uid: chat.user.uid,
+      data: chatService.getAvatar(chat.user.uid)
+    };
+    send(avatarData, chat.user.uid);
+    $.each(chat.user.contacts, function(uid, contact) {
+      if (chatService.containsUser(chat.user.uid, uid) ) {
+        send(avatarData, uid);
+      }
+    });
+  };
+
+  actions.searchUsers = function(data) {
+    data.users = chatService.searchUsers(chat.user.uid, data.keyword);
+    send(data);
+  };
+
+  actions.newGroup = function(data) {
+
+    if (data.users.length < 1) {
+      return;
+    }
+
+    var users = [chat.user.uid];
+    $.each(data.users, function(i, uid) {
+      users.push(uid);
+    });
+    users.sort(function(u1, u2) {
+      return u1 < u2? -1 : 1;
+    });
+
+    if (users.length == 2) {
+      if (!chatService.containsUser(users[0], users[1]) ||
+          !chatService.containsUser(users[1], users[0]) ) {
+        return;
+      }
+    }
+
+    data.gid = chatService.newGroup(users);
+    send(data);
+
+    $.each(users, function(i, uid) {
+      var group = chatService.getGroup(uid, data.gid);
+      send({
+        action: 'group',
+        group: group
+      }, uid);
+    });
+
+    if (users.length > 2) {
+      var nicknames = '';
+      $.each(users, function(i, uid) {
+        if (uid != chat.user.uid) {
+          if (nicknames) {
+            nicknames += ', ';
+          }
+          nicknames += getNickname(uid);
+        }
+      });
+      sendSystemMessage(
+          chatService.getGroup(chat.user.uid, data.gid),
+          messageFormat(
+            chat.messages.ADD_TO_GROUP,
+            getNickname(chat.user.uid),
+            nicknames) );
+    }
+
+    if (data.message != null) {
+      onMessageImpl({
+        action: 'postMessage',
+        gid: data.gid,
+        message: data.message
+      });
+    }
+  };
+
+  actions.requestAddToContacts = function(data) {
+
+    var gid = chatService.createContactGroup(chat.user.uid, data.uid);
+    if (gid != null) {
+
+      data.gid = gid;
+      send(data);
+
+      onMessageImpl({
+        action: 'postMessage',
+        gid: gid,
+        newGroup: true,
+        message: {
+          message: data.message,
+          requestAddToContacts: true,
+          requestAddToContactsUid: data.uid
+        }
+      });
+    }
+  };
+
+  actions.acceptContact = function(data) {
+
+    var users = [chat.user.uid, data.uid];
+    var gid = chatService.applyContact(users[0], users[1], data.gid);
+
+    if (gid != null) {
+
+      send(data, users[0]);
+      send(data, users[1]);
+
+      var sendUser = function(uid1, uid2) {
+        var user = chatService.getUser(uid1);
+        send({
+          action: 'user',
+          user:{
+            uid: user.uid,
+            gid: gid,
+            nickname: user.nickname,
+            message: user.message,
+            date: getTime()
+          }
+        }, uid2);
+      };
+      sendUser(users[0], users[1]);
+      sendUser(users[1], users[0]);
+    }
+  };
+
+  actions.removeContact = function(data) {
+    var gid = chatService.removeContact(chat.user.uid, data.uid);
+    if (gid != null) {
+      send(data, chat.user.uid);
+    }
+  };
+
+  actions.addToGroup = function(data) {
+
+    var group = chatService.getGroup(chat.user.uid, data.gid);
+
+    if (isGroupMember(group) ) {
+
+      group = chatService.addToGroup(group, data.uid);
+      if (group != null) {
+        data.group = group;
+        send(data);
+        $.each(group.users, function(uid, user) {
+          send({
+            action: 'group',
+            group: group
+          }, uid);
+        });
+        sendSystemMessage(group, messageFormat(
+            chat.messages.ADD_TO_GROUP,
+            getNickname(chat.user.uid),
+            getNickname(data.uid) ) );
+      }
+    }
+  };
+
+  actions.removeFromGroup = function(data) {
+
+    var group = chatService.getGroup(chat.user.uid, data.gid);
+    if (isGroupMember(group) ) {
+      var oldGroup = JSON.parse(JSON.stringify(group) );
+      group = chatService.removeFromGroup(group, data.uid);
+      data.group = group;
+      send(data);
+      $.each(oldGroup.users, function(uid, user) {
+        send({
+          action: 'group',
+          group: group
+        }, uid);
+      });
+      sendSystemMessage(oldGroup, messageFormat(
+          chat.messages.REMOVE_FROM_GROUP,
+          getNickname(chat.user.uid),
+          getNickname(data.uid) ) );
+    }
+  };
+
+  actions.exitFromGroup = function(data) {
+
+    var group = chatService.getGroup(chat.user.uid, data.gid);
+    if (isGroupMember(group) ) {
+      var oldGroup = JSON.parse(JSON.stringify(group) );
+      group = chatService.removeFromGroup(group, chat.user.uid);
+      data.group = group;
+      send(data);
+      $.each(oldGroup.users, function(uid, user) {
+        send({
+          action: 'group',
+          group: group
+        }, uid);
+      });
+      sendSystemMessage(oldGroup, messageFormat(
+          chat.messages.EXIT_FROM_GROUP,
+          getNickname(chat.user.uid) ) );
+    }
+  };
+
+  actions.fetchGroups = function(data) {
+    $.each(chatService.fetchGroups(chat.user.uid, data.opts),
+      function(gid, group) {
+        send({
+          action: 'group',
+          group: group
+        });
+      });
+  };
+
+  actions.message = function(data) {
+
+    if (!data.notifyAll) {
+      chatService.updateMessage(chat.user.uid, data.gid, data.message);
+      send(data, chat.user.uid);
+    } else {
+      var group = chatService.getGroup(chat.user.uid, data.gid);
+      if (isGroupMember(group) ) {
+        $.each(group.users, function(uid) {
+          chatService.updateMessage(uid, data.gid, data.message);
+          send(data, uid);
+        });
+      }
+    }
+  };
+
+  actions.fetchMessages = function(data) {
+    $.each(chatService.fetchMessages(chat.user.uid, data.gid, data.opts), 
+      function(mid, message) {
+        send({action:'message',
+          gid: data.gid,
+          message: message
+        });
+      });
+  };
+
+  actions.postMessage = function(data) {
+
+    var group = chatService.getGroup(chat.user.uid, data.gid);
+
+    if (isGroupMember(group) ) {
+
+      if (data.newGroup) {
+        $.each(group.users, function(uid) {
+          send({
+            action: 'group',
+            group: group
+          }, uid);
+        });
+      }
+
+      var mid = chatService.newMid();
+      $.each(group.users, function(uid) {
+
+        var message = data.message;
+        message.mid = mid;
+        message.uid = chat.user.uid;
+        message.nickname = chat.user.nickname;
+        message.date = getTime();
+        message.newMsg = uid != chat.user.uid;
+
+        chatService.updateMessage(uid, data.gid, message);
+        send({action:'message',
+          gid: data.gid,
+          message: message
+        }, uid);
+      });
+    }
+  };
+
+  actions.typing = function(data) {
+
+    var group = chatService.getGroup(chat.user.uid, data.gid);
+    if (isGroupMember(group) ) {
+      data.uid = chat.user.uid;
+      data.nickname = chat.user.nickname;
+      $.each(group.users, function(uid) {
+        if (chat.user.uid != uid) {
+          send(data, uid);
+        }
+      });
+    }
+  };
+
+  actions.download = function(data) {
+    data.message = chatService.getMessage(chat.user.uid, data.mid);
+    send(data);
+  };
+
   var onOpen = function(config) {
     console.log('open/sid=' + $session.getId() );
   };
@@ -566,350 +925,10 @@
   };
 
   var onMessageImpl = function(data) {
-
-    if (data.action == 'login') {
-
-      chat.user = chatService.getUser(data.uid);
-      if (chat.user == null) {
-        data.status = 'failure';
-        send(data);
-        return;
-      }
-      chat.messages = loadMessage(data.lang || 'en');
-      data.user = {
-        uid: chat.user.uid,
-        nickname: chat.user.nickname,
-        message: chat.user.message
-      };
-      data.status = 'success';
-      data.messages = chat.messages;
-      send(data);
-
-      send({
-        action: 'avatar',
-        uid: chat.user.uid,
-        data: chatService.getAvatar(chat.user.uid)
-      });
-
-      $.each(chat.user.contacts, function(uid, contact) {
-        var user = chatService.getUser(uid);
-        send({
-          action: 'user',
-          user:{
-            uid: user.uid,
-            gid: contact.gid,
-            nickname: user.nickname,
-            message: user.message,
-            date: 0
-          }
-        });
-        var group = chatService.getGroup(chat.user.uid, contact.gid);
-        send({
-          action: 'group',
-          group: group
-        });
-
-        send({
-          action: 'avatar',
-          uid: user.uid,
-          data: chatService.getAvatar(user.uid)
-        });
-      });
-
-    } else if (data.action == 'user') {
-
-      if (data.user.date == null) {
-        data.user.date = getTime();
-      }
-      chatService.updateUser(data.user);
-      chatService.putUserSession(chat.user.uid, $session.getId(), data);
-      chat.user = chatService.getUser(chat.user.uid);
-      send(data, chat.user.uid);
-      $.each(chat.user.contacts, function(uid, contact) {
-        if (chatService.containsUser(chat.user.uid, uid) ) {
-          data.user.gid = contact.gid;
-          send(data, uid);
-        }
-      });
-
-    } else if (data.action == 'updateAvatar') {
-
-      chatService.updateAvatar(chat.user.uid, data.file);
-      var avatarData = {
-        action: 'avatar',
-        uid: chat.user.uid,
-        data: chatService.getAvatar(chat.user.uid)
-      };
-      send(avatarData, chat.user.uid);
-      $.each(chat.user.contacts, function(uid, contact) {
-        if (chatService.containsUser(chat.user.uid, uid) ) {
-          send(avatarData, uid);
-        }
-      });
-
-    } else if (data.action == 'searchUsers') {
-
-      data.users = chatService.searchUsers(chat.user.uid, data.keyword);
-      send(data);
-
-    } else if (data.action == 'newGroup') {
-
-      if (data.users.length < 1) {
-        return;
-      }
-
-      var users = [chat.user.uid];
-      $.each(data.users, function(i, uid) {
-        users.push(uid);
-      });
-      users.sort(function(u1, u2) {
-        return u1 < u2? -1 : 1;
-      });
-
-      if (users.length == 2) {
-        if (!chatService.containsUser(users[0], users[1]) ||
-            !chatService.containsUser(users[1], users[0]) ) {
-          return;
-        }
-      }
-
-      data.gid = chatService.newGroup(users);
-      send(data);
-
-      $.each(users, function(i, uid) {
-        var group = chatService.getGroup(uid, data.gid);
-        send({
-          action: 'group',
-          group: group
-        }, uid);
-      });
-
-      if (users.length > 2) {
-        var nicknames = '';
-        $.each(users, function(i, uid) {
-          if (uid != chat.user.uid) {
-            if (nicknames) {
-              nicknames += ', ';
-            }
-            nicknames += getNickname(uid);
-          }
-        });
-        sendSystemMessage(
-            chatService.getGroup(chat.user.uid, data.gid),
-            messageFormat(
-              chat.messages.ADD_TO_GROUP,
-              getNickname(chat.user.uid),
-              nicknames) );
-      }
-
-      if (data.message != null) {
-        onMessageImpl({
-          action: 'postMessage',
-          gid: data.gid,
-          message: data.message
-        });
-      }
-
-    } else if (data.action == 'requestAddToContacts') {
-
-      var gid = chatService.createContactGroup(chat.user.uid, data.uid);
-      if (gid != null) {
-
-        data.gid = gid;
-        send(data);
-
-        onMessageImpl({
-          action: 'postMessage',
-          gid: gid,
-          newGroup: true,
-          message: {
-            message: data.message,
-            requestAddToContacts: true,
-            requestAddToContactsUid: data.uid
-          }
-        });
-      }
-
-    } else if (data.action == 'acceptContact') {
-
-      var users = [chat.user.uid, data.uid];
-      var gid = chatService.applyContact(users[0], users[1], data.gid);
-
-      if (gid != null) {
-
-        send(data, users[0]);
-        send(data, users[1]);
-  
-        var sendUser = function(uid1, uid2) {
-          var user = chatService.getUser(uid1);
-          send({
-            action: 'user',
-            user:{
-              uid: user.uid,
-              gid: gid,
-              nickname: user.nickname,
-              message: user.message,
-              date: getTime()
-            }
-          }, uid2);
-        };
-        sendUser(users[0], users[1]);
-        sendUser(users[1], users[0]);
-      }
-
-    } else if (data.action == 'removeContact') {
-      var gid = chatService.removeContact(chat.user.uid, data.uid);
-      if (gid != null) {
-        send(data, chat.user.uid);
-      }
-
-    } else if (data.action == 'addToGroup') {
-
-      var group = chatService.getGroup(chat.user.uid, data.gid);
-
-      if (isGroupMember(group) ) {
-
-        group = chatService.addToGroup(group, data.uid);
-        if (group != null) {
-          data.group = group;
-          send(data);
-          $.each(group.users, function(uid, user) {
-            send({
-              action: 'group',
-              group: group
-            }, uid);
-          });
-          sendSystemMessage(group, messageFormat(
-              chat.messages.ADD_TO_GROUP,
-              getNickname(chat.user.uid),
-              getNickname(data.uid) ) );
-        }
-      }
-
-    } else if (data.action == 'removeFromGroup') {
-
-      var group = chatService.getGroup(chat.user.uid, data.gid);
-      if (isGroupMember(group) ) {
-        var oldGroup = JSON.parse(JSON.stringify(group) );
-        group = chatService.removeFromGroup(group, data.uid);
-        data.group = group;
-        send(data);
-        $.each(oldGroup.users, function(uid, user) {
-          send({
-            action: 'group',
-            group: group
-          }, uid);
-        });
-        sendSystemMessage(oldGroup, messageFormat(
-            chat.messages.REMOVE_FROM_GROUP,
-            getNickname(chat.user.uid),
-            getNickname(data.uid) ) );
-      }
-
-    } else if (data.action == 'exitFromGroup') {
-
-      var group = chatService.getGroup(chat.user.uid, data.gid);
-      if (isGroupMember(group) ) {
-        var oldGroup = JSON.parse(JSON.stringify(group) );
-        group = chatService.removeFromGroup(group, chat.user.uid);
-        data.group = group;
-        send(data);
-        $.each(oldGroup.users, function(uid, user) {
-          send({
-            action: 'group',
-            group: group
-          }, uid);
-        });
-        sendSystemMessage(oldGroup, messageFormat(
-            chat.messages.EXIT_FROM_GROUP,
-            getNickname(chat.user.uid) ) );
-      }
-
-    } else if (data.action == 'fetchGroups') {
-
-      $.each(chatService.fetchGroups(chat.user.uid, data.opts),
-        function(gid, group) {
-          send({
-            action: 'group',
-            group: group
-          });
-        });
-
-    } else if (data.action == 'message') {
-
-      if (!data.notifyAll) {
-        chatService.updateMessage(chat.user.uid, data.gid, data.message);
-        send(data, chat.user.uid);
-      } else {
-        var group = chatService.getGroup(chat.user.uid, data.gid);
-        if (isGroupMember(group) ) {
-          $.each(group.users, function(uid) {
-            chatService.updateMessage(uid, data.gid, data.message);
-            send(data, uid);
-          });
-        }
-      }
-
-    } else if (data.action == 'fetchMessages') {
-
-      $.each(chatService.fetchMessages(chat.user.uid, data.gid, data.opts), 
-        function(mid, message) {
-          send({action:'message',
-            gid: data.gid,
-            message: message
-          });
-        });
-
-    } else if (data.action == 'postMessage') {
-
-      var group = chatService.getGroup(chat.user.uid, data.gid);
-
-      if (isGroupMember(group) ) {
-
-        if (data.newGroup) {
-          $.each(group.users, function(uid) {
-            send({
-              action: 'group',
-              group: group
-            }, uid);
-          });
-        }
-
-        var mid = chatService.newMid();
-        $.each(group.users, function(uid) {
-
-          var message = data.message;
-          message.mid = mid;
-          message.uid = chat.user.uid;
-          message.nickname = chat.user.nickname;
-          message.date = getTime();
-          message.newMsg = uid != chat.user.uid;
-
-          chatService.updateMessage(uid, data.gid, message);
-          send({action:'message',
-            gid: data.gid,
-            message: message
-          }, uid);
-        });
-      }
-
-    } else if (data.action == 'typing') {
-
-      var group = chatService.getGroup(chat.user.uid, data.gid);
-      if (isGroupMember(group) ) {
-        data.uid = chat.user.uid;
-        data.nickname = chat.user.nickname;
-        $.each(group.users, function(uid) {
-          if (chat.user.uid != uid) {
-            send(data, uid);
-          }
-        });
-      }
-    } else if (data.action == 'download') {
-      data.message = chatService.getMessage(chat.user.uid, data.mid);
-      send(data);
+    var action = actions[data.action];
+    if (action) {
+      action(data);
     }
-    //console.log('<=' + JSON.stringify(chat(), null, 2) );
   };
 
   return new Packages.ws.IServerEndpoint({

@@ -74,12 +74,6 @@ public class FileServlet extends HttpServlet {
         startup();
     }
 
-    private long getLongParam(ServletConfig config, String name,
-            long defaultValue) {
-        String value = config.getInitParameter(name);
-        return (value != null)? Long.valueOf(value) : defaultValue;
-    }
-
     @Override
     public void destroy() {
         shutdown();
@@ -199,7 +193,7 @@ public class FileServlet extends HttpServlet {
         for (FileItem item : items) {
             File tmpfile = writeToTmpfile(repository, item);
             Map<String,String> fileInfo = new HashMap<String, String>();
-            fileInfo.put("name", new File(item.getName() ).getName() );
+            fileInfo.put("name", stripFilename(item.getName() ) );
             fileInfo.put("contentType", item.getContentType() );
             fileInfo.put("tmpfile", tmpfile.getName() );
             fileList.add(fileInfo);
@@ -228,21 +222,11 @@ public class FileServlet extends HttpServlet {
                 "javax.servlet.context.tempdir");
     }
 
-    public static String encodeFilename(
-        HttpServletRequest request, 
-        String filename
-    ) throws IOException {
-        String ua = request.getHeader("User-Agent");
-        if (ua != null && ua.contains("MSIE") ) {
-            // * fixed to MS932
-            // http://support.microsoft.com/default.aspx?scid=kb;ja;436616
-            // ftp://ftp.rfc-editor.org/in-notes/rfc2231.txt
-            return "filename=\"" +
-                new String(filename.getBytes("MS932"), "ISO-8859-1") +
-                "\"";
-        }
-        return "filename*=UTF-8''" + 
-            URLEncoder.encode(filename, "UTF-8");
+    protected String stripFilename(String name) {
+        int index = Math.max(
+                name.lastIndexOf('/'),
+                name.lastIndexOf('\\') );
+        return index != -1? name.substring(index + 1) : name;
     }
 
     protected String getTempFilePrefix() {
@@ -332,5 +316,28 @@ public class FileServlet extends HttpServlet {
             throw new RuntimeException(e);
         }
         logger.info("cleanup service shutdown");
+    }
+
+    public static String encodeFilename(
+        HttpServletRequest request, 
+        String filename
+    ) throws IOException {
+        String ua = request.getHeader("User-Agent");
+        if (ua != null && ua.contains("MSIE") ) {
+            // * fixed to MS932
+            // http://support.microsoft.com/default.aspx?scid=kb;ja;436616
+            // ftp://ftp.rfc-editor.org/in-notes/rfc2231.txt
+            return "filename=\"" +
+                new String(filename.getBytes("MS932"), "ISO-8859-1") +
+                "\"";
+        }
+        return "filename*=UTF-8''" + 
+            URLEncoder.encode(filename, "UTF-8");
+    }
+
+    private static long getLongParam(ServletConfig config, String name,
+            long defaultValue) {
+        String value = config.getInitParameter(name);
+        return (value != null)? Long.valueOf(value) : defaultValue;
     }
 }
