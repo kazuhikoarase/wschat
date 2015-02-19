@@ -16,12 +16,17 @@
     <listener-class>ws.WSServletContextListener</listener-class>
   </listener>
   <context-param>
-    <param-name>ws.path</param-name>
-    <param-value>/wschat</param-value>
-  </context-param>
-  <context-param>
-    <param-name>ws.scriptPath</param-name>
-    <param-value>/WEB-INF/js/chat-server.js</param-value>
+    <param-name>ws.config</param-name>
+    <param-value>
+    {
+      "endpoints": [
+        {
+          "path": "/wschat",
+          "scriptPath": "/WEB-INF/js/chat-server.js"
+        }
+      ]
+    }
+    </param-value>
   </context-param>
   <context-param>
     <param-name>wschat.service</param-name>

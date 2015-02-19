@@ -49,8 +49,8 @@ public class WSEndpoint extends Endpoint {
         try {
             ServletContext servletContext = (ServletContext)config.
                     getUserProperties().get("servletContext");
-            String scriptPath = 
-                    servletContext.getInitParameter("ws.scriptPath");
+            String scriptPath = (String)config.
+                    getUserProperties().get("scriptPath");
             ScriptEngine se = ScriptUtil.newScriptEngine();
             se.put(ScriptEngine.FILENAME, scriptPath);
             se.put("$global", global);
