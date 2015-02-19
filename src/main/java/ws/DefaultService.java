@@ -1,22 +1,20 @@
-package wschat.impl;
+package ws;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import wschat.IChatService;
-
 /**
- * AbstractChatService
+ * DefaultService
  * @author Kazuhiko Arase
  */
-public abstract class AbstractChatService implements IChatService {
+public class DefaultService implements IService {
 
     private final Map<String,Map<String,String>> sessionMap =
             new HashMap<String,Map<String,String>>();
 
-    protected AbstractChatService() {
+    public DefaultService() {
     }
 
     @Override

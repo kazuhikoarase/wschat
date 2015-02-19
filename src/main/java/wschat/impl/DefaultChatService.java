@@ -10,11 +10,13 @@ import java.util.Map;
 
 import javax.script.ScriptEngine;
 
+import ws.DefaultService;
 import ws.util.ImageUtil;
 import ws.util.ScriptUtil;
 import wschat.Contact;
 import wschat.Group;
 import wschat.GroupUser;
+import wschat.IChatService;
 import wschat.Message;
 import wschat.User;
 import wschat.sql.ConnManager;
@@ -24,7 +26,8 @@ import wschat.sql.ConnManager;
  * default chat service for HSQLDB
  * @author Kazuhiko Arase
  */
-public class DefaultChatService extends AbstractChatService {
+public class DefaultChatService 
+extends DefaultService implements IChatService {
 
     public DefaultChatService() {
     }

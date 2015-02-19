@@ -48,8 +48,6 @@ public class FileServlet extends HttpServlet {
     protected final Logger logger = Logger.getLogger(getClass().getName() );
 
     private IChatService service;
-    private String doGetScript;
-    private String doPostScript;
 
     private long ticks;
     private long interval;
@@ -63,9 +61,6 @@ public class FileServlet extends HttpServlet {
 
         service = ChatServiceHolder.getInstance(getServletContext() );
 
-        doGetScript = buildDoGetScript();
-        doPostScript = buildDoPostScript();
-        
         ticks = getLongParam(config, "ticks", 1000L);
         interval =
                 getLongParam(config, "interval", 1000L * 60 * 5);
@@ -82,24 +77,13 @@ public class FileServlet extends HttpServlet {
 
     protected String buildDoGetScript() {
         StringBuilder script = new StringBuilder();
-        script.append("var message = JSON.parse('' + javaMessage.getJsonData());");
-        script.append("var name = message.file.name;");
-        script.append("var tmpfile = message.file.tmpfile;");
+
         return script.toString();
     }
 
     protected String buildDoPostScript() {
         StringBuilder script = new StringBuilder();
-        script.append("var result = {fileList:[]};");
-        script.append("for (var i = 0; i < fileList.size(); i += 1) {");
-        script.append("var item = fileList.get(i);");
-        script.append("result.fileList.push({");
-        script.append("name:''+item.get('name'),");
-        script.append("contentType:''+item.get('contentType'),");
-        script.append("tmpfile:''+item.get('tmpfile')");
-        script.append("});");
-        script.append("}");
-        script.append("JSON.stringify(result);");
+
         return script.toString();
     }
 
@@ -134,7 +118,7 @@ public class FileServlet extends HttpServlet {
         ScriptEngine se = ScriptUtil.newScriptEngine();
 
         se.put("javaMessage", message);
-        se.eval(doGetScript);
+        ScriptUtil.eval(se, this, "_doGet.js");
         String name = se.get("name").toString();
         String tmpfile = se.get("tmpfile").toString();
 
@@ -203,7 +187,7 @@ public class FileServlet extends HttpServlet {
         se.put("fileList", fileList);
         Object result;
         try {
-            result = se.eval(doPostScript);
+            result = ScriptUtil.eval(se, this, "_doPost.js");
         } catch(ScriptException e) {
             throw new ServletException(e);
         }

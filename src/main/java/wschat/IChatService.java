@@ -3,16 +3,13 @@ package wschat;
 import java.util.List;
 import java.util.Map;
 
+import ws.IService;
+
 /**
  * IChatService
  * @author Kazuhiko Arase
  */
-public interface IChatService {
-
-    void putUserSession(String uid, String sid, String jsonData) throws Exception;
-    String getUserSession(String uid, String sid) throws Exception;
-    void removeUserSession(String uid, String sid) throws Exception;
-    List<String> getUserSessionIdList(String uid) throws Exception;
+public interface IChatService extends IService {
 
     User getUser(String uid) throws Exception;
     void updateUser(User user) throws Exception;
@@ -30,5 +27,4 @@ public interface IChatService {
 
     void updateAvatar(String uid, String data, int size) throws Exception;
     String getAvatar(String uid, int size) throws Exception;
-
 }
