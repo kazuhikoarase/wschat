@@ -17,22 +17,26 @@ public class ChatServiceHolder {
     private ChatServiceHolder() {
     }
 
+    private static final Object LOCK = new Object();
+
     private static IChatService instance = null;
 
     public static IChatService getInstance(ServletContext sc) {
-        if (instance == null) {
-            try {
-                Class<?> clazz = Class.forName(
-                        sc.getInitParameter("wschat.service") );
-                instance = wrap(
-                        (IChatService)clazz.newInstance() );
-            } catch(RuntimeException e) {
-                throw e;
-            } catch(Exception e) {
-                throw new RuntimeException(e);
+        synchronized(LOCK) {
+            if (instance == null) {
+                try {
+                    Class<?> clazz = Class.forName(
+                            sc.getInitParameter("wschat.service") );
+                    instance = wrap(
+                            (IChatService)clazz.newInstance() );
+                } catch(RuntimeException e) {
+                    throw e;
+                } catch(Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
+            return instance;
         }
-        return instance;
     }
 
     protected static IChatService wrap(IChatService service) {

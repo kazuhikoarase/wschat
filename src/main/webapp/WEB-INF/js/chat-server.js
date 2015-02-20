@@ -417,7 +417,6 @@
     };
 
     var putUserSession = function(uid, sid, data) {
-      //console.log('putUserSession:' + uid + ',' + sid);
       service.putUserSession(uid, sid, JSON.stringify(data));
     };
     var getUserSession = function(uid, sid) {
@@ -482,7 +481,6 @@
   };
 
   var send = function(data, uid) {
-    //console.log('###########' + data.action + ',' + uid);
     var msg = JSON.stringify(data);
     if (arguments.length == 1) {
       sync($session, function() {

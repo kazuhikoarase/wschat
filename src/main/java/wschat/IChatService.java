@@ -3,13 +3,11 @@ package wschat;
 import java.util.List;
 import java.util.Map;
 
-import ws.IService;
-
 /**
  * IChatService
  * @author Kazuhiko Arase
  */
-public interface IChatService extends IService {
+public interface IChatService extends IUserService {
 
     User getUser(String uid) throws Exception;
     void updateUser(User user) throws Exception;

@@ -1,12 +1,12 @@
-package ws;
+package wschat;
 
 import java.util.List;
 
 /**
- * IService
+ * IUserService
  * @author Kazuhiko Arase
  */
-public interface IService {
+public interface IUserService {
     void putUserSession(String uid, String sid,
             String jsonData) throws Exception;
     String getUserSession(String uid, String sid) throws Exception;

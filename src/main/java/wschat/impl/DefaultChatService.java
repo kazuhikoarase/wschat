@@ -10,7 +10,6 @@ import java.util.Map;
 
 import javax.script.ScriptEngine;
 
-import ws.DefaultService;
 import ws.util.ImageUtil;
 import ws.util.ScriptUtil;
 import wschat.Contact;
@@ -27,7 +26,7 @@ import wschat.sql.ConnManager;
  * @author Kazuhiko Arase
  */
 public class DefaultChatService 
-extends DefaultService implements IChatService {
+extends UserService implements IChatService {
 
     public DefaultChatService() {
     }

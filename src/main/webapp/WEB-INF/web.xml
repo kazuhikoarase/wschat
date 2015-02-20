@@ -21,6 +21,10 @@
     {
       "endpoints": [
         {
+          "path": "/base/test",
+          "scriptPath": "/base/assets/server.js"
+        },
+        {
           "path": "/wschat",
           "scriptPath": "/WEB-INF/js/chat-server.js"
         }
