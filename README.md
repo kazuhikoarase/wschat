@@ -7,6 +7,8 @@ URL: http://www.d-project.com/
 Licensed under the MIT license:
   http://www.opensource.org/licenses/mit-license.php
 
+Demo site:
+  https://kazuhikoarase.github.io/wschat/
 
 ### System Requirements
 
@@ -17,6 +19,8 @@ Apache Tomcat 7
 HSQLDB + Apache Ant or PostgreSQL
 
 ### Embedding in your webapp
+
+In this case, the userId would be taken from http session.
 
 Edit chat-server.js.
 
