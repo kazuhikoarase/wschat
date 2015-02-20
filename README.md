@@ -7,9 +7,6 @@ URL: http://www.d-project.com/
 Licensed under the MIT license:
   http://www.opensource.org/licenses/mit-license.php
 
-Demo site:
-  https://kazuhikoarase.github.io/wschat/
-
 ### System Requirements
 
 Modern browser
