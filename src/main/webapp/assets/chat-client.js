@@ -192,6 +192,43 @@ var wschat = function(opts) {
     };
   }();
 
+  var notifySound = function() {
+    if (opts.notifySound && window.Audio) {
+      var loaded = false;
+      var preloader = new Audio();
+      preloader.src = opts.notifySound;
+      preloader.addEventListener('canplay', function(event) {
+        loaded = true;
+      });
+      preloader.load();
+      var buf = [];
+      for (var i = 0; i < 4; i += 1) {
+        buf.push({audio: new Audio(), startTime: 0});
+      }
+      return function() {
+        if (loaded) {
+          for (var i = 0; i < buf.length; i += 1) {
+            var now = new Date().getTime();
+            if (buf[i].startTime + preloader.duration * 1000 < now) {
+              buf[i].startTime = now;
+              var audio = buf[i].audio;
+              audio.src = preloader.src;
+              audio.loop = false;
+              if (opts.notifySoundVolume) {
+                audio.volume = +opts.notifySoundVolume;
+              }
+              audio.load();
+              audio.play();
+              break;
+            }
+          }
+        }
+      };
+    } else {
+      return function() {};
+    }
+  }();
+
   var attachDnD = function($ui, beginDrag, endDrag, drop) {
     return $ui.on('dragenter', function(event) {
         event.preventDefault();
@@ -1109,6 +1146,7 @@ var wschat = function(opts) {
             message.nickname + ' ' +
             getTimestampLabel(message.date),
             message.message);
+        notifySound();
       }
     }
     groupsUI.invalidate();

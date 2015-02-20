@@ -12,6 +12,8 @@ $(function() {
     uid: uid,
     url: url,
     fileuploadUrl: 'wschat-file',
+//    notifySound: 'assets/chat.m4a',
+//    notifySoundVolume: 0.1,
     inputAssist: function() {
       return smiley.getSmileys();
     },
