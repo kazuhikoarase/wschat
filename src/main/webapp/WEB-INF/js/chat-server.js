@@ -64,7 +64,7 @@
       resIn = getResIn(lang.replace(/\-.+$/, '') );
     }
     if (resIn == null) {
-      file = buildFile('en');
+      resIn = getResIn('en');
     }
     return JSON.parse('' + new java.lang.String(
         loadStream(resIn), 'UTF-8') );
