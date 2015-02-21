@@ -37,7 +37,7 @@ implements ServletContextListener {
         ScriptEngine se = ScriptUtil.newScriptEngine();
         try {
             se.put("config", servletContext.getInitParameter("ws.config") );
-            ScriptUtil.eval(se, this, "_parse.js");
+            ScriptUtil.eval(se, WSServletContextListener.class, "_parse.js");
         } catch(ScriptException e) {
             throw new RuntimeException(e);
         }

@@ -118,7 +118,7 @@ public class FileServlet extends HttpServlet {
         ScriptEngine se = ScriptUtil.newScriptEngine();
 
         se.put("javaMessage", message);
-        ScriptUtil.eval(se, this, "_doGet.js");
+        ScriptUtil.eval(se, FileServlet.class, "_doGet.js");
         String name = se.get("name").toString();
         String tmpfile = se.get("tmpfile").toString();
 
@@ -187,7 +187,7 @@ public class FileServlet extends HttpServlet {
         se.put("fileList", fileList);
         Object result;
         try {
-            result = ScriptUtil.eval(se, this, "_doPost.js");
+            result = ScriptUtil.eval(se, FileServlet.class, "_doPost.js");
         } catch(ScriptException e) {
             throw new ServletException(e);
         }

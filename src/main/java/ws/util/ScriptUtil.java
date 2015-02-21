@@ -39,10 +39,9 @@ public class ScriptUtil {
         return se;
     }
 
-    public static Object eval(ScriptEngine se, Object target, String suffix)
+    public static Object eval(ScriptEngine se, Class<?> clazz, String suffix)
     throws ScriptException {
         try {
-            Class<?> clazz = target.getClass();
             String res = clazz.getSimpleName() + suffix;
             se.put(ScriptEngine.FILENAME, res);
             Reader in = new InputStreamReader(
