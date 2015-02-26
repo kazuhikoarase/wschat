@@ -107,24 +107,26 @@ extends UserService implements IChatService {
     }
 
     @Override
-    public List<User> searchUsers(String uid, final String keyword) throws Exception {
+    public List<User> searchUsers(String uid, String keyword) throws Exception {
         final List<User> users = new ArrayList<User>();
         if (keyword.length() == 0) {
             return users;
         }
+        final String lowerKeyword = keyword.toLowerCase();
         final ScriptEngine se = ScriptUtil.newScriptEngine();
         executeQuery("select UID,JSON_DATA from USERS order by UID",
             new Object[]{},
             new ResultHandler() {
                 @Override
                 public void handle(ResultSet rs) throws Exception {
-                    String uid = rs.getString(1);
+                    String uid = rs.getString(1).toLowerCase();
                     String jsonData = rs.getString(2);
                     se.put("jsonData", jsonData);
                     String nickname = se.eval(
-                        "JSON.parse(jsonData).nickname || ''").toString();
-                    if (uid.indexOf(keyword) != -1 ||
-                            nickname.indexOf(keyword) != -1) {
+                        "JSON.parse(jsonData).nickname || ''").
+                        toString().toLowerCase();
+                    if (uid.indexOf(lowerKeyword) != -1 ||
+                            nickname.indexOf(lowerKeyword) != -1) {
                         User user = new User();
                         user.setUid(uid);
                         user.setJsonData(jsonData);
