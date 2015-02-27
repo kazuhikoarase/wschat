@@ -2088,7 +2088,8 @@ var wschat = function(opts) {
           text(txt) ).
       append($('<br/>') ).
       append(applyDecoration( $('<span></span>').
-          text(user.message || '\u3000') ) );
+          text(user.message || '\u3000').
+          attr('title', user.message) ) );
     return $('<div></div>').
       attr('wschat-uid', user.uid).
       addClass('wschat-users-cell').
@@ -2460,7 +2461,9 @@ var wschat = function(opts) {
   };
 
   var appendEditButton = function(gid, message, $cell) {
+    var lastMsg = '';
     var endEditHandler = function(event, data) {
+      $msg.val(lastMsg);
       $cell.children('.wschat-thread-msg-body').
         removeClass('wschat-msg-edit');
       $msg.off('endEdit', endEditHandler);
@@ -2494,6 +2497,7 @@ var wschat = function(opts) {
     var msgEditHandler = function(event) {
       $cell.children('.wschat-thread-msg-body').
         addClass('wschat-msg-edit');
+      lastMsg = $msg.val();
       msgEditor.beginEdit(message.message);
       $msg.on('endEdit', endEditHandler);
       msgMenu.hideMenu();
