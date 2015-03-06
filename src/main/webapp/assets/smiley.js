@@ -7,6 +7,7 @@
 var smiley = function() {
 
   var applySmileys = function(s, handler) {
+    var re = /^\w+$/;
     var start = 0;
     while (start < s.length) {
       var found = false;
@@ -15,6 +16,12 @@ var smiley = function() {
       var i;
       for(var k in map) {
         if ( (i = s.indexOf(k, start) ) != -1 && i < pos) {
+          if (i > 0 && s.substring(i - 1, i + 1).match(re) ) {
+            continue;
+          } else if (i + k.length < s.length && 
+              s.substring(i + k.length - 1, i + k.length + 1).match(re) ) {
+            continue;
+          }
           key = k;
           pos = i;
           found = true;
