@@ -19,6 +19,7 @@ var wschat = function(opts) {
     groups: {},
     groupPrevs: {},
     messages: {},
+    threadMessagesGid: null,
     threadMessages: [],
     threadMsg: {},
     fid: 0,
@@ -2920,6 +2921,7 @@ var wschat = function(opts) {
     }
 
     chat.selectedMid = null;
+    chat.threadMessagesGid = gid;
     chat.threadMessages = [];
     if (group) {
       $.each(group.messages, function(mid, message) {
@@ -2934,7 +2936,9 @@ var wschat = function(opts) {
   var validateThreadMessages = function() {
     var start = new Date();
     while (chat.threadMessages.length > 0 && new Date() - start < 50) {
-      updateThreadMessage(chat.threadGid, chat.threadMessages.shift() );
+      updateThreadMessage(
+          chat.threadMessagesGid,
+          chat.threadMessages.shift() );
     }
   };
 
