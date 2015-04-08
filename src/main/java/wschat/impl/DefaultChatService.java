@@ -200,6 +200,8 @@ extends UserService implements IChatService {
     public Group getGroup(String uid, String gid) throws Exception {
         final Group group = new Group();
         group.setGid(gid);
+        group.setMinDate(0L);
+        group.setMaxDate(0L);
         int count = executeQuery("select JSON_DATA from GROUPS where UID=? and GID=?",
                 new Object[]{uid, stringToLong(gid)}, new ResultHandler() {
             @Override
@@ -212,14 +214,6 @@ extends UserService implements IChatService {
         } else if (count != 1) {
             throw new IllegalStateException();
         }
-        executeQuery("select min(DATE),max(DATE) from MESSAGES where UID=? and GID=?",
-                new Object[]{uid, stringToLong(gid)}, new ResultHandler() {
-            @Override
-            public void handle(ResultSet rs) throws Exception {
-                group.setMinDate(rs.getLong(1) );
-                group.setMaxDate(rs.getLong(2) );
-            }
-        });
         executeQuery("select GROUP_UID,JSON_DATA from GROUP_USERS where UID=? and GID=?",
                 new Object[]{uid, stringToLong(gid)}, new ResultHandler() {
             @Override
