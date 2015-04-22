@@ -305,7 +305,7 @@ public class FileServlet extends HttpServlet {
     }
 
     protected int executeUpdate(String sql) {
-        logger.info(sql);
+        //logger.info(sql);
         try {
             Connection conn = ConnManager.getInstance().getConnection();
             try {
