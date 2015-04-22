@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +39,7 @@ import ws.util.ScriptUtil;
 import wschat.ChatServiceHolder;
 import wschat.IChatService;
 import wschat.Message;
+import wschat.sql.ConnManager;
 
 /**
  * FileServlet
@@ -45,10 +48,13 @@ import wschat.Message;
 @SuppressWarnings("serial")
 public class FileServlet extends HttpServlet {
 
+    private static final long DAY_IN_MILLIS = 1000L * 3600 * 24;
+
     protected final Logger logger = Logger.getLogger(getClass().getName() );
 
     private IChatService service;
 
+    private int messageExpireInDays;
     private long ticks;
     private long interval;
     private long tempFileExpireInMillis;
@@ -60,12 +66,12 @@ public class FileServlet extends HttpServlet {
         super.init(config);
 
         service = ChatServiceHolder.getInstance(getServletContext() );
-
+        messageExpireInDays = getIntParam(config,
+                "messageExpireInDays", 31);
         ticks = getLongParam(config, "ticks", 1000L);
-        interval =
-                getLongParam(config, "interval", 1000L * 60 * 5);
-        tempFileExpireInMillis =
-                getLongParam(config, "tempFileExpireInMillis", 1000L * 3600);
+        interval = getLongParam(config, "interval", 1000L * 60 * 5);
+        tempFileExpireInMillis = getLongParam(config,
+                "tempFileExpireInMillis", 1000L * 3600);
         startup();
     }
 
@@ -289,6 +295,36 @@ public class FileServlet extends HttpServlet {
                 file.delete();
             }
         }
+        int updateCount = executeUpdate(
+            "delete from MESSAGES where DATE<" +
+            (System.currentTimeMillis() -
+                    DAY_IN_MILLIS * messageExpireInDays) );
+        if (updateCount > 0) {
+            logger.info(updateCount + " messages are deleted.");
+        }
+    }
+
+    protected int executeUpdate(String sql) {
+        logger.info(sql);
+        try {
+            Connection conn = ConnManager.getInstance().getConnection();
+            try {
+                Statement stmt = conn.createStatement();
+                try {
+                    int updateCount = stmt.executeUpdate(sql);
+                    conn.commit();
+                    return updateCount;
+                } finally {
+                    stmt.close();
+                }
+            } finally {
+                conn.close();
+            }
+        } catch(RuntimeException e) {
+            throw e;
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected void shutdown() {
@@ -319,7 +355,13 @@ public class FileServlet extends HttpServlet {
             URLEncoder.encode(filename, "UTF-8");
     }
 
-    private static long getLongParam(ServletConfig config, String name,
+    protected static int getIntParam(ServletConfig config, String name,
+            int defaultValue) {
+        String value = config.getInitParameter(name);
+        return (value != null)? Integer.valueOf(value) : defaultValue;
+    }
+
+    protected static long getLongParam(ServletConfig config, String name,
             long defaultValue) {
         String value = config.getInitParameter(name);
         return (value != null)? Long.valueOf(value) : defaultValue;
