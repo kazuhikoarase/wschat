@@ -1850,7 +1850,7 @@ var wschat = function(opts) {
         on('click', deleteContactHandler) );
   });
 
-  var editor = function($parent, width, defaultMessage, decorate) {
+  var editor = function($parent, width, maxlength, defaultMessage, decorate) {
     var lastValue = '';
     var value = '';
     var val = function() {
@@ -1875,7 +1875,7 @@ var wschat = function(opts) {
     var $editor = $('<input type="text"/>').
       addClass('wschat-editor').
       addClass('wschat-mouse-enabled').
-      attr('maxlength', '30').
+      attr('maxlength', '' + maxlength).
       css('width', width + 'px').
       css('vertical-align', 'middle').
       change(function(event) {
@@ -1917,9 +1917,9 @@ var wschat = function(opts) {
 
     var updateUI = function() {
       if (val() ) {
-        $text.text(val()).css('color', '#000000');
+        $text.text(val()).attr('title', val()).css('color', '#000000');
       } else {
-        $text.text(defaultMessage).css('color', '#cccccc');
+        $text.text(defaultMessage).attr('title', '').css('color', '#cccccc');
       }
       if (decorate) {
         applyDecoration($text);
@@ -2018,21 +2018,21 @@ var wschat = function(opts) {
     var $info = $('<div></div>').css('height', '36px');
     $user.append($info);
 
-    var appendEditor = function(width, value, defaultMessage, decorate) {
+    var appendEditor = function(width, maxlength, value, defaultMessage, decorate) {
       var $editor = $('<div></div>').css('margin', '2px 0px 2px 0px');
       $info.append($editor);
-      editor($editor, width, defaultMessage, decorate);
+      editor($editor, width, maxlength, defaultMessage, decorate);
       $editor.data('controller').val(value);
       return $editor;
     };
-    appendEditor(ui.avatarSize - ui.gap, chat.user.nickname, chat.user.uid).
+    appendEditor(ui.avatarSize - ui.gap, 20, chat.user.nickname, chat.user.uid).
         on('valueChange', function() {
       chat.user.nickname = $(this).data('controller').val() ||
         chat.user.uid;
       userUI.invalidate();
       userUpdate();
     }).prepend(createUserState(chat.user) );
-    appendEditor(ui.avatarSize, chat.user.message, chat.messages.TODAYS_FEELING, true).
+    appendEditor(ui.avatarSize, 140, chat.user.message, chat.messages.TODAYS_FEELING, true).
         on('valueChange', function() {
       chat.user.message = $(this).data('controller').val();
       userUI.invalidate();
