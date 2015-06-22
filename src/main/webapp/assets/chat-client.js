@@ -1917,11 +1917,12 @@ var wschat = function(opts) {
 
     var updateUI = function() {
       if (val() ) {
-        $text.text(val()).attr('title', val()).css('color', '#000000');
+        $text.text(val()).css('color', '#000000');
       } else {
-        $text.text(defaultMessage).attr('title', '').css('color', '#cccccc');
+        $text.text(defaultMessage).css('color', '#cccccc');
       }
       if (decorate) {
+        $text.attr('title', $text.text() );
         applyDecoration($text);
       }
       $editor.val(val());
