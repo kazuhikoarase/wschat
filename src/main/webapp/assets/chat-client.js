@@ -690,7 +690,9 @@ var wschat = function(opts) {
 
   actions.user = function(data) {
 
-    chat.date = data.user.date;
+    if (chat.date < data.user.date) {
+      chat.date = data.user.date;
+    }
     data.user.idleTime = getIdleTime(data.user);
 
     if (chat.user.uid == data.user.uid) {
