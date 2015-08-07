@@ -1200,11 +1200,11 @@ var wschat = function(opts) {
       var my = off.top;
       var dx = event.pageX - mx;
       var dy = event.pageY - my;
-      var r = 4;
+      var r = 6;
       return {
         mx: mx,
         my: my,
-        enable: 0 <= dx && dx <= r && 0 <= dy && dy <= r
+        enable: -r <= dx && dx <= r && -r <= dy && dy <= r
       };
     };
     var h = helper(event);
