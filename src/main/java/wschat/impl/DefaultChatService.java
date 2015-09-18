@@ -41,7 +41,7 @@ extends UserService implements IChatService {
                     }
                 });
         if (count != 1) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("count:" + count);
         }
         return String.valueOf(value[0]);
     }
@@ -68,7 +68,7 @@ extends UserService implements IChatService {
         if (count == 0) {
             return null;
         } else if (count != 1) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("count:" + count);
         }
         executeQuery("select CONTACT_UID,CONTACT_GID from CONTACTS where UID=?",
                 new Object[]{uid}, new ResultHandler() {
@@ -150,7 +150,7 @@ extends UserService implements IChatService {
         if (count == 0) {
             return "";
         } else if (count != 1) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("count:" + count);
         }
         return ImageUtil.resizeImage(data[0], size, false);
     }
@@ -212,7 +212,7 @@ extends UserService implements IChatService {
         if (count == 0) {
             return null;
         } else if (count != 1) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("count:" + count);
         }
         executeQuery("select GROUP_UID,JSON_DATA from GROUP_USERS where UID=? and GID=?",
                 new Object[]{uid, stringToLong(gid)}, new ResultHandler() {
@@ -307,7 +307,7 @@ extends UserService implements IChatService {
         if (count == 0) {
             return null;
         } else if (count != 1) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("count:" + count);
         }
         return message;
     }
