@@ -723,6 +723,11 @@
             date: getTime()
           }
         }, uid2);
+        send({
+          action: 'avatar',
+          uid: user.uid,
+          data: chatService.getAvatar(user.uid)
+        }, uid2);
       };
       sendUser(users[0], users[1]);
       sendUser(users[1], users[0]);
