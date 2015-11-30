@@ -94,8 +94,9 @@ var wschat = function(opts) {
   }();
 
   var replaceText = function(target, replacement) {
-    if (document.selection) {
-      var range = document.selection.createRange();
+    var doc = document;
+    if (doc.selection) {
+      var range = doc.selection.createRange();
       if (range.parentElement() == target) {
         range.text = replacement;
         range.scrollIntoView();
@@ -145,18 +146,19 @@ var wschat = function(opts) {
   }();
 
   var notificationManager = function() {
+    var win = window;
     var ntf = null;
     var init = function() {
-      if (window.Notification && Notification.permission != 'granted') {
-        Notification.requestPermission(function (permission) {
-          if (Notification.permission != permission) {
-            Notification.permission = permission;
+      if (win.Notification && win.Notification.permission != 'granted') {
+        win.Notification.requestPermission(function (permission) {
+          if (win.Notification.permission != permission) {
+            win.Notification.permission = permission;
           }
         });
       }
     };
     var notify = function(title, body) {
-      if (window.Notification && Notification.permission == 'granted') {
+      if (win.Notification && win.Notification.permission == 'granted') {
         if (ntf != null) {
           return;
         }
@@ -169,7 +171,7 @@ var wschat = function(opts) {
         if (opts.icon) {
           options.icon = opts.icon;
         }
-        ntf = new Notification(chat.messages.NOTIFY_NEW_MESSAGE, options);
+        ntf = new win.Notification(chat.messages.NOTIFY_NEW_MESSAGE, options);
         ntf.onshow = function() {
           open();
         };
@@ -194,9 +196,10 @@ var wschat = function(opts) {
   }();
 
   var notifySound = function() {
-    if (opts.notifySound && window.Audio) {
+    var win = window;
+    if (opts.notifySound && win.Audio) {
       var loaded = false;
-      var preloader = new Audio();
+      var preloader = new win.Audio();
       preloader.src = opts.notifySound;
       preloader.addEventListener('canplay', function(event) {
         loaded = true;
@@ -204,7 +207,7 @@ var wschat = function(opts) {
       preloader.load();
       var buf = [];
       for (var i = 0; i < 4; i += 1) {
-        buf.push({audio: new Audio(), startTime: 0});
+        buf.push({audio: new win.Audio(), startTime: 0});
       }
       return function() {
         if (loaded) {
@@ -377,8 +380,8 @@ var wschat = function(opts) {
     return msg;
   };
 
-  var formatNumber = function(n) {
-    n = '' + ~~n;
+  var formatNumber = function(num) {
+    var n = '' + ~~num;
     var neg = n.indexOf('-') == 0;
     if (neg) {
       n = n.substring(1);
@@ -1615,7 +1618,7 @@ var wschat = function(opts) {
     };
   };
 
-  var createControl = function(label) {
+  var createControl = function() {
     return $('<span></span>').
       css('display', 'inline-block').
       css('cursor', 'default').
@@ -2165,7 +2168,7 @@ var wschat = function(opts) {
           });
           return !alreadyAdded;
         },
-        function(event) {
+        function() {
           var gid = getThreadGid();
           if (gid) {
             addToGroup(gid, user.uid);
@@ -2780,7 +2783,7 @@ var wschat = function(opts) {
         function() {
           return getThreadUsers(gid, group).length > 1;
         },
-        function(event) {
+        function() {
           if (gid != null) {
             removeFromGroup(gid, uid);
           } else {
@@ -2937,8 +2940,8 @@ var wschat = function(opts) {
   };
 
   var validateThreadMessages = function() {
-    var start = new Date();
-    while (chat.threadMessages.length > 0 && new Date() - start < 50) {
+    var start = getTime();
+    while (chat.threadMessages.length > 0 && getTime() - start < 50) {
       updateThreadMessage(
           chat.threadMessagesGid,
           chat.threadMessages.shift() );
