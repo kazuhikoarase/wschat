@@ -62,10 +62,11 @@ public class WSEndpoint extends Endpoint {
             Reader in = new InputStreamReader(
                 servletContext.getResourceAsStream(scriptPath), "UTF-8");
             try {
-                return (IServerEndpoint)se.eval(in);
+                se.eval(in);
             } finally {
                 in.close();
             }
+            return (IServerEndpoint)se.eval("wschat.createServer()");
         } catch(RuntimeException e) {
             throw e;
         } catch(Exception e) {
