@@ -14,6 +14,7 @@ namespace wschat {
   declare var $logger : any;
   declare var $global : any;
   declare var $servletContext : any;
+  declare var $request : any;
   declare var $session : any;
 
   var $ : JQThin = {
@@ -96,7 +97,7 @@ namespace wschat {
         new Packages.ws.ISync({ sync : sync }) );
   };
 
-  var createChatService = function() {
+  export var chatService = function() {
 
     var wschat = Packages.wschat;
     var service = wschat.ChatServiceHolder.getInstance($servletContext);
@@ -182,6 +183,9 @@ namespace wschat {
       return javaUser;
     };
 
+    var doLogin = function(uid : string) {
+      return getUser(uid);
+    };
     var getUser = function(uid : string) {
       var javaUser = service.getUser(uid);
       if (javaUser == null) {
@@ -228,7 +232,7 @@ namespace wschat {
       service.updateAvatar(uid, data, 120);
       tmpfile['delete']();
     };
-    var newUser = function(user : User) {
+    var newUser = function(user : NewUser) {
       var javaUser = new wschat.User();
       javaUser.setUid(user.uid);
       javaUser.setJsonData(JSON.stringify({
@@ -448,6 +452,7 @@ namespace wschat {
       removeUserSession: removeUserSession,
       getUserSessionIdList: getUserSessionIdList,
 
+      doLogin: doLogin,
       getUser: getUser,
       updateUser: updateUser,
       getAvatar: getAvatar,
@@ -470,15 +475,13 @@ namespace wschat {
       updateMessage: updateMessage,
       fetchMessages: fetchMessages
     };
-  };
+  }();
 
   var createChatEndpoint = function() {
 
     var chat : {user : User, messages? : any} = {
       user: null
     };
-
-    var chatService = createChatService();
 
     var isGroupMember = function(group : Group) {
       var found = false;
@@ -550,7 +553,7 @@ namespace wschat {
 
     actions.login = function(data) {
   
-      chat.user = chatService.getUser(data.uid);
+      chat.user = chatService.doLogin(data.uid);
       if (chat.user == null) {
         data.status = 'failure';
         send(data);
@@ -951,7 +954,9 @@ namespace wschat {
     };
 
     return {
-      onOpen: onOpen, onClose: onClose, onMessage: onMessage
+      onOpen: onOpen,
+      onClose: onClose,
+      onMessage: onMessage
     }
   };
 

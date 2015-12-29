@@ -81,7 +81,12 @@ namespace wschat {
     nickname : string
   }
 
-  export interface User extends ContactRequest {
+  export interface NewUser {
+    uid : string
+    nickname : string
+  }
+
+  export interface User extends ContactRequest, NewUser {
     uid : string
     nickname : string
     message : string
