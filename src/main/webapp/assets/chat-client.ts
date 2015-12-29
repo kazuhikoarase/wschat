@@ -8,7 +8,7 @@
 
 namespace wschat {
 
-export var wschat = function(opts : ChatOptions) {
+export var createChatClient = function(opts : ChatOptions) {
 
   var ws : WebSocket = null;
 
@@ -1879,16 +1879,15 @@ export var wschat = function(opts : ChatOptions) {
   ) {
     var lastValue = '';
     var value = '';
-    var val : any = function() {
-      if (arguments.length == 0) {
-        return value;
-      } else {
+    var val = function(newValue? : string) : string {
+      if (arguments.length > 0) {
         if (value != arguments[0]) {
           value = trim(arguments[0] || '');
           $parent.trigger('valueChange');
         }
         updateUI();
       }
+      return value;
     };
     var setEdit = function(edit : boolean) {
       $editor.css('display', edit? 'inline-block' : 'none');
@@ -2471,7 +2470,8 @@ export var wschat = function(opts : ChatOptions) {
     window.setTimeout(checkRead, 50);
   };
 
-  var appendThreadMessageHeader = function($cellsContent : JQuery, gid : string, message : Message) {
+  var appendThreadMessageHeader = function($cellsContent : JQuery,
+      gid : string, message : Message) {
     var date = trimToDate(message.date);
     var id = date.getFullYear() + '-' +
       date.getMonth() + '-' + date.getDate();
@@ -2490,7 +2490,8 @@ export var wschat = function(opts : ChatOptions) {
     appendThreadMessageCell($cellsContent, $header, hmessage.date);
   };
 
-  var appendEditButton = function(gid : string, message : Message, $cell : JQuery) {
+  var appendEditButton = function(gid : string,
+      message : Message, $cell : JQuery) {
     var lastMsg = '';
     var endEditHandler = function(event : JQueryEventObject, data? : any) {
       $msg.val(lastMsg);
@@ -3004,4 +3005,3 @@ export var wschat = function(opts : ChatOptions) {
 };
 
 }
-

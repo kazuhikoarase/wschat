@@ -169,7 +169,7 @@ namespace wschat {
     updateAvatar? : (data : any) => void
     searchUsers? : (data : any) => void
     newGroup? : (data : { gid : string,
-      users : string[], message : string }) => void
+    users? : string[], message : string }) => void
     requestAddToContacts? : (data : any) => void
     acceptContact? : (data : any) => void
     removeContact? : (data : any) => void
