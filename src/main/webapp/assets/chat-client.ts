@@ -180,6 +180,7 @@ export var createChatClient = function(opts : ChatOptions) {
           open();
         };
         ntf.onclick = function() {
+          window.focus();
           close();
         };
         ntf.onclose = function() {
