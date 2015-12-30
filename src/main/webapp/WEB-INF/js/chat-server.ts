@@ -492,12 +492,12 @@ namespace wschat {
       });
       return found;
     };
-  
+
     var getNickname = function(uid : string) {
       var user = chatService.getUser(uid);
       return user.nickname || user.uid;
     };
-  
+
     var send = function(data : any, uid? : string) {
       var msg = JSON.stringify(data);
       if (arguments.length == 1) {
@@ -529,7 +529,7 @@ namespace wschat {
         });
       }
     };
-  
+
     var sendSystemMessage = function(group : Group, systemMessage : string) {
       var mid = chatService.newMid();
       $.each(group.users, function(uid) {
@@ -552,7 +552,7 @@ namespace wschat {
     var actions : ServerActions = {};
 
     actions.login = function(data) {
-  
+
       chat.user = chatService.doLogin(data.uid);
       if (chat.user == null) {
         data.status = 'failure';
@@ -568,13 +568,13 @@ namespace wschat {
       data.status = 'success';
       data.messages = chat.messages;
       send(data);
-  
+
       send({
         action: 'avatar',
         uid: chat.user.uid,
         data: chatService.getAvatar(chat.user.uid)
       });
-  
+
       $.each(chat.user.contacts, function(uid, contact) {
         var user = chatService.getUser(uid);
         send({
@@ -592,7 +592,7 @@ namespace wschat {
           action: 'group',
           group: group
         });
-  
+
         send({
           action: 'avatar',
           uid: user.uid,
@@ -600,9 +600,9 @@ namespace wschat {
         });
       });
     };
-  
+
     actions.user = function(data) {
-  
+
       if (data.user.date == null) {
         data.user.date = getTime();
       }
@@ -617,9 +617,9 @@ namespace wschat {
         }
       });
     };
-  
+
     actions.updateAvatar = function(data) {
-  
+
       chatService.updateAvatar(chat.user.uid, data.file);
       var avatarData = {
         action: 'avatar',
@@ -633,18 +633,18 @@ namespace wschat {
         }
       });
     };
-  
+
     actions.searchUsers = function(data) {
       data.users = chatService.searchUsers(chat.user.uid, data.keyword);
       send(data);
     };
-  
+
     actions.newGroup = function(data) {
-  
+
       if (data.users.length < 1) {
         return;
       }
-  
+
       var users : string[] = [chat.user.uid];
       $.each(data.users, function(i, uid) {
         users.push(uid);
@@ -652,17 +652,17 @@ namespace wschat {
       users.sort(function(u1, u2) {
         return u1 < u2? -1 : 1;
       });
-  
+
       if (users.length == 2) {
         if (!chatService.containsUser(users[0], users[1]) ||
             !chatService.containsUser(users[1], users[0]) ) {
           return;
         }
       }
-  
+
       data.gid = chatService.newGroup(users);
       send(data);
-  
+
       $.each(users, function(i, uid) {
         var group = chatService.getGroup(uid, data.gid);
         send({
@@ -670,7 +670,7 @@ namespace wschat {
           group: group
         }, uid);
       });
-  
+
       if (users.length > 2) {
         var nicknames = '';
         $.each(users, function(i, uid) {
@@ -688,7 +688,7 @@ namespace wschat {
               getNickname(chat.user.uid),
               nicknames) );
       }
-  
+
       if (data.message != null) {
         onMessageImpl({
           action: 'postMessage',
@@ -697,15 +697,15 @@ namespace wschat {
         });
       }
     };
-  
+
     actions.requestAddToContacts = function(data) {
-  
+
       var gid = chatService.createContactGroup(chat.user.uid, data.uid);
       if (gid != null) {
-  
+
         data.gid = gid;
         send(data);
-  
+
         onMessageImpl({
           action: 'postMessage',
           gid: gid,
@@ -718,17 +718,17 @@ namespace wschat {
         });
       }
     };
-  
+
     actions.acceptContact = function(data) {
-  
+
       var users = [chat.user.uid, data.uid];
       var gid = chatService.applyContact(users[0], users[1], data.gid);
-  
+
       if (gid != null) {
-  
+
         send(data, users[0]);
         send(data, users[1]);
-  
+
         var sendUser = function(uid1 : string, uid2 : string) {
           var user = chatService.getUser(uid1);
           send({
@@ -751,20 +751,20 @@ namespace wschat {
         sendUser(users[1], users[0]);
       }
     };
-  
+
     actions.removeContact = function(data) {
       var gid = chatService.removeContact(chat.user.uid, data.uid);
       if (gid != null) {
         send(data, chat.user.uid);
       }
     };
-  
+
     actions.addToGroup = function(data) {
-  
+
       var group = chatService.getGroup(chat.user.uid, data.gid);
-  
+
       if (isGroupMember(group) ) {
-  
+
         group = chatService.addToGroup(chat.user.uid, group, data.uid);
         if (group != null) {
           data.group = group;
@@ -782,9 +782,9 @@ namespace wschat {
         }
       }
     };
-  
+
     actions.removeFromGroup = function(data) {
-  
+
       var group = chatService.getGroup(chat.user.uid, data.gid);
       if (isGroupMember(group) ) {
         var oldGroup : Group = JSON.parse(JSON.stringify(group) );
@@ -803,9 +803,9 @@ namespace wschat {
             getNickname(data.uid) ) );
       }
     };
-  
+
     actions.exitFromGroup = function(data) {
-  
+
       var group = chatService.getGroup(chat.user.uid, data.gid);
       if (isGroupMember(group) ) {
         var oldGroup : Group = JSON.parse(JSON.stringify(group) );
@@ -824,7 +824,7 @@ namespace wschat {
             getNickname(chat.user.uid) ) );
       }
     };
-  
+
     actions.fetchGroups = function(data) {
       $.each(chatService.fetchGroups(chat.user.uid, data.opts),
         function(gid, group) {
@@ -834,9 +834,9 @@ namespace wschat {
           });
         });
     };
-  
+
     actions.message = function(data) {
-  
+
       if (!data.notifyAll) {
         chatService.updateMessage(chat.user.uid, data.gid, data.message);
         send(data, chat.user.uid);
@@ -850,9 +850,9 @@ namespace wschat {
         }
       }
     };
-  
+
     actions.fetchMessages = function(data) {
-      $.each(chatService.fetchMessages(chat.user.uid, data.gid, data.opts), 
+      $.each(chatService.fetchMessages(chat.user.uid, data.gid, data.opts),
         function(mid, message) {
           send({action:'message',
             gid: data.gid,
@@ -860,13 +860,13 @@ namespace wschat {
           });
         });
     };
-  
+
     actions.postMessage = function(data) {
-  
+
       var group = chatService.getGroup(chat.user.uid, data.gid);
-  
+
       if (isGroupMember(group) ) {
-  
+
         if (data.newGroup) {
           $.each(group.users, function(uid) {
             send({
@@ -875,17 +875,17 @@ namespace wschat {
             }, uid);
           });
         }
-  
+
         var mid = chatService.newMid();
         $.each(group.users, function(uid) {
-  
+
           var message = data.message;
           message.mid = mid;
           message.uid = chat.user.uid;
           message.nickname = chat.user.nickname;
           message.date = getTime();
           message.newMsg = uid != chat.user.uid;
-  
+
           chatService.updateMessage(uid, data.gid, message);
           send({action:'message',
             gid: data.gid,
@@ -894,9 +894,9 @@ namespace wschat {
         });
       }
     };
-  
+
     actions.typing = function(data) {
-  
+
       var group = chatService.getGroup(chat.user.uid, data.gid);
       if (isGroupMember(group) ) {
         data.uid = chat.user.uid;
@@ -908,16 +908,16 @@ namespace wschat {
         });
       }
     };
-  
+
     actions.download = function(data) {
       data.message = chatService.getMessage(chat.user.uid, data.mid);
       send(data);
     };
-  
+
     var onOpen = function(config : any) {
       console.log('open/sid=' + $session.getId() );
     };
-  
+
     var onClose = function(closeReason : any) {
       console.log('close/sid=' + $session.getId() );
       if (chat.user) {
@@ -937,7 +937,7 @@ namespace wschat {
         chat.user = null;
       }
     };
-  
+
     var onMessage = function(msg : any) {
       msg = '' + msg;
       if (msg.length == 0) {
@@ -945,7 +945,7 @@ namespace wschat {
       }
       onMessageImpl(JSON.parse(msg) );
     };
-  
+
     var onMessageImpl = function(data : any) {
       var action = (<any>actions)[data.action];
       if (action) {

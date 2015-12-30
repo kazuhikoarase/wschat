@@ -3,6 +3,7 @@
 //
 // @author Kazuhiko Arase
 //
+
 'use strict';
 
 namespace wschat {
@@ -26,7 +27,7 @@ namespace wschat {
         if ( (i = s.indexOf(k, start) ) != -1 && i < pos) {
           if (i > 0 && s.substring(i - 1, i + 1).match(re) ) {
             continue;
-          } else if (i + k.length < s.length && 
+          } else if (i + k.length < s.length &&
               s.substring(i + k.length - 1, i + k.length + 1).match(re) ) {
             continue;
           }
@@ -69,7 +70,7 @@ namespace wschat {
     var map : StrMap = {};
     for (var name in images) {
       var image = images[name];
-      var names = codes[name].split(/\s+/g); 
+      var names = codes[name].split(/\s+/g);
       for (var i = 0; i < names.length; i += 1) {
         map[names[i]] = image;
       }

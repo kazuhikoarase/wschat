@@ -446,13 +446,13 @@ export var createChatClient = function(opts : ChatOptions) {
     var date = new Date();
     date.setTime(d);
     var getShortLabel = function() {
-      return messageFormat(chat.messages.SHORT_DATE_FORMAT, 
+      return messageFormat(chat.messages.SHORT_DATE_FORMAT,
           getMonthLabel(date.getMonth() ),
           date.getDate(),
           getDayLabel(date.getDay() ) );
     };
     var getFullLabel = function() {
-      return messageFormat(chat.messages.FULL_DATE_FORMAT, 
+      return messageFormat(chat.messages.FULL_DATE_FORMAT,
           date.getFullYear(),
           getMonthLabel(date.getMonth() ),
           date.getDate(),
@@ -479,8 +479,8 @@ export var createChatClient = function(opts : ChatOptions) {
   var getTimestampLabel = function(d : number) {
     var date = new Date();
     date.setTime(d);
-    return date.getFullYear() + '/' + 
-        (date.getMonth() + 1) + '/' + 
+    return date.getFullYear() + '/' +
+        (date.getMonth() + 1) + '/' +
         date.getDate() + ' ' +
         date.getHours() +':' +
         fillZero(date.getMinutes(), 2);
@@ -581,13 +581,13 @@ export var createChatClient = function(opts : ChatOptions) {
         return 'idle';
       }
       return 'online';
-    } 
+    }
     return 'offline';
   };
 
   var createUserState = function(user : User) {
     var userState = getUserState(user);
-    var color = userState == 'online'? '#00ff00' : 
+    var color = userState == 'online'? '#00ff00' :
         (userState == 'idle'? '#ffee00' : '#cccccc');
     return createSVG(12, 12).css('vertical-align', 'middle').
       append(createSVGElement('circle').
@@ -677,7 +677,7 @@ export var createChatClient = function(opts : ChatOptions) {
 
   var userChanged = function(user1 : User, user2 : User) {
     return user1.nickname != user2.nickname ||
-      user1.message != user2.message || 
+      user1.message != user2.message ||
       getUserState(user1) != getUserState(user2);
   };
 
@@ -972,7 +972,7 @@ export var createChatClient = function(opts : ChatOptions) {
       action: 'postMessage',
       gid: gid,
       newGroup: !chat.groups[gid],
-      message: message 
+      message: message
     });
   };
 
@@ -980,7 +980,7 @@ export var createChatClient = function(opts : ChatOptions) {
     send({
       action: 'typing',
       gid: gid,
-      status: status 
+      status: status
     });
   };
 
@@ -1157,7 +1157,7 @@ export var createChatClient = function(opts : ChatOptions) {
   var putMessage = function(gid : string, message : Message) {
     var group = chat.groups[gid];
     group.messages[message.mid] = message;
-    if (message.newMsg && 
+    if (message.newMsg &&
         message.uid != chat.user.uid) {
       if (!isActive() ) {
         notify.start();
@@ -1247,14 +1247,14 @@ export var createChatClient = function(opts : ChatOptions) {
     }
   });
 
-  
+
   var $threadUsers = $('<div></div>').
     addClass('wschat-thread-users').
     css('text-align', 'center').
     css('overflow-x', 'hidden').
     css('overflow-y', 'auto').
     css('cursor', 'default').
-    css('height', '160px'); 
+    css('height', '160px');
   $thread.append($threadUsers);
 
   var commitMsg = function(
@@ -1348,7 +1348,7 @@ export var createChatClient = function(opts : ChatOptions) {
       fillZero(date.getHours(), 2) +
       fillZero(date.getMinutes(), 2) +
       fillZero(date.getSeconds(), 2);
-    
+
     var fr = new FileReader();
     fr.onload = function(event : any) {
       var $img = $('<img/>').
@@ -1435,7 +1435,7 @@ export var createChatClient = function(opts : ChatOptions) {
         update(null);
       });
   };
-  
+
   attachDnD($msg,
     function(event){
       var $msg = $(this);
@@ -2060,7 +2060,7 @@ export var createChatClient = function(opts : ChatOptions) {
       userUI.invalidate();
       userUpdate();
     }).prepend(createUserState(chat.user) );
-    appendEditor(ui.avatarSize, 140, chat.user.message, chat.messages.TODAYS_FEELING, true). 
+    appendEditor(ui.avatarSize, 140, chat.user.message, chat.messages.TODAYS_FEELING, true).
         on('valueChange', function() {
       chat.user.message = $(this).data('controller').val();
       userUI.invalidate();
@@ -2577,7 +2577,7 @@ export var createChatClient = function(opts : ChatOptions) {
         $menuButton.css('display', 'none');
       });
   };
-  
+
   var updateThreadMessage = function(gid : string, message : Message) {
 
     if (gid != getThreadGid() ) {
@@ -2656,7 +2656,7 @@ export var createChatClient = function(opts : ChatOptions) {
         }
       }
 
-      var approveMsg = message.requestAddToContacts && 
+      var approveMsg = message.requestAddToContacts &&
         message.requestAddToContactsUid == chat.user.uid;
 
       if (!sysUser && !approveMsg && !message.deleted) {
@@ -2752,7 +2752,7 @@ export var createChatClient = function(opts : ChatOptions) {
           sendRequest({uid: uid, nickname: nickname});
         }
       });
-    if (!chat.users[uid]) { 
+    if (!chat.users[uid]) {
       $user.attr('title', chat.messages.DBLCLICK_TO_SEND_CONTACT_ADD_REQUEST);
     }
     if (size == 'small') {
