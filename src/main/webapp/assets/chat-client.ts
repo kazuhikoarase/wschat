@@ -1084,7 +1084,7 @@ export var createChatClient = function(opts : ChatOptions) {
         lastTime = time;
       }
       if ($typingUI.data('active') ) {
-        requestAnimationFrame(updateTyping);
+        window.setTimeout(updateTyping, 50);
       }
     };
     window.setTimeout(updateTyping, 100);
@@ -2998,7 +2998,7 @@ export var createChatClient = function(opts : ChatOptions) {
         ui.valid = true;
       }
     });
-    requestAnimationFrame(validateUI);
+    window.setTimeout(validateUI, 50);
   };
   validateUI();
 
