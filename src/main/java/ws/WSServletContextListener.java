@@ -49,13 +49,17 @@ implements ServletContextListener {
             try {
                 String path = ep.get("path");
                 String scriptPath = ep.get("scriptPath");
-                logger.info("register endpoint " + path + " - " + scriptPath);
+                String factory = ep.get("factory");
+                logger.info("register endpoint " +
+                        path + " - " +
+                        scriptPath + " - " + factory);
                 ServerEndpointConfig config = ServerEndpointConfig.Builder.
                         create(WSEndpoint.class, path).
                         configurator(new WSConfigurator() ).
                         build();
                 config.getUserProperties().put("servletContext", servletContext);
                 config.getUserProperties().put("scriptPath", scriptPath);
+                config.getUserProperties().put("factory", factory);
                 serverContainer.addEndpoint(config);
             } catch(DeploymentException e) {
                 throw new RuntimeException(e);

@@ -51,6 +51,8 @@ public class WSEndpoint extends Endpoint {
                     getUserProperties().get("servletContext");
             String scriptPath = (String)config.
                     getUserProperties().get("scriptPath");
+            String factory = (String)config.
+                    getUserProperties().get("factory");
             ScriptEngine se = ScriptUtil.newScriptEngine();
             se.put(ScriptEngine.FILENAME, scriptPath);
             se.put("$global", global);
@@ -66,7 +68,7 @@ public class WSEndpoint extends Endpoint {
             } finally {
                 in.close();
             }
-            return (IServerEndpoint)se.eval("wschat.createServer()");
+            return (IServerEndpoint)se.eval(factory);
         } catch(RuntimeException e) {
             throw e;
         } catch(Exception e) {
