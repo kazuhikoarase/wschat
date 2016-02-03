@@ -3,10 +3,15 @@
   <property name="dist" location="dist"/>
   <target name="dist">
     <mkdir dir="${dist}"/>
-    <jar destfile="${dist}/wschat.jar">
+    <jar destfile="${dist}/ws.jar">
       <zipfileset dir="${build}/java" >
-        <include name="**/*"/>
+        <include name="ws/**/*"/>
       </zipfileset>
   	</jar>
+    <jar destfile="${dist}/wschat.jar">
+      <zipfileset dir="${build}/java" >
+        <include name="wschat/**/*"/>
+      </zipfileset>
+    </jar>
   </target>
 </project>
