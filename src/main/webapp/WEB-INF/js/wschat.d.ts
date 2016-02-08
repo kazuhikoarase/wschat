@@ -33,7 +33,7 @@ declare module wschat {
     monthLabels : string[]
   }
 
-  export interface ChatOptions {
+  interface ChatOptions {
     url : string
     fileuploadUrl : string
     uid? : string
@@ -44,19 +44,19 @@ declare module wschat {
     inputAssist? : () => JQuery
   }
 
-  export interface AttachedFile {
+  interface AttachedFile {
     name : string
     deleted : boolean
     tmpfile : string
     contentType : string
   }
 
-  export interface NewMessage {
+  interface NewMessage {
     message : string
     file? : AttachedFile
   }
 
-  export interface Message extends NewMessage {
+  interface Message extends NewMessage {
     mid : string
     uid : string
     nickname : string
@@ -71,20 +71,20 @@ declare module wschat {
     requestAddToContactsUid? : string
   }
 
-  export interface FetchOptions {
+  interface FetchOptions {
   }
 
-  export interface ContactRequest {
+  interface ContactRequest {
     uid : string
     nickname : string
   }
 
-  export interface NewUser {
+  interface NewUser {
     uid : string
     nickname : string
   }
 
-  export interface User extends ContactRequest, NewUser {
+  interface User extends ContactRequest, NewUser {
     uid : string
     nickname : string
     message : string
@@ -94,22 +94,22 @@ declare module wschat {
     contacts : { [uid : string] : Contact }
   }
 
-  export interface GroupUser {
+  interface GroupUser {
     uid : string
     nickname : string
   }
 
-  export interface Contact {
+  interface Contact {
     gid : string
   }
 
-  export interface ProgressData {
+  interface ProgressData {
     gid: string
     fid: number
     progress: string
   }
 
-  export interface Group {
+  interface Group {
     gid : string
     users : { [uid : string] : GroupUser }
     messages : { [mid : string] : Message }
@@ -118,37 +118,37 @@ declare module wschat {
     newMsg : boolean
   }
 
-  export interface Point {
+  interface Point {
     x : number
     y : number
   }
 
-  export interface Dialog {
+  interface Dialog {
     showDialog : ($content : JQuery) => void
     hideDialog : () => void
   }
 
-  export interface IdleTime {
+  interface IdleTime {
     time : number
     idleTime : number
   }
 
-  export interface TypingData {
+  interface TypingData {
     uid : string
     nickname : string
     gid : string
     status : string
   }
-  export interface UI {
+  interface UI {
     valid : boolean
     validate : () => void
   }
-  export interface PrevMessage {
+  interface PrevMessage {
     label : string
     lastDays : number
   }
 
-  export interface Actions {
+  interface Actions {
     login? : (data : any) => void
     user? : (data : any) => void
     avatar? : (data : any) => void
@@ -166,7 +166,7 @@ declare module wschat {
     download? : (data : any) => void
   }
 
-  export interface ServerActions {
+  interface ServerActions {
     login? : (data : any) => void
     user? : (data : any) => void
     updateAvatar? : (data : any) => void
@@ -187,13 +187,13 @@ declare module wschat {
     download? : (data : any) => void
   }
 
-  export interface MessageEditor {
+  interface MessageEditor {
     beginEdit : (message : string) => void
     isEditing : () => boolean
     endEdit : (reason? : string, msg? : string) => void
   }
 
-  export interface Messages {
+  interface Messages {
     OK : string
     CANCEL : string
     USERS : string
@@ -237,7 +237,7 @@ declare module wschat {
     DROP_HERE_A_FILE : string
   }
 
-  export interface JQThin {
+  interface JQThin {
     each: {
       <T>(it: T[], f : (i : number, v : T) => void) : void
       <T>(it: { [k:string]:T }, f : (k : string, v : T) => void) : void
