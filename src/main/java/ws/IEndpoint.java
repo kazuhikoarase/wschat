@@ -4,10 +4,10 @@ import javax.websocket.CloseReason;
 import javax.websocket.EndpointConfig;
 
 /**
- * IServerEndpoint
+ * IEndpoint
  * @author Kazuhiko Arase
  */
-public interface IServerEndpoint {
+public interface IEndpoint {
     void onOpen(EndpointConfig config);
     void onClose(CloseReason closeReason);
     void onMessage(String message);

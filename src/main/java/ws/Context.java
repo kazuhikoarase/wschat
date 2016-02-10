@@ -8,10 +8,10 @@ import javax.websocket.Session;
  */
 public class Context {
     private final Session session;
-    private final IServerEndpoint endpoint;
+    private final IEndpoint endpoint;
     public Context(
         final Session session,
-        final IServerEndpoint endpoint
+        final IEndpoint endpoint
     ) {
         this.session = session;
         this.endpoint = endpoint;
@@ -19,7 +19,7 @@ public class Context {
     public Session getSession() {
         return session;
     }
-    public IServerEndpoint getEndpoint() {
+    public IEndpoint getEndpoint() {
         return endpoint;
     }
 }

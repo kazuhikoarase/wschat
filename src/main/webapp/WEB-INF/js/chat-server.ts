@@ -961,6 +961,6 @@ namespace wschat {
   };
 
   export function createServer() {
-    return new Packages.ws.IServerEndpoint(createChatEndpoint() );
+    return new Packages.ws.IEndpoint(createChatEndpoint() );
   }
 }

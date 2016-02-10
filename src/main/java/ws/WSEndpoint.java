@@ -44,7 +44,7 @@ public class WSEndpoint extends Endpoint {
         return (ConcurrentHashMap<String,Context>)global.get("contextMap");
     }
 
-    protected IServerEndpoint createEndpoint(
+    protected IEndpoint createEndpoint(
             Session session, EndpointConfig config) {
         try {
             ServletContext servletContext = (ServletContext)config.
@@ -68,7 +68,7 @@ public class WSEndpoint extends Endpoint {
             } finally {
                 in.close();
             }
-            return (IServerEndpoint)se.eval(factory);
+            return (IEndpoint)se.eval(factory);
         } catch(RuntimeException e) {
             throw e;
         } catch(Exception e) {
