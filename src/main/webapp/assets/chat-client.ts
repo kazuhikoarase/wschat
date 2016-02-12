@@ -1703,6 +1703,7 @@ export var createChatClient = function(opts : ChatOptions) {
       var y = off.top + $target.height();
       $menu.css('left', x + 'px').
         css('top', y + 'px');
+      return $menu;
     };
     var hideMenu = function() {
       if ($menu != null) {
@@ -2491,7 +2492,28 @@ export var createChatClient = function(opts : ChatOptions) {
     appendThreadMessageCell($cellsContent, $header, hmessage.date);
   };
 
-  var appendEditButton = function(gid : string,
+  $(document).on('contextmenu', function(event) {
+    var $cell = $(event.target).closest('.wschat-thread-message');
+    var $users = $(event.target).closest('.wschat-users-frame');
+    if ($cell.length != 0) {
+      event.preventDefault();
+      var msgMenu = $cell.data('msgMenu');
+      if (msgMenu != null) {
+        msgMenu.showMenu($cell).
+          css('left', event.pageX + 'px').
+          css('top', event.pageY + 'px');
+      }
+    } else if ($users.length != 0) {
+      event.preventDefault();
+      contactMenu.showMenu($users).
+        css('left', event.pageX + 'px').
+        css('top', event.pageY + 'px');
+    } else if ($(event.target).closest('.wschat-menu').length != 0) {
+      event.preventDefault();
+    }
+  } );
+
+  var appendEditMenu = function(gid : string,
       message : Message, $cell : JQuery) {
     var lastMsg = '';
     var endEditHandler = function(event : JQueryEventObject, data? : any) {
@@ -2560,23 +2582,7 @@ export var createChatClient = function(opts : ChatOptions) {
             on('click', msgDeleteHandler) );
       }
     });
-
-    var $menuButton = createMenuButton().
-      css('float', 'right').
-      css('display', 'none').
-      on('click', function(event) {
-        msgMenu.showMenu($(this));
-      });
-    $cell.children('.wschat-thread-msg-body').
-      append($menuButton).
-      on('mouseover', function(event) {
-        if (!msgEditor.isEditing() ) {
-          $menuButton.css('display', 'inline-block');
-        }
-      }).
-      on('mouseout', function(event) {
-        $menuButton.css('display', 'none');
-      });
+    $cell.data('msgMenu', msgMenu);
   };
 
   var updateThreadMessage = function(gid : string, message : Message) {
@@ -2626,6 +2632,7 @@ export var createChatClient = function(opts : ChatOptions) {
         append(createMessageState(message.newMsg) );
       $cell.children('.wschat-thread-msg-body').text(message.message);
       applyDecoration($cell.children('.wschat-thread-msg-body'));
+      $cell.data('msgMenu', null);
 
       if (message.modified) {
         $cell.children('.wschat-thread-msg-body').append($('<span></span>').
@@ -2661,7 +2668,7 @@ export var createChatClient = function(opts : ChatOptions) {
         message.requestAddToContactsUid == chat.user.uid;
 
       if (!sysUser && !approveMsg && !message.deleted) {
-        appendEditButton(gid, message, $cell);
+        appendEditMenu(gid, message, $cell);
       }
 
       if (approveMsg) {
