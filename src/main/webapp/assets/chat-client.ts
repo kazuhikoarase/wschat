@@ -2355,7 +2355,7 @@ export var createChatClient = function(opts : ChatOptions) {
       append($('<span></span>').addClass('wschat-thread-msg-body').
           css('display', 'inline-block').
           css('word-wrap', 'break-word').
-          css('white-space', 'pre').
+//          css('white-space', 'pre').
           css('vertical-align', 'top').
           css('text-align', 'left').
           css('width', ui.bodyWidth + 'px').
@@ -2585,6 +2585,26 @@ export var createChatClient = function(opts : ChatOptions) {
     $cell.data('msgMenu', msgMenu);
   };
 
+  var lineParser = function(text : string,
+      handle : (line : string) => void) {
+    var start = 0;
+    var index = 0;
+    while (index < text.length) {
+      var c = text.charAt(index);
+      if (c == '\u0020' || c == '\t' || c == '\n') {
+        if (start < index) {
+          handle(text.substring(start, index) );
+        }
+        handle(c);
+        start = index + 1;
+      }
+      index += 1;
+    }
+    if (start < index) {
+      handle(text.substring(start, index) );
+    }
+  };
+
   var updateThreadMessage = function(gid : string, message : Message) {
 
     if (gid != getThreadGid() ) {
@@ -2630,8 +2650,25 @@ export var createChatClient = function(opts : ChatOptions) {
       $cell.children('.wschat-thread-msg-icon').children().remove();
       $cell.children('.wschat-thread-msg-icon').
         append(createMessageState(message.newMsg) );
-      $cell.children('.wschat-thread-msg-body').text(message.message);
-      applyDecoration($cell.children('.wschat-thread-msg-body'));
+
+      var $body = $cell.children('.wschat-thread-msg-body');
+      $body.children().remove();
+      lineParser(message.message, function(line : string) {
+        if (line == '\u0020') {
+          $body.append('&#160;');
+        } else if (line == '\t') {
+          $body.append('&#160;&#160;&#160;&#160;');
+        } else if (line == '\n') {
+          $body.append($('<br/>') );
+        } else {
+          var $line = $('<span></span>').text(line);
+          $body.append($line);
+          applyDecoration($line);
+        }
+      });
+
+      //$cell.children('.wschat-thread-msg-body').text(message.message);
+      //applyDecoration($cell.children('.wschat-thread-msg-body'));
       $cell.data('msgMenu', null);
 
       if (message.modified) {
