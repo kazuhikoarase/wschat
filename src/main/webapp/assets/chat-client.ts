@@ -361,6 +361,10 @@ export var createChatClient = function(opts : ChatOptions) {
     return s.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
   };
 
+  var rtrim = function(s : string) {
+    return s.replace(/[\s\u3000]+$/g, '');
+  };
+
   var split = function(s : string, c : string) {
     var list : string[] = [];
     var start = 0;
@@ -1290,7 +1294,7 @@ export var createChatClient = function(opts : ChatOptions) {
     on('keydown', function(event) {
       if (event.keyCode == 13 && !event.shiftKey) {
         event.preventDefault();
-        var msg = trim($(this).val());
+        var msg = rtrim($(this).val());
         if (msg.length != 0 && msg.length <= 1000) {
           if (msgEditor.isEditing() ) {
             msgEditor.endEdit('commit', msg);
@@ -2652,7 +2656,7 @@ export var createChatClient = function(opts : ChatOptions) {
         append(createMessageState(message.newMsg) );
 
       var $body = $cell.children('.wschat-thread-msg-body');
-      $body.children().remove();
+      $body.html('');
       lineParser(message.message, function(line : string) {
         if (line == '\u0020') {
           $body.append('&#160;');
