@@ -61,6 +61,8 @@ public class WSEndpoint extends Endpoint {
             se.put("$servletContext", servletContext);
             se.put("$request", config.getUserProperties().get("request") );
             se.put(ScriptEngine.FILENAME, scriptPath);
+            // clear properties.
+            config.getUserProperties().clear();
             Reader in = new InputStreamReader(
                 servletContext.getResourceAsStream(scriptPath), "UTF-8");
             try {
