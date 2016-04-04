@@ -187,6 +187,7 @@ public class FileServlet extends HttpServlet {
             fileInfo.put("contentType", item.getContentType() );
             fileInfo.put("tmpfile", tmpfile.getName() );
             fileList.add(fileInfo);
+            item.delete();
         }
 
         ScriptEngine se = ScriptUtil.newScriptEngine();
