@@ -2589,7 +2589,7 @@ export var createChatClient = function(opts : ChatOptions) {
     $cell.data('msgMenu', msgMenu);
   };
 
-  var lineParser = function(text : string,
+  var parseLine = function(text : string,
       handle : (line : string) => void) {
     var start = 0;
     var index = 0;
@@ -2657,7 +2657,7 @@ export var createChatClient = function(opts : ChatOptions) {
 
       var $body = $cell.children('.wschat-thread-msg-body');
       $body.html('');
-      lineParser(message.message, function(line : string) {
+      parseLine(message.message, function(line : string) {
         if (line == '\u0020') {
           $body.append('&#160;');
         } else if (line == '\t') {
