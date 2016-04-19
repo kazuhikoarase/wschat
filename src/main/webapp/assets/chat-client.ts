@@ -46,15 +46,18 @@ export var createChatClient = function(opts : ChatOptions) {
   };
 
   var ui = {
-    height: 300,
     leftWidth: 200,
-    userWidth: 100,
+
+    height: 300,
+    threadUserHeight: 160,
     bodyWidth: 300,
+    msgHeight: 70,
+
+    userWidth: 100,
     dateWidth: 40,
     rightBarWidth: 30,
     pad: 4,
     gap: 12,
-    msgHeight: 70,
     barWidth: 48,
     avatarSize: 120,
     smallAvatarSize: 36
@@ -1258,8 +1261,7 @@ export var createChatClient = function(opts : ChatOptions) {
     css('text-align', 'center').
     css('overflow-x', 'hidden').
     css('overflow-y', 'auto').
-    css('cursor', 'default').
-    css('height', '160px');
+    css('cursor', 'default');
   $thread.append($threadUsers);
 
   var commitMsg = function(
@@ -1287,8 +1289,6 @@ export var createChatClient = function(opts : ChatOptions) {
     addClass('wschat-thread-msg').
     addClass('wschat-mouse-enabled').
     addClass('wschat-editor').
-    css('width', ui.bodyWidth + 'px').
-    css('height', ui.msgHeight + 'px').
     css('margin-top', '4px').
     css('margin-left', (ui.pad + ui.userWidth + ui.gap) + 'px').
     on('keydown', function(event) {
@@ -1584,14 +1584,89 @@ export var createChatClient = function(opts : ChatOptions) {
 
   var $rightPane = $('<div></div>').
     css('float', 'left').
-    css('width', (ui.userWidth + ui.bodyWidth + ui.dateWidth +
-        ui.rightBarWidth + ui.gap * 2 + ui.pad * 2) + 'px').
     append($threadFrame);
+
+  var createResizeButton = function(size : number) {
+    var $rect : JQuery = null;
+    var dragPoint : { x : number, y : number } = null;
+    var currSize : { width : number, height : number } = null;
+    var uiSize : { height : number, bodyWidth : number } = null;
+    var getSize = function(event : JQueryEventObject) {
+      var off = $chatUI.offset();
+      var curr = {
+        x : event.pageX - dragPoint.x,
+        y : event.pageY - dragPoint.y
+      };
+      return {
+        width : curr.x - off.left + currSize.width,
+        height : curr.y - off.top + currSize.height
+      };
+    };
+    var resize_mouseDownHandler = function(event : JQueryEventObject) {
+      event.preventDefault();
+      currSize = {
+        width : $chatUI.outerWidth() - 2,
+        height : $chatUI.outerHeight() - 2
+      };
+      var off = $chatUI.offset();
+      dragPoint = {
+        x : event.pageX - off.left,
+        y : event.pageY - off.top
+      };
+      uiSize = {
+        height : ui.height,
+        bodyWidth : ui.bodyWidth
+      };
+      $rect = $('<div></div>').
+        css('cursor', 'nwse-resize').
+        css('position', 'absolute').
+        css('left', off.left + 'px').css('top', off.top + 'px').
+        css('border', '1px solid #cccccc').
+        css('width', currSize.width + 'px').
+        css('height', currSize.height + 'px');
+      $('BODY').append($rect);
+
+      $(document).on('mousemove', resize_mouseMoveHandler);
+      $(document).on('mouseup', resize_mouseUpHandler);
+    };
+    var resize_mouseMoveHandler = function(event : JQueryEventObject) {
+      var size = getSize(event);
+      $rect.css('width', size.width + 'px').
+        css('height', size.height + 'px');
+    };
+    var resize_mouseUpHandler = function(event : JQueryEventObject) {
+      $(document).off('mousemove', resize_mouseMoveHandler);
+      $(document).off('mouseup', resize_mouseUpHandler);
+      $rect.remove();
+      var size = getSize(event);
+      var $outer = $chatUI.parent().parent();
+      size.width = Math.max(600, Math.min(size.width,
+        $outer.outerWidth() - 2 - 2) );
+      size.height = Math.max(400, Math.min(size.height,
+        $outer.outerHeight() - 2 - 2) );
+      var height = uiSize.height + (size.height - currSize.height);
+      var bodyWidth = uiSize.bodyWidth + (size.width - currSize.width);
+      ui.height = height;
+      ui.bodyWidth = bodyWidth;
+      layout();
+    };
+    return createSVG(size, size).append(createSVGElement('path').
+        attr('d', 'M ' + size + ' ' + size +
+          ' L ' + size + ' 0 L 0 ' + size + ' Z').
+        attr('stroke', 'none').attr('fill', '#f0f0f0') ).
+      css('position', 'absolute').
+      css('bottom', '0px').css('right', '0px').
+      css('cursor', 'nwse-resize').
+      on('mousedown', resize_mouseDownHandler);
+  };
 
   var $chatUI = $('<div></div>').
     addClass('wschat').
     append($leftPane).
     append($rightPane).
+    append($('<br/>').css('clear', 'both') ).
+    append($('<div></div>').css('position', 'relative').append(
+    createResizeButton(8) ) ).
     on('mousedown', function(event) {
       if ($(event.target).closest('.wschat-mouse-enabled').length == 0) {
         event.preventDefault();
@@ -2374,8 +2449,7 @@ export var createChatClient = function(opts : ChatOptions) {
     return $thread.children('.wschat-thread-cells');
   };
   var getThreadCellsContent = function() {
-    return $thread.children('.wschat-thread-cells').
-      children('.wschat-thread-cells-content');
+    return getThreadCells().children('.wschat-thread-cells-content');
   };
 
   var updateThreadContent = function(update : ($cellsContent : JQuery) => void) {
@@ -3022,6 +3096,26 @@ export var createChatClient = function(opts : ChatOptions) {
   };
 
   var layout = function() {
+
+    $rightPane.
+      css('width', (ui.userWidth + ui.bodyWidth + ui.dateWidth +
+        ui.rightBarWidth + ui.gap * 2 + ui.pad * 2) + 'px');
+    $threadUsers.
+      css('height', ui.threadUserHeight + 'px');
+    $msg.
+      css('width', ui.bodyWidth + 'px').
+      css('height', ui.msgHeight + 'px');
+
+    getThreadCells().
+      css('height', (ui.height - ui.msgHeight) + 'px');
+    getThreadCellsContent().
+      children('.wschat-thread-cell').
+      children('.wschat-thread-msg-body').
+          css('width', ui.bodyWidth + 'px');
+    getThreadCellsContent().
+      children('.wschat-search-header').
+          css('width', ui.bodyWidth + 'px');
+
     $usersFrame.
       css('width', ui.leftWidth + 'px').
       css('height', ui.height + 'px');
@@ -3034,6 +3128,15 @@ export var createChatClient = function(opts : ChatOptions) {
       css('width', ui.leftWidth + 'px');
   };
 
+(<any>window).wsSetBodyWidth = function(bodyWidth : number) {
+  ui.bodyWidth = bodyWidth;
+  layout();
+};
+(<any>window).wsSetHeight = function(height : number) {
+  ui.height = height;
+  layout();
+};
+  
   layout();
 
   var validateUI = function() {
