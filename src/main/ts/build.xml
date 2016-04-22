@@ -1,0 +1,26 @@
+<project default="build" basedir="../../..">
+  <property name="js.src" location="build/ts" />
+  <property name="web" location="src/main/webapp" />
+  <target name="build">
+    <echo message="${js.src}"/>
+    <echo message="${web}"/>
+  	<property name="smiley-src" value="wschat-smiley.js"/>
+    <concat destfile="${web}/assets/wschat-client.js">
+      <fileset dir="${js.src}/client">
+        <include name="**/*.js" />
+        <exclude name="${smiley-src}" />
+      </fileset>
+    </concat>
+    <concat destfile="${web}/assets/${smiley-src}">
+      <fileset dir="${js.src}/client">
+        <include name="${smiley-src}" />
+      </fileset>
+    </concat>
+    <concat destfile="${web}/WEB-INF/js/wschat-server.js">
+      <fileset dir="${js.src}/server">
+        <include name="**/*.js" />
+      </fileset>
+    </concat>
+  	<eclipse.refreshLocal resource="wschat" depth="infinite"/>
+  </target>
+</project>

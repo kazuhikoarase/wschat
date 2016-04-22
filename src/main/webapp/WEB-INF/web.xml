@@ -22,7 +22,7 @@
       "endpoints": [
         {
           "path": "/wschat",
-          "scriptPath": "/WEB-INF/js/chat-server.js",
+          "scriptPath": "/WEB-INF/js/wschat-server.js",
           "factory": "wschat.createServer()"
         }
       ]
