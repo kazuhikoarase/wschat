@@ -23,7 +23,7 @@
         {
           "path": "/wschat",
           "scriptPath": "/WEB-INF/js/wschat-server.js",
-          "factory": "wschat.createServer()"
+          "factory": "wschat.server.createServer()"
         }
       ]
     }

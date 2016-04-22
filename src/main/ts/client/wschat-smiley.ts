@@ -6,7 +6,7 @@
 
 'use strict';
 
-namespace wschat {
+namespace wschat.client {
 
   declare type StrMap = { [name : string] : string };
 

@@ -6,7 +6,7 @@
 
 'use strict';
 
-namespace wschat {
+namespace wschat.client {
 
 export var createChatClient = function(opts : ChatOptions) {
 

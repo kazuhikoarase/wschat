@@ -5,7 +5,7 @@
 //
 
 'use strict';
-namespace wschat {
+namespace wschat.server {
 
   declare var context : any;
   declare var java : any;

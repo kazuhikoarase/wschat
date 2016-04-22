@@ -1,4 +1,4 @@
-declare module wschat {
+declare module wschat.server {
 
   interface JQThin {
     each: {

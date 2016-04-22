@@ -1,4 +1,4 @@
-declare module wschat {
+declare module wschat.client {
 
   interface Chat {
     user : User

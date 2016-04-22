@@ -9,19 +9,19 @@ $(function() {
 
   var uid = location.hash? location.hash.substring(1) : 'testuser001';
   var url = buildUrl('/wschat');
-  $('#placeHolder').append(wschat.createChatClient({
+  $('#placeHolder').append(wschat.client.createChatClient({
     uid: uid,
     url: url,
     fileuploadUrl: 'wschat-file',
 //    notifySound: 'assets/chat.m4a',
 //    notifySoundVolume: 0.1,
     inputAssist: function() {
-      return wschat.smiley.getSmileys();
+      return wschat.client.smiley.getSmileys();
     },
     decorator: function($target) {
       var s = $target.text();
       $target.text('');
-      wschat.smiley.applySmileys(s, {
+      wschat.client.smiley.applySmileys(s, {
         text: function(text) {
           $target.append($('<span></span>').text(text) );
         },

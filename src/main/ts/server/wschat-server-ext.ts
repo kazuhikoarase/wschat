@@ -5,7 +5,7 @@
 //
 
 'use strict';
-namespace wschat {
+namespace wschat.server {
 
   export function createChatService(service : ChatService) {
     return service;
