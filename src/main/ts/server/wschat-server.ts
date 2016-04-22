@@ -5,7 +5,6 @@
 //
 
 'use strict';
-
 namespace wschat {
 
   declare var context : any;
@@ -17,7 +16,7 @@ namespace wschat {
   declare var $request : any;
   declare var $session : any;
 
-  var $ : JQThin = {
+  export var JQThinStatic : JQThin = {
     each : function(it : any, f : any) {
       if (typeof it.splice == 'function') {
         for (var i = 0; i < it.length; i += 1) {
@@ -31,7 +30,9 @@ namespace wschat {
     }
   };
 
-  var console = {
+  var $ = JQThinStatic;
+
+  export var console = {
     log: function(msg : string) {
       $logger.info(msg);
     }
@@ -97,7 +98,7 @@ namespace wschat {
         new Packages.ws.ISync({ sync : sync }) );
   };
 
-  export var chatService = function() {
+  var createService = function() {
 
     var wschat = Packages.wschat;
     var service = wschat.ChatServiceHolder.getInstance($servletContext);
@@ -475,9 +476,11 @@ namespace wschat {
       updateMessage: updateMessage,
       fetchMessages: fetchMessages
     };
-  }();
+  };
 
   var createChatEndpoint = function() {
+
+    var chatService = createChatService(createService() );
 
     var chat : {user : User, messages? : any} = {
       user: null
