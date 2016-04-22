@@ -1352,7 +1352,6 @@ export var createChatClient = function(opts : ChatOptions) {
   };
 
   var fitImage = function ($img : JQuery, size : number) {
-    console.log('fitImage::'  + size);
     var w = $img.width();
     var h = $img.height();
     if (w > size || h > size) {
