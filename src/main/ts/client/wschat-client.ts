@@ -1351,6 +1351,22 @@ export var createChatClient = function(opts : ChatOptions) {
       attr('src', src) );
   };
 
+  var fitImage = function ($img : JQuery, size : number) {
+    console.log('fitImage::'  + size);
+    var w = $img.width();
+    var h = $img.height();
+    if (w > size || h > size) {
+      if (w > h) {
+        $img.css('width', size + 'px');
+        $img.css('height', ~~(size / w * h) + 'px');
+      } else {
+        $img.css('width', ~~(size / h * w) + 'px');
+        $img.css('height', size + 'px');
+      }
+    }
+    return $img;
+  };
+
   var uploadImage = function(file : File) {
 
     var date = new Date();
@@ -1363,19 +1379,7 @@ export var createChatClient = function(opts : ChatOptions) {
 
     var img_loadHandler = function() {
 
-      var $img = $(this);
-      var w = $img.width();
-      var h = $img.height();
-      var size = 300;
-      if (w > size || h > size) {
-        if (w > h) {
-          $img.css('width', size);
-          $img.css('height', size / w * h);
-        } else {
-          $img.css('width', size / h * w);
-          $img.css('height', size);
-        }
-      }
+      var $img = fitImage($(this), 300);
       $img.css('display', 'inline-block').remove();
 
       var dlg = createDialog();
@@ -2175,18 +2179,7 @@ export var createChatClient = function(opts : ChatOptions) {
     var avatar = chat.avatars[user.uid];
     if (avatar) {
       loadImage(avatar, function() {
-        var $img = $(this);
-        var w = $img.width();
-        var h = $img.height();
-        if (w > ui.smallAvatarSize || h > ui.smallAvatarSize) {
-          if (w > h) {
-            $img.css('width', ui.smallAvatarSize + 'px');
-            $img.css('height', ~~(ui.smallAvatarSize / w * h) + 'px');
-          } else {
-            $img.css('width', ~~(ui.smallAvatarSize / h * w) + 'px');
-            $img.css('height', ui.smallAvatarSize + 'px');
-          }
-        }
+        var $img = fitImage($(this), ui.smallAvatarSize);
         $img.css('display', 'inline-block').remove();
         appendImage($view, $img);
       } );
