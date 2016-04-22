@@ -1344,6 +1344,13 @@ export var createChatClient = function(opts : ChatOptions) {
     }
   });
 
+  var loadImage = function(src : string, loadHandler : () => void) {
+    $chatUI.append($('<img/>').
+      css('display', 'none').
+      on('load', loadHandler).
+      attr('src', src) );
+  };
+
   var uploadImage = function(file : File) {
 
     var date = new Date();
@@ -1354,12 +1361,9 @@ export var createChatClient = function(opts : ChatOptions) {
       fillZero(date.getMinutes(), 2) +
       fillZero(date.getSeconds(), 2);
 
-    var fr = new FileReader();
-    fr.onload = function(event : any) {
-      var $img = $('<img/>').
-        attr('src', event.target.result).
-        css('display', 'none');
-      $chatUI.append($img);
+    var img_loadHandler = function() {
+
+      var $img = $(this);
       var w = $img.width();
       var h = $img.height();
       var size = 300;
@@ -1389,6 +1393,11 @@ export var createChatClient = function(opts : ChatOptions) {
             dlg.hideDialog();
             uploadFile(file, base + '.png');
           }) ) );
+    };
+
+    var fr = new FileReader();
+    fr.onload = function(event : any) {
+      loadImage(event.target.result, img_loadHandler);
     };
     fr.readAsDataURL(file);
   };
@@ -2165,25 +2174,22 @@ export var createChatClient = function(opts : ChatOptions) {
       css('margin-right', '2px');
     var avatar = chat.avatars[user.uid];
     if (avatar) {
-      var $img = $('<img/>').attr('src', avatar).
-        css('display', 'none').
-        on('load', function() {
-          var $img = $(this);
-          var w = $img.width();
-          var h = $img.height();
-          if (w > ui.smallAvatarSize || h > ui.smallAvatarSize) {
-            if (w > h) {
-              $img.css('width', ui.smallAvatarSize + 'px');
-              $img.css('height', ~~(ui.smallAvatarSize / w * h) + 'px');
-            } else {
-              $img.css('width', ~~(ui.smallAvatarSize / h * w) + 'px');
-              $img.css('height', ui.smallAvatarSize + 'px');
-            }
+      loadImage(avatar, function() {
+        var $img = $(this);
+        var w = $img.width();
+        var h = $img.height();
+        if (w > ui.smallAvatarSize || h > ui.smallAvatarSize) {
+          if (w > h) {
+            $img.css('width', ui.smallAvatarSize + 'px');
+            $img.css('height', ~~(ui.smallAvatarSize / w * h) + 'px');
+          } else {
+            $img.css('width', ~~(ui.smallAvatarSize / h * w) + 'px');
+            $img.css('height', ui.smallAvatarSize + 'px');
           }
-          $img.css('display', 'inline-block').remove();
-          appendImage($view, $img);
-        });
-        $chatUI.append($img);
+        }
+        $img.css('display', 'inline-block').remove();
+        appendImage($view, $img);
+      } );
     }
     return $view;
   };
