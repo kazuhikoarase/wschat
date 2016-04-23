@@ -5,7 +5,6 @@
 //
 
 'use strict';
-
 namespace wschat.client {
 
   export var createChatClient = function(opts : ChatOptions) {
@@ -1254,7 +1253,6 @@ namespace wschat.client {
           }
       }
     });
-
 
     var $threadUsers = $('<div></div>').
       addClass('wschat-thread-users').
