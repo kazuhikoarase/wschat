@@ -9,7 +9,6 @@ namespace wschat.client {
 
   export var createChatClient = function(opts : ChatOptions) {
 
-    var ws : WebSocket = null;
 
     var chat : Chat = {
       user: null,
@@ -62,27 +61,11 @@ namespace wschat.client {
       smallAvatarSize: 36
     };
 
-    var console = {
-      log: function(msg : string) {
-        if (location.hostname == 'localhost') {
-          window.console.log(msg);
-        }
+    var applyDecoration = function($target : JQuery) {
+      if (opts.decorator) {
+        opts.decorator($target);
       }
-    };
-
-    var xhr = function(
-        uploadProgressHandler? : EventListener,
-        downloadProgressHandler? : EventListener) {
-      return function() {
-        var xhr = new XMLHttpRequest();
-        if (uploadProgressHandler) {
-          xhr.upload.addEventListener('progress', uploadProgressHandler, false);
-        }
-        if (downloadProgressHandler) {
-          xhr.addEventListener('progress', downloadProgressHandler, false);
-        }
-        return xhr;
-      };
+      return $target;
     };
 
     var isActive = function() {
@@ -99,46 +82,7 @@ namespace wschat.client {
       };
     }();
 
-    var replaceText = function(target : any, replacement : string) {
-      var doc : any = document;
-      if (doc.selection) {
-        var range = doc.selection.createRange();
-        if (range.parentElement() == target) {
-          range.text = replacement;
-          range.scrollIntoView();
-        }
-      } else if (typeof target.selectionStart != 'undefined') {
-        var pos = target.selectionStart + replacement.length;
-        target.value = target.value.substring(0, target.selectionStart) +
-          replacement +
-          target.value.substring(target.selectionEnd);
-        target.setSelectionRange(pos, pos);
-      }
-    };
-
-    var timer = function(task : () => void, interval : number, reset? : () => void) {
-      var tid : number = null;
-      var start = function() {
-        if (tid == null) {
-          tid = window.setInterval(task, interval);
-        }
-      };
-      var stop = function() {
-        if (tid != null) {
-          window.clearInterval(tid);
-          tid = null;
-        }
-        if (reset) {
-          reset();
-        }
-      };
-      return {
-        start: start,
-        stop: stop
-      };
-    };
-
-    var notify = function() {
+    var notifyTitle = function() {
       var title = document.title;
       var toggle = false;
       return timer(function() {
@@ -151,282 +95,9 @@ namespace wschat.client {
         });
     }();
 
-    var notificationManager = function() {
-      var win : any = window;
-      var ntf : any = null;
-      var init = function() {
-        if (win.Notification && win.Notification.permission != 'granted') {
-          win.Notification.requestPermission(function (permission : string) {
-            if (win.Notification.permission != permission) {
-              win.Notification.permission = permission;
-            }
-          });
-        }
-      };
-      var notify = function(title : string, body : string) {
-        if (win.Notification && win.Notification.permission == 'granted') {
-          if (ntf != null) {
-            return;
-          }
-          var open = function() {
-          };
-          var close = function() {
-            ntf = null;
-          };
-          var options : any = {};
-          if (opts.icon) {
-            options.icon = opts.icon;
-          }
-          ntf = new win.Notification(chat.messages.NOTIFY_NEW_MESSAGE, options);
-          ntf.onshow = function() {
-            open();
-          };
-          ntf.onclick = function() {
-            window.focus();
-            close();
-          };
-          ntf.onclose = function() {
-            close();
-          };
-        }
-      };
-      var close = function() {
-        if (ntf != null) {
-          ntf.close();
-        }
-  //      window.focus();
-      };
-      init();
-      return {
-        notify: notify,
-        close: close
-      };
-    }();
-
-    var notifySound = function() {
-      var win : any = window;
-      if (opts.notifySound && win.Audio) {
-        var loaded = false;
-        var preloader = new win.Audio();
-        preloader.src = opts.notifySound;
-        preloader.addEventListener('canplay', function(event : EventListener) {
-          loaded = true;
-        });
-        preloader.load();
-        var buf : any[] = [];
-        for (var i = 0; i < 4; i += 1) {
-          buf.push({audio: new win.Audio(), startTime: 0});
-        }
-        return function() {
-          if (loaded) {
-            for (var i = 0; i < buf.length; i += 1) {
-              var now = new Date().getTime();
-              if (buf[i].startTime + preloader.duration * 1000 < now) {
-                buf[i].startTime = now;
-                var audio = buf[i].audio;
-                audio.src = preloader.src;
-                audio.loop = false;
-                if (opts.notifySoundVolume) {
-                  audio.volume = +opts.notifySoundVolume;
-                }
-                audio.load();
-                audio.play();
-                break;
-              }
-            }
-          }
-        };
-      } else {
-        return function() {};
-      }
-    }();
-
-    var attachDnD = function(
-      $ui : JQuery,
-      beginDrag : (event : JQueryEventObject) => void,
-      endDrag : (event : JQueryEventObject) => void,
-      drop : (event : JQueryEventObject) => void
-    ) {
-      return $ui.on('dragenter', function(event) {
-          event.preventDefault();
-          event.stopPropagation();
-          beginDrag.call(this, event);
-        }).
-        on('dragover', function(event : any) {
-          event.preventDefault();
-          event.stopPropagation();
-          event.originalEvent.dataTransfer.dropEffect  = 'copy';
-        }).
-        on('dragleave', function(event) {
-          event.preventDefault();
-          event.stopPropagation();
-          endDrag.call(this, event);
-        }).
-        on('drop', function(event) {
-          event.preventDefault();
-          event.stopPropagation();
-          endDrag.call(this, event);
-          drop.call(this, event);
-        });
-    };
-
-    var draggable = function(
-      proxyFactory : () => JQuery,
-      $dragTarget : JQuery,
-      $dropTarget : JQuery,
-      canDrop : () => boolean,
-      dropHandler : () => void,
-      symbols : string[]
-    ) {
-      var $proxy : JQuery = null;
-      var $symbol : JQuery = null;
-      var dragPoint : Point = null;
-      var dropAvailable = false;
-      var mousedownPoint : Point = null;
-      var clearSymbol = function() {
-        if ($symbol != null) {
-          $symbol.remove();
-          $symbol = null;
-        }
-      };
-      var mouseDownHandler = function(event : JQueryEventObject) {
-        var off = $(this).offset();
-        dragPoint = {
-            x: event.pageX - off.left,
-            y: event.pageY - off.top};
-        mousedownPoint = {x: event.pageX, y: event.pageY};
-        $(document).on('mousemove', mouseMoveHandler);
-        $(document).on('mouseup', mouseUpHandler);
-      };
-      var mouseMoveHandler = function(event : JQueryEventObject) {
-        if ($proxy == null) {
-          var dx = Math.abs(event.pageX - mousedownPoint.x);
-          var dy = Math.abs(event.pageY - mousedownPoint.y);
-          if (dx < 2 && dy < 2) {
-            return;
-          }
-        }
-        // dragging
-        if ($proxy == null) {
-          $proxy = proxyFactory().
-            addClass('wschat-user-proxy').
-            css('position', 'absolute');
-          $chatUI.append($proxy);
-        }
-        var x = event.pageX - dragPoint.x;
-        var y = event.pageY - dragPoint.y;
-        $proxy.css('left', x + 'px').css('top', y + 'px');
-
-        dropAvailable = false;
-        clearSymbol();
-        if (overwrap($dropTarget, $proxy) ) {
-          if (canDrop() ) {
-            dropAvailable = true;
-            $symbol = createDndSymbol(symbols[0]);
-          } else {
-            $symbol = createDndSymbol(symbols[1]);
-          }
-          $chatUI.append($symbol);
-          $symbol.css('left', (x - $symbol.width() / 2) + 'px').
-            css('top', (y - $symbol.height() / 2) + 'px');
-        }
-      };
-      var mouseUpHandler = function(event : JQueryEventObject) {
-        $(document).off('mousemove', mouseMoveHandler);
-        $(document).off('mouseup', mouseUpHandler);
-        if ($proxy != null) {
-          $proxy.remove();
-          $proxy = null;
-          if (dropAvailable) {
-            dropHandler();
-          }
-        }
-        clearSymbol();
-      };
-      return $dragTarget.on('mousedown', mouseDownHandler);
-    };
-
-    var createSVGElement = function(tagName : string) {
-      return $(document.createElementNS(
-          'http://www.w3.org/2000/svg', tagName) );
-    };
-
-    var createSVG = function(w : number, h : number) {
-      return createSVGElement('svg').attr({
-        version: '1.1',
-        width: w, height: h,
-        viewBox: '0 0 ' + w + ' ' + h
-      });
-    };
-
-    var trim = function(s : string) {
-      return s.replace(/^[\s\u3000]+|[\s\u3000]+$/g, '');
-    };
-
-    var rtrim = function(s : string) {
-      return s.replace(/[\s\u3000]+$/g, '');
-    };
-
-    var split = function(s : string, c : string) {
-      var list : string[] = [];
-      var start = 0;
-      var index : number;
-      while ( (index = s.indexOf(c, start) ) != -1) {
-        list.push(s.substring(start, index) );
-        start = index + c.length;
-      }
-      if (start < s.length) {
-        list.push(s.substring(start));
-      }
-      return list;
-    };
-
-    var fillZero = function(v : number, len : number) {
-      var s = '' + v;
-      while (s.length < len) {
-        s = '0' + s;
-      }
-      return s;
-    };
-
-    var messageFormat : any = function(msg : string) {
-      for (var i = 1; i < arguments.length; i += 1) {
-        var re = new RegExp('\\{' + (i - 1) + '\\}', 'g');
-        msg = msg.replace(re, arguments[i]);
-      }
-      return msg;
-    };
-
-    var formatNumber = function(num : number) {
-      var n : string = '' + ~~num;
-      var neg = n.indexOf('-') == 0;
-      if (neg) {
-        n = n.substring(1);
-      }
-      var f = '';
-      while (n.length > 3) {
-        f = ',' + n.substring(n.length - 3, n.length) + f;
-        n = n.substring(0, n.length - 3);
-      }
-      f = n + f;
-      return neg? '-' + f : f;
-    };
-
-    var formatTime = function(t : number) {
-      return ~~(t / 60 / 1000) + ':' +
-        fillZero(~~(t / 1000) % 60, 2);
-    };
-
-    var getTime = function() {
-      return new Date().getTime();
-    };
-
-    var trimToDate = function(d : number) {
-      var date = new Date();
-      date.setTime(d);
-      date.setHours(0, 0, 0, 0);
-      return date;
-    };
+    var notificationManager = createNotificationManager(opts,
+      () => chat.messages.NOTIFY_NEW_MESSAGE);
+    var notifySound = createNotifySound(opts);
 
     var getMonthLabel = function(month : number) {
       if (chat.monthLabels == null) {
@@ -476,23 +147,6 @@ namespace wschat.client {
       }
     };
 
-    var getTimeLabel = function(d : number) {
-      var date = new Date();
-      date.setTime(d);
-      return date.getHours() +':' +
-          fillZero(date.getMinutes(), 2);
-    };
-
-    var getTimestampLabel = function(d : number) {
-      var date = new Date();
-      date.setTime(d);
-      return date.getFullYear() + '/' +
-          (date.getMonth() + 1) + '/' +
-          date.getDate() + ' ' +
-          date.getHours() +':' +
-          fillZero(date.getMinutes(), 2);
-    };
-
     var getPrevMessages = function() : PrevMessage[] {
       return [
        {label: chat.messages.TODAY, lastDays: 0},
@@ -520,29 +174,6 @@ namespace wschat.client {
       }
       return prevIndex;
     };
-
-    var applyDecoration = function($target : JQuery) {
-      if (opts.decorator) {
-        opts.decorator($target);
-      }
-      return $target;
-    };
-
-    var overwrap = function() {
-      var overwrap = function(p1 : number, p2 : number, q1 : number, q2 : number) {
-        return !(q1 < p1 && q2 < p1 || p2 < q1 && p2 < q2);
-      };
-      return function($u1 : JQuery, $u2 : JQuery) {
-        var off1 = $u1.offset();
-        var off2 = $u2.offset();
-        return overwrap(
-            off1.left, off1.left + $u1.outerWidth(),
-            off2.left, off2.left + $u2.outerWidth()) &&
-          overwrap(
-            off1.top, off1.top + $u1.outerHeight(),
-            off2.top, off2.top + $u2.outerHeight());
-      };
-    }();
 
     var updateActiveTime = function() {
       if (chat.user) {
@@ -639,47 +270,6 @@ namespace wschat.client {
           attr({'d':'M 2 4 L 10 4 L 6 9 Z'}).
           css('fill', '#666666').
           css('stroke', 'none') );
-    };
-
-    var createDndSymbol = function(type : string) {
-      var color = '#cccccc';
-      if (type == 'add') {
-        color = '#00ff00';
-      } else if (type == 'remove') {
-        color = '#00ff00';
-      } else if (type == 'reject') {
-        color = '#ff0000';
-      }
-      var $svg = createSVG(16, 16).css('position', 'absolute').
-        append(createSVGElement('circle').
-          attr({'cx':8, 'cy': 8, 'r': 8}).
-          css('fill', color).
-          css('stroke', 'none') );
-
-      if (type == 'add') {
-        $svg.append(createSVGElement('path').
-            attr('d', 'M 2 8 L 14 8 M 8 2 L 8 14').
-            css('fill', 'none').
-            css('stroke-width', '4').
-            css('stroke', '#ffffff') );
-      } else if (type == 'remove') {
-        $svg.append(createSVGElement('path').
-            attr('d', 'M 2 8 L 14 8').
-            css('fill', 'none').
-            css('stroke-width', '4').
-            css('stroke', '#ffffff') );
-      } else if (type == 'reject') {
-        $svg.append(createSVGElement('circle').
-            attr({'cx':8, 'cy': 8, 'r': 5}).
-            css('fill', '#ffffff').
-            css('stroke', 'none') ).
-          append(createSVGElement('path').
-            attr('d', 'M 4 4 L 12 12').
-            css('fill', 'none').
-            css('stroke-width', '4').
-            css('stroke', '#ff0000') );
-      }
-      return $svg;
     };
 
     var userChanged = function(user1 : User, user2 : User) {
@@ -816,6 +406,8 @@ namespace wschat.client {
         location.href = url;
       }
     };
+
+    var ws : WebSocket = null;
 
     var onopen = function(event : Event) {
       console.log(event.type);
@@ -1167,7 +759,7 @@ namespace wschat.client {
       if (message.newMsg &&
           message.uid != chat.user.uid) {
         if (!isActive() ) {
-          notify.start();
+          notifyTitle.start();
           notificationManager.notify(
               message.nickname + ' ' +
               getTimestampLabel(message.date),
@@ -1342,35 +934,6 @@ namespace wschat.client {
       }
     });
 
-    var loadImage = function(
-      src : string, size : number,
-      loadHandler : ($img : JQuery) => void
-    ) {
-      $chatUI.append($('<img/>').
-        css('display', 'none').
-        on('load', function(event) {
-          var $img = fitImage($(this), size);
-          $img.css('display', 'inline-block').remove();
-          loadHandler($img);
-        }).
-        attr('src', src) );
-    };
-
-    var fitImage = function ($img : JQuery, size : number) {
-      var w = $img.width();
-      var h = $img.height();
-      if (w > size || h > size) {
-        if (w > h) {
-          $img.css('width', size + 'px');
-          $img.css('height', ~~(size / w * h) + 'px');
-        } else {
-          $img.css('width', ~~(size / h * w) + 'px');
-          $img.css('height', size + 'px');
-        }
-      }
-      return $img;
-    };
-
     var uploadImage = function(file : File) {
 
       var img_loadHandler = function($img : JQuery) {
@@ -1402,7 +965,7 @@ namespace wschat.client {
 
       var fr = new FileReader();
       fr.onload = function(event : any) {
-        loadImage(event.target.result, 300, img_loadHandler);
+        loadImage($chatUI, event.target.result, 300, img_loadHandler);
       };
       fr.readAsDataURL(file);
     };
@@ -1734,86 +1297,6 @@ namespace wschat.client {
       };
     };
 
-    var createControl = function() {
-      return $('<span></span>').
-        css('display', 'inline-block').
-        css('cursor', 'default').
-        on('mousedown', function(event) {
-          event.preventDefault();
-        });
-    };
-    var createButton = function(label : string) {
-      return createControl().
-        addClass('wschat-button').
-        css('float', 'right').
-        text(label);
-    };
-    var createDialogContent = function(dlg : Dialog, label : string, buttons : string[]) {
-      var $content = $('<div></div>').
-        append(createControl().
-          css('margin-bottom', '4px').
-          css('width', '200px').
-          css('word-wrap', 'break-word').
-          text(label) ).
-        append($('<br/>') );
-      $.each(buttons, function(i, button) {
-        var $button = createButton(button).
-          on('click', function(event) {
-            $content.trigger('close', button);
-            dlg.hideDialog();
-          });
-        $content.append($button);
-        if (i > 0) {
-          $button.css('margin-right', '2px');
-        }
-      });
-      $content.append($('<br/>').css('clear', 'both') );
-      return $content;
-    };
-
-    var createMenuItem = function(label : string) {
-      return $('<div></div>').
-        addClass('wschat-menu-item').
-        css('cursor', 'default').
-        text(label).
-        on('mousedown', function(event) {
-          event.preventDefault();
-        });
-    };
-    var createMenu = function(factory : ($menu : JQuery) => void) {
-      var $menu : JQuery = null;
-      var showMenu = function($target : JQuery) {
-        if ($menu != null) {
-          hideMenu();
-        }
-        $menu = $('<div></div>').
-          addClass('wschat-menu').
-          addClass('wschat-mouse-enabled').
-          css('position', 'absolute');
-        factory($menu);
-        $chatUI.append($menu).on('mousedown', function(event) {
-          if ($(event.target).closest('.wschat-menu').length == 0) {
-            hideMenu();
-          }
-        });
-        var off = $target.offset();
-        var x = off.left;
-        var y = off.top + $target.height();
-        $menu.css('left', x + 'px').
-          css('top', y + 'px');
-        return $menu;
-      };
-      var hideMenu = function() {
-        if ($menu != null) {
-          $menu.remove();
-          $menu = null;
-        }
-      };
-      return {
-        showMenu: showMenu,
-        hideMenu: hideMenu
-      };
-    };
 
     var sendRequest = function(user : ContactRequest) {
       var $editor = $('<input type="text"/>').
@@ -1965,7 +1448,7 @@ namespace wschat.client {
       contactMenu.hideMenu();
     };
 
-    var contactMenu = createMenu(function($menu : JQuery) {
+    var contactMenu = createMenu($chatUI, function($menu : JQuery) {
       $menu.append(createMenuItem(chat.messages.SEARCH_CONTACT).
           on('click', searchContactHandler) ).
         append(createMenuItem(chat.messages.DELETE_CONTACT).
@@ -2179,9 +1662,10 @@ namespace wschat.client {
         css('margin-right', '2px');
       var avatar = chat.avatars[user.uid];
       if (avatar) {
-        loadImage(avatar, ui.smallAvatarSize, function($img : JQuery) {
-          appendImage($view, $img);
-        });
+        loadImage($chatUI, avatar, ui.smallAvatarSize,
+          function($img : JQuery) {
+            appendImage($view, $img);
+          });
       }
       return $view;
     };
@@ -2244,6 +1728,7 @@ namespace wschat.client {
         $users.append($cell);
 
         draggable(
+          $chatUI,
           function() {
             return createUser(user);
           },
@@ -2374,7 +1859,7 @@ namespace wschat.client {
       });
       $groupsTab.data('controller').setNewMsg(newMsg);
       if (!newMsg) {
-        notify.stop();
+        notifyTitle.stop();
         notificationManager.close();
       }
 
@@ -2390,7 +1875,7 @@ namespace wschat.client {
           css('cursor', 'default').
           text(prevMessage.label);
         if (active) {
-          $header.addClass('ws-prev-button').
+          $header.addClass('wschat-prev-button').
             on('click', function(event) {
               fetchGroups({lastDays: prevMessage.lastDays});
             });
@@ -2652,7 +2137,7 @@ namespace wschat.client {
         msgMenu.hideMenu();
       };
 
-      var msgMenu = createMenu(function($menu) {
+      var msgMenu = createMenu($chatUI, function($menu) {
         $menu.append(createMenuItem(chat.messages.QUOTE).
             on('click', msgQuoteHandler) );
         if (message.uid == chat.user.uid &&
@@ -2929,6 +2414,7 @@ namespace wschat.client {
           });
         $threadUsers.append($user);
         draggable(
+          $chatUI,
           factory,
           $user,
           $tabContent,
@@ -3035,7 +2521,7 @@ namespace wschat.client {
             css('margin-left', '4px').
             text(prevMessage.label);
           if (i + 1 != prevIndex) {
-            $btn.addClass('ws-prev-button').
+            $btn.addClass('wschat-prev-button').
               on('click', function() {
                 chat.groupPrevs[gid] = i + 1;
                 group.messages = {};
