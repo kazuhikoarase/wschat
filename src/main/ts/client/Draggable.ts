@@ -68,8 +68,8 @@ namespace wschat.client {
           x: event.pageX - off.left,
           y: event.pageY - off.top};
       mousedownPoint = {x: event.pageX, y: event.pageY};
-      $(document).on('mousemove', mouseMoveHandler);
-      $(document).on('mouseup', mouseUpHandler);
+      $(document).on('mousemove', mouseMoveHandler).
+        on('mouseup', mouseUpHandler);
     };
     var mouseMoveHandler = function(event : JQueryEventObject) {
       if ($proxy == null) {
@@ -105,8 +105,8 @@ namespace wschat.client {
       }
     };
     var mouseUpHandler = function(event : JQueryEventObject) {
-      $(document).off('mousemove', mouseMoveHandler);
-      $(document).off('mouseup', mouseUpHandler);
+      $(document).off('mousemove', mouseMoveHandler).
+        off('mouseup', mouseUpHandler);
       if ($proxy != null) {
         $proxy.remove();
         $proxy = null;
