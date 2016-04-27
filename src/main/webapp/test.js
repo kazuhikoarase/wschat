@@ -12,6 +12,7 @@ $(function() {
   $('#placeHolder').append(wschat.client.createChatClient({
     uid: uid,
     url: url,
+    mobile: !!navigator.userAgent.match(/Android|iPod|iPhone|iPad/i),
     fileuploadUrl: 'wschat-file',
 //    notifySound: 'assets/chat.m4a',
 //    notifySoundVolume: 0.1,
