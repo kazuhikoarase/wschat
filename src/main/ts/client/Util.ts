@@ -150,4 +150,28 @@ namespace wschat.client {
         date.getHours() +':' +
         fillZero(date.getMinutes(), 2);
   };
+
+  export var parseLine = function(text : string,
+      handle : (line : string) => void) {
+    var start = 0;
+    var index = 0;
+    while (index < text.length) {
+      var c = text.charAt(index);
+      if (c == '\u0020' || c == '\t' || c == '\n') {
+        if (start < index) {
+          handle(text.substring(start, index) );
+        }
+        handle(c);
+        start = index + 1;
+      }
+      index += 1;
+    }
+    if (start < index) {
+      handle(text.substring(start, index) );
+    }
+  };
+
+  export function callLater(fn : () => void) {
+    window.setTimeout(fn, 0);
+  }
 }

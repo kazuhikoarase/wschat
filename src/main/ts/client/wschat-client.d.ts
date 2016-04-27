@@ -1,5 +1,17 @@
 declare module wschat.client {
 
+  interface ChatOptions {
+    url : string
+    fileuploadUrl : string
+    uid? : string
+    icon? : string
+    notifySound? : string
+    notifySoundVolume? : number
+    decorator? : ($target : JQuery) => void
+    inputAssist? : () => JQuery
+    mobile? : boolean
+  }
+
   interface Chat {
     user : User
     date : number
@@ -31,17 +43,6 @@ declare module wschat.client {
     messages : Messages
     dayLabels : string[]
     monthLabels : string[]
-  }
-
-  interface ChatOptions {
-    url : string
-    fileuploadUrl : string
-    uid? : string
-    icon? : string
-    notifySound? : string
-    notifySoundVolume? : number
-    decorator? : ($target : JQuery) => void
-    inputAssist? : () => JQuery
   }
 
   interface Point {
@@ -88,4 +89,3 @@ declare module wschat.client {
     download? : (data : any) => void
   }
 }
-

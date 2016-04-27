@@ -9,6 +9,7 @@ namespace wschat.client {
 
   export var createChatClient = function(opts : ChatOptions) {
 
+    console.log('mob:' + opts.mobile);
 
     var chat : Chat = {
       user: null,
@@ -808,43 +809,107 @@ namespace wschat.client {
     $groupsFrame.append($groups);
     $threadFrame.append($thread);
 
-    $threadFrame.on('click', function(event) {
-      var helper = function(event : JQueryEventObject) {
+    !function(inputAssist : () => JQuery) {
+
+      if (!inputAssist) {
+        return;
+      }
+
+      var $assist : JQuery = null;
+
+      var clickHandler = function(event : JQueryEventObject) {
+        $assist.remove();
+        $assist = null;
+        $(document).off('click', clickHandler);
+      };
+
+      var touchStart : Point = null;
+      var touchEnd : Point = null;
+
+      var eventToPoint = function(event : any) : Point {
+        if (event.originalEvent.touches.length > 0) {
+          var touch = event.originalEvent.touches[0];
+          return { x : ~~touch.pageX, y : ~~touch.pageY };
+        } else {
+          return null;
+        }
+      };
+
+      var touchStartHandler = function(event : any) {
+        touchStart = eventToPoint(event);
+        touchEnd = null;
         var off = $msg.offset();
         var mx = off.left + $msg.outerWidth();
         var my = off.top;
+        if (mx < touchStart.x && my < touchStart.y) {
+          event.preventDefault();
+        } else {
+          touchStart = null;
+        }
+        $(document).on('touchmove', touchMoveHandler).
+          on('touchend', touchEndHandler);
+      };
+
+      var touchMoveHandler = function(event : any) {
+        touchEnd = eventToPoint(event);
+      };
+
+      var touchEndHandler = function(event : any) {
+        if (touchStart != null && touchEnd != null) {
+          var dx = touchEnd.x - touchStart.x;
+          var dy = touchEnd.y - touchStart.y;
+          if (Math.abs(dx) < 16 && dy < -50) {
+            $threadFrame.trigger('showAssist');
+            return;
+          }
+        }
+        $(document).off('touchmove', touchMoveHandler).
+          off('touchend', touchEndHandler).trigger('click');
+      };
+
+      $threadFrame.on('touchstart', touchStartHandler);
+
+      $threadFrame.on('click', function(event) {
+
+        var off = $msg.offset();
+        var mx = off.left + $msg.outerWidth();
+        var my = off.top;
+
         var dx = event.pageX - mx;
         var dy = event.pageY - my;
         var r = 6;
-        return {
-          mx: mx,
-          my: my,
-          enable: -r <= dx && dx <= r && -r <= dy && dy <= r
-        };
-      };
-      var h = helper(event);
-      if (h.enable) {
-          if (opts.inputAssist) {
-            var $ia = $('<div></div>').
-              addClass('wschat-input-assist').
-              css('position', 'absolute').
-              append(opts.inputAssist().on('textinput', function(event, data) {
-                replaceText($msg[0], data.text);
-                $msg.focus();
-              }) );
-            $chatUI.append($ia);
-            $ia.css('left', h.mx - $ia.outerWidth() ).
-              css('top', h.my - $ia.outerHeight() );
-            var clickHandler = function(event : JQueryEventObject) {
-              if (!helper(event).enable) {
-                $ia.remove();
-                $(document).off('click', clickHandler);
-              }
-            };
-            $(document).on('click', clickHandler);
-          }
-      }
-    });
+
+        if (-r <= dx && dx <= r && -r <= dy && dy <= r) {
+          $threadFrame.trigger('showAssist');
+        }
+
+      }).on('showAssist', function(event) {
+
+        if ($assist != null) {
+          return;
+        }
+
+        var off = $msg.offset();
+        var mx = off.left + $msg.outerWidth();
+        var my = off.top;
+
+        $assist = $('<div></div>').
+          addClass('wschat-input-assist').
+          css('position', 'absolute').
+          append(inputAssist().on('textinput', function(event, data) {
+            replaceText($msg[0], data.text);
+            $msg.focus();
+          }) );
+        $chatUI.append($assist);
+        $assist.css('left', mx - $assist.outerWidth() ).
+          css('top', my - $assist.outerHeight() );
+
+        callLater(function() {
+          $(document).on('click', clickHandler);
+        });
+      });
+
+    }(opts.inputAssist);
 
     var $threadUsers = $('<div></div>').
       addClass('wschat-thread-users').
@@ -1209,8 +1274,8 @@ namespace wschat.client {
           css('height', currSize.height + 'px');
         $('BODY').append($rect);
 
-        $(document).on('mousemove', resize_mouseMoveHandler);
-        $(document).on('mouseup', resize_mouseUpHandler);
+        $(document).on('mousemove', resize_mouseMoveHandler).
+          on('mouseup', resize_mouseUpHandler);
       };
 
       var resize_mouseMoveHandler = function(event : JQueryEventObject) {
@@ -1218,8 +1283,8 @@ namespace wschat.client {
       };
 
       var resize_mouseUpHandler = function(event : JQueryEventObject) {
-        $(document).off('mousemove', resize_mouseMoveHandler);
-        $(document).off('mouseup', resize_mouseUpHandler);
+        $(document).off('mousemove', resize_mouseMoveHandler).
+          off('mouseup', resize_mouseUpHandler);
         $rect.remove();
       };
 
@@ -2153,26 +2218,6 @@ namespace wschat.client {
       $cell.data('msgMenu', msgMenu);
     };
 
-    var parseLine = function(text : string,
-        handle : (line : string) => void) {
-      var start = 0;
-      var index = 0;
-      while (index < text.length) {
-        var c = text.charAt(index);
-        if (c == '\u0020' || c == '\t' || c == '\n') {
-          if (start < index) {
-            handle(text.substring(start, index) );
-          }
-          handle(c);
-          start = index + 1;
-        }
-        index += 1;
-      }
-      if (start < index) {
-        handle(text.substring(start, index) );
-      }
-    };
-
     var updateThreadMessage = function(gid : string, message : Message) {
 
       if (gid != getThreadGid() ) {
@@ -2635,6 +2680,7 @@ namespace wschat.client {
       });
       window.setTimeout(validateUI, 50);
     };
+
     validateUI();
 
     return $chatUI;
