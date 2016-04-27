@@ -9,8 +9,6 @@ namespace wschat.client {
 
   export var createChatClient = function(opts : ChatOptions) {
 
-    console.log('mob:' + opts.mobile);
-
     var chat : Chat = {
       user: null,
       users: {},
@@ -889,20 +887,16 @@ namespace wschat.client {
           return;
         }
 
-        var off = $msg.offset();
-        var mx = off.left + $msg.outerWidth();
-        var my = off.top;
-
         $assist = $('<div></div>').
           addClass('wschat-input-assist').
           css('position', 'absolute').
+          css('right', '0px').
+          css('bottom', '0px').
           append(inputAssist().on('textinput', function(event, data) {
             replaceText($msg[0], data.text);
             $msg.focus();
           }) );
-        $chatUI.append($assist);
-        $assist.css('left', mx - $assist.outerWidth() ).
-          css('top', my - $assist.outerHeight() );
+        $assistHolder.append($assist);
 
         callLater(function() {
           $(document).on('click', clickHandler);
@@ -944,7 +938,6 @@ namespace wschat.client {
       addClass('wschat-thread-msg').
       addClass('wschat-mouse-enabled').
       addClass('wschat-editor').
-      css('margin-top', '4px').
       css('margin-left', (ui.pad + ui.userWidth + ui.gap) + 'px').
       on('keydown', function(event) {
         if (event.keyCode == 13 && !event.shiftKey) {
@@ -1105,7 +1098,13 @@ namespace wschat.client {
         }
       });
 
-    $threadFrame.append($msg);
+    var $assistHolder = $('<div></div>').
+      css('position', 'relative');
+
+    $threadFrame.append($('<div></div>').
+      css('margin-top', '4px').
+      css('display', 'inline-block').
+      append($assistHolder).append($msg) );
 
     var msgEditor : MessageEditor = function() {
       var editing = false;
