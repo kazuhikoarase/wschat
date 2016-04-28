@@ -843,7 +843,7 @@ namespace wschat.client {
         var off = $msg.offset();
         if (off.left > touchStart.x && off.top < touchStart.y) {
           event.preventDefault();
-          longTapCount = 10;
+          longTapCount = 5;
           longTap();
         }
         $(document).on('touchmove', touchMoveHandler).
