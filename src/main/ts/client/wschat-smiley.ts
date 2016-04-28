@@ -53,7 +53,17 @@ namespace wschat.client {
   };
   var getSmileys = function() {
     var $target = $('<div></div>');
-    $target.append(createSmiley($target, ':)') );
+    var flg = false;
+    $target.append(createSmiley($target, ':)') ).
+      on('prev', function(event) {
+        flg = true;
+      }).on('next', function(event) {
+        flg = true;
+      }).on('commit', function(event) {
+        if (flg) {
+          $target.children('img').trigger('click');
+        }
+      });
     return $target;
   };
 

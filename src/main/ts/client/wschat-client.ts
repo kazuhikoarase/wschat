@@ -815,14 +815,18 @@ namespace wschat.client {
 
       var $assist : JQuery = null;
 
-      var clickHandler = function(event : JQueryEventObject) {
-        $assist.remove();
-        $assist = null;
-        $(document).off('click', clickHandler);
-      };
-
       var touchStart : Point = null;
-      var touchEnd : Point = null;
+      var lastAngle = 0;
+      var longTapCount = -1;
+
+      function longTap() {
+        if (longTapCount == 0) {
+          $threadFrame.trigger('longtap');
+        } else if (longTapCount > 0) {
+          longTapCount -= 1;
+          window.setTimeout(longTap, 100);
+        }
+      }
 
       var eventToPoint = function(event : any) : Point {
         if (event.originalEvent.touches.length > 0) {
@@ -835,41 +839,49 @@ namespace wschat.client {
 
       var touchStartHandler = function(event : any) {
         touchStart = eventToPoint(event);
-        touchEnd = null;
+        lastAngle = 0;
         var off = $msg.offset();
-        var mx = off.left + $msg.outerWidth();
-        var my = off.top;
-        if (mx < touchStart.x && my < touchStart.y) {
+        if (off.left > touchStart.x && off.top < touchStart.y) {
           event.preventDefault();
-        } else {
-          touchStart = null;
+          longTapCount = 10;
+          longTap();
         }
         $(document).on('touchmove', touchMoveHandler).
           on('touchend', touchEndHandler);
       };
 
       var touchMoveHandler = function(event : any) {
-        touchEnd = eventToPoint(event);
+        if ($assist != null) {
+          var p = eventToPoint(event);
+          if (p.x != touchStart.x || p.y != touchStart.y) {
+            var angle = Math.atan2(p.y - touchStart.y, p.x - touchStart.x);
+            if (Math.abs(lastAngle - angle) > 0.2) {
+              if (lastAngle > angle) {
+                $assist.children().trigger('prev');
+              } else {
+                $assist.children().trigger('next');
+              }
+              lastAngle = angle;
+            }
+          }
+        }
       };
 
       var touchEndHandler = function(event : any) {
-        var needsClick = touchStart != null;
-        if (touchStart != null && touchEnd != null) {
-          var dx = touchEnd.x - touchStart.x;
-          var dy = touchEnd.y - touchStart.y;
-          if (Math.abs(dx) < 16 && dy < -50) {
-            $threadFrame.trigger('showAssist');
-            needsClick = false;
-          }
-        }
+        longTapCount = -1;
         $(document).off('touchmove', touchMoveHandler).
           off('touchend', touchEndHandler);
-        if (needsClick) {
+        if ($assist != null) {
+          $assist.children().trigger('commit');
           $(document).trigger('click');
         }
       };
 
-      $threadFrame.on('touchstart', touchStartHandler);
+      // smartphone
+      $threadFrame.on('touchstart', touchStartHandler).
+      on('longtap', function(event) {
+        showAssist({left: '0px', bottom: '0px'});
+      });
 
       $threadFrame.on('click', function(event) {
 
@@ -882,10 +894,11 @@ namespace wschat.client {
         var r = 6;
 
         if (-r <= dx && dx <= r && -r <= dy && dy <= r) {
-          $threadFrame.trigger('showAssist');
+          showAssist({right: '0px', bottom: '0px'});
         }
+      });
 
-      }).on('showAssist', function(event) {
+      function showAssist(css : Object) {
 
         if ($assist != null) {
           return;
@@ -894,8 +907,7 @@ namespace wschat.client {
         $assist = $('<div></div>').
           addClass('wschat-input-assist').
           css('position', 'absolute').
-          css('right', '0px').
-          css('bottom', '0px').
+          css(css).
           append(inputAssist().on('textinput', function(event, data) {
             replaceText($msg[0], data.text);
             $msg.focus();
@@ -905,7 +917,13 @@ namespace wschat.client {
         callLater(function() {
           $(document).on('click', clickHandler);
         });
-      });
+      }
+
+      var clickHandler = function(event : JQueryEventObject) {
+        $assist.remove();
+        $assist = null;
+        $(document).off('click', clickHandler);
+      };
 
     }(opts.inputAssist);
 
@@ -1103,11 +1121,12 @@ namespace wschat.client {
       });
 
     var $assistHolder = $('<div></div>').
+      css('margin-left', $msg.css('margin-left') ).
       css('position', 'relative');
 
     $threadFrame.append($('<div></div>').
-      css('margin-top', '4px').
       css('display', 'inline-block').
+      css('margin-top', '4px').
       append($assistHolder).append($msg) );
 
     var msgEditor : MessageEditor = function() {
