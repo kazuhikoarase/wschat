@@ -853,16 +853,20 @@ namespace wschat.client {
       };
 
       var touchEndHandler = function(event : any) {
+        var needsClick = touchStart != null;
         if (touchStart != null && touchEnd != null) {
           var dx = touchEnd.x - touchStart.x;
           var dy = touchEnd.y - touchStart.y;
           if (Math.abs(dx) < 16 && dy < -50) {
             $threadFrame.trigger('showAssist');
-            return;
+            needsClick = false;
           }
         }
         $(document).off('touchmove', touchMoveHandler).
-          off('touchend', touchEndHandler).trigger('click');
+          off('touchend', touchEndHandler);
+        if (needsClick) {
+          $(document).trigger('click');
+        }
       };
 
       $threadFrame.on('touchstart', touchStartHandler);
@@ -1255,8 +1259,7 @@ namespace wschat.client {
         event.preventDefault();
         currSize = {
           width : $chatUI.outerWidth() - 2,
-          height : $chatUI.outerHeight() - 2
-        };
+          height : $chatUI.outerHeight() - 2 };
         var off = $chatUI.offset();
         dragPoint = {
           x : event.pageX - off.left,
