@@ -47,12 +47,14 @@ public class WSEndpoint extends Endpoint {
     protected IEndpoint createEndpoint(
             Session session, EndpointConfig config) {
         try {
+
             ServletContext servletContext = (ServletContext)config.
                     getUserProperties().get("servletContext");
             String scriptPath = (String)config.
                     getUserProperties().get("scriptPath");
             String factory = (String)config.
                     getUserProperties().get("factory");
+
             ScriptEngine se = ScriptUtil.newScriptEngine();
             se.put(ScriptEngine.FILENAME, scriptPath);
             se.put("$global", global);
@@ -60,7 +62,7 @@ public class WSEndpoint extends Endpoint {
             se.put("$session", session);
             se.put("$servletContext", servletContext);
             se.put("$request", config.getUserProperties().get("request") );
-            se.put(ScriptEngine.FILENAME, scriptPath);
+
             // clear properties.
             config.getUserProperties().clear();
             Reader in = new InputStreamReader(
