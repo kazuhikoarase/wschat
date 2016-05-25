@@ -165,6 +165,8 @@ public class FileServlet extends HttpServlet {
         HttpServletResponse response
     ) throws ServletException, IOException {
 
+        request.setCharacterEncoding("UTF-8");
+
         DefaultFileItemFactory factory = new DefaultFileItemFactory();
         File repository = getRepository();
         factory.setRepository(repository);
