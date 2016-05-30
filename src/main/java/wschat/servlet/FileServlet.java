@@ -136,8 +136,6 @@ public class FileServlet extends HttpServlet {
 
         response.reset();
         response.setContentType("application/octet-stream");
-        response.setHeader("Content-Length",
-                String.valueOf(file.length() ) );
         response.setHeader("Content-Disposition", "attachment; " +
                 encodeFilename(request, name) );
 
