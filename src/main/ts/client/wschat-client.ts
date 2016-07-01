@@ -1784,6 +1784,50 @@ namespace wschat.client {
         append($body).append($('<br/>').css('clear', 'both') );
     };
 
+    var setAddToGroupAction = function($cell : JQuery, user : User) {
+      draggable(
+        $chatUI,
+        function() {
+          return createUser(user);
+        },
+        $cell,
+        $threadUsers,
+        function() {
+          var gid = getThreadGid();
+          if (gid == null) {
+            return false;
+          }
+          var group = chat.groups[gid];
+          if (group) {
+            var groupUser = false;
+            $.each(group.users, function(uid, user) {
+              if (uid == chat.user.uid) {
+                groupUser = true;
+              }
+            });
+            if (!groupUser) {
+              return false;
+            }
+          }
+          var alreadyAdded = false;
+          $.each(getThreadUsers(gid, group), function(i, uid) {
+            if (uid == user.uid) {
+              alreadyAdded = true;
+            }
+          });
+          return !alreadyAdded;
+        },
+        function() {
+          var gid = getThreadGid();
+          if (gid) {
+            addToGroup(gid, user.uid);
+          } else {
+            setSelectedUser(user.uid, true);
+          }
+        },
+        ['add', 'reject']);
+    };
+
     usersUI.validate = function() {
       var users : User[] = [];
       $.each(chat.users, function(uid, user) {
@@ -1813,47 +1857,7 @@ namespace wschat.client {
           });
         $users.append($cell);
 
-        draggable(
-          $chatUI,
-          function() {
-            return createUser(user);
-          },
-          $cell,
-          $threadUsers,
-          function() {
-            var gid = getThreadGid();
-            if (gid == null) {
-              return false;
-            }
-            var group = chat.groups[gid];
-            if (group) {
-              var groupUser = false;
-              $.each(group.users, function(uid, user) {
-                if (uid == chat.user.uid) {
-                  groupUser = true;
-                }
-              });
-              if (!groupUser) {
-                return false;
-              }
-            }
-            var alreadyAdded = false;
-            $.each(getThreadUsers(gid, group), function(i, uid) {
-              if (uid == user.uid) {
-                alreadyAdded = true;
-              }
-            });
-            return !alreadyAdded;
-          },
-          function() {
-            var gid = getThreadGid();
-            if (gid) {
-              addToGroup(gid, user.uid);
-            } else {
-              setSelectedUser(user.uid, true);
-            }
-          },
-          ['add', 'reject']);
+        setAddToGroupAction($cell, user);
       });
       updateSelectedUsers();
     };
@@ -1919,6 +1923,9 @@ namespace wschat.client {
       }
       if (group.gid == getSelectedGid() ) {
         $cell.addClass('wschat-selected');
+      }
+      if (users.length == 1) {
+        setAddToGroupAction($cell, chat.users[users[0]]);
       }
       return $cell;
     };
