@@ -3,8 +3,10 @@ package wschat.impl;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -344,6 +346,22 @@ extends UserService implements IChatService {
             } else {
                 date = 0;
             }
+        } else {
+            final SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+            final long[] latestDate = new long[] { date };
+            executeQuery("select count(GID),max(DATE) from MESSAGES" +
+                    " where UID=? and GID=?",
+                new Object[]{uid, stringToLong(gid)},
+                new ResultHandler() {
+                    @Override
+                    public void handle(ResultSet rs) throws Exception {
+                        if (rs.getLong(1) > 0) {
+                            latestDate[0] = df.parse(df.format(
+                                    new Date(rs.getLong(2) ) ) ).getTime();
+                        }
+                    }
+                });
+            date = latestDate[0];
         }
 
         final List<Message> messages = new ArrayList<Message>();
