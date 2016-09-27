@@ -127,6 +127,17 @@ namespace wschat.client {
     return new Date().getTime();
   };
 
+  export var getTimestamp = function() {
+    var date = new Date();
+    date.setTime(getTime() );
+    return date.getFullYear() +
+        fillZero(date.getMonth() + 1, 2) +
+        fillZero(date.getDate(), 2) +
+        fillZero(date.getHours(), 2) +
+        fillZero(date.getMinutes(), 2) +
+        fillZero(date.getSeconds(), 2);
+  };
+
   export var trimToDate = function(d : number) {
     var date = new Date();
     date.setTime(d);

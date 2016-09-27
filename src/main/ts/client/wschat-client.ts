@@ -146,6 +146,33 @@ namespace wschat.client {
       }
     };
 
+    var isSaveDataSupported = function() {
+      var w : any = window;
+      return w.URL && w.Blob;
+    };
+    var saveData = function() {
+      var lastUrl : string = null;
+      return function(contentType : string, data : string, filename : string) {
+        var blob = new Blob([data], {type: contentType});
+        if(window.navigator.msSaveOrOpenBlob) {
+            window.navigator.msSaveBlob(blob, filename);
+        } else {
+          if (lastUrl != null) {
+            window.URL.revokeObjectURL(lastUrl);
+            lastUrl = null;
+          }
+          var url = window.URL.createObjectURL(blob);
+          lastUrl = url;
+          var anchor : any = window.document.createElement('a');
+          anchor.href = url;
+          anchor.download = filename;
+          document.body.appendChild(anchor);
+          anchor.click();
+          document.body.removeChild(anchor);
+        }
+      };
+    }();
+
     var getPrevMessages = function() : PrevMessage[] {
       return [
        {label: chat.messages.TODAY, lastDays: 0},
@@ -1018,14 +1045,6 @@ namespace wschat.client {
 
       var img_loadHandler = function($img : JQuery) {
 
-        var date = new Date();
-        var base = date.getFullYear() +
-          fillZero(date.getMonth() + 1, 2) +
-          fillZero(date.getDate(), 2) +
-          fillZero(date.getHours(), 2) +
-          fillZero(date.getMinutes(), 2) +
-          fillZero(date.getSeconds(), 2);
-
         var dlg = createDialog();
         dlg.showDialog($('<div></div>').
           append($('<div></div>').
@@ -1039,7 +1058,7 @@ namespace wschat.client {
             css('margin-right', '2px').
             on('click', function(event) {
               dlg.hideDialog();
-              uploadFile(file, base + '.png');
+              uploadFile(file, getTimestamp() + '.png');
             }) ) );
       };
 
@@ -2229,6 +2248,46 @@ namespace wschat.client {
         });
         msgMenu.hideMenu();
       };
+      var msgSaveHandler = function() {
+        var $tbody = $('<tbody></tbody>');
+        var $cellsContent = getThreadCellsContent();
+        $cellsContent.children().each(function(i) {
+          var $cell = $(this);
+          var message : Message = $cell.data('message');
+          if (!message) {
+            return;
+          }
+          if (!message.uid || message.uid == '$sys') {
+            return;
+          }
+          var $tr = $('<tr></tr>').addClass(i % 2 == 0?
+            'wschat-even' : 'wschat-odd');
+          $tbody.append($tr);
+          $tr.append($('<td></td>').css('vertical-align', 'top').
+            css('text-align', 'right').html(
+              $cell.children('.wschat-thread-msg-user').html() ) );
+          $tr.append($('<td></td>').css('vertical-align', 'top').html(
+            $cell.children('.wschat-thread-msg-body').html() ) );
+          $tr.append($('<td></td>').css('vertical-align', 'top').text(
+            $cell.children('.wschat-thread-msg-date').attr('title') ) );
+          //console.log(JSON.stringify(message) );//$(this).html() );
+        });
+        // cleanup icons
+        $tbody.find('IMG').each(function() {
+          $(this).replaceWith($(this).attr('title') );
+        });
+        var html = '<!doctype html><html><head>';
+        html += '<meta http-equiv="Content-Type"';
+        html += ' content="text/html;charset=UTF-8" />';
+        html += '<style type="text/css">';
+        html += '.wschat-even { background-color: #f0f0f0; }';
+        html += '</style></head><body>';
+        html += $('<div></div>').append(
+          $('<table></table>').append($tbody) ).html();
+        html += '</body></html>';
+        saveData('text/html', html, getTimestamp() + '.html');
+        msgMenu.hideMenu();
+      };
 
       var msgMenu = createMenu($chatUI, function($menu) {
         $menu.append(createMenuItem(chat.messages.QUOTE).
@@ -2241,6 +2300,10 @@ namespace wschat.client {
           }
           $menu.append(createMenuItem(chat.messages.DELETE).
               on('click', msgDeleteHandler) );
+        }
+        if (isSaveDataSupported() && getThreadCellsContent().length > 0) {
+          $menu.append(createMenuItem(chat.messages.SAVE).
+              on('click', msgSaveHandler) );
         }
       });
       $cell.data('msgMenu', msgMenu);

@@ -116,6 +116,7 @@ declare module wschat {
     MODIFIED : string
     APPROVE : string
     DELETE : string
+    SAVE : string
     EDIT : string
     QUOTE : string
     DBLCLICK_TO_SEND_CONTACT_ADD_REQUEST : string
