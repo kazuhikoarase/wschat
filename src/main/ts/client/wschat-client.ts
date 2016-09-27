@@ -148,7 +148,8 @@ namespace wschat.client {
 
     var isSaveDataSupported = function() {
       var w : any = window;
-      return w.URL && w.Blob;
+      var d : any = document;
+      return w.URL && w.Blob && d.execCommand;
     };
     var saveData = function() {
       var lastUrl : string = null;
@@ -2249,43 +2250,37 @@ namespace wschat.client {
         msgMenu.hideMenu();
       };
       var msgSaveHandler = function() {
-        var $tbody = $('<tbody></tbody>');
+        var quoteRe = /"/g
+        var quote = function(s : string) {
+          return '"' + s.replace(quoteRe, '""') + '"';
+        };
+        var csv = '';
         var $cellsContent = getThreadCellsContent();
         $cellsContent.children().each(function(i) {
           var $cell = $(this);
           var message : Message = $cell.data('message');
           if (!message) {
             return;
-          }
-          if (!message.uid || message.uid == '$sys') {
+          } else if (!message.uid || message.uid == '$sys') {
             return;
           }
-          var $tr = $('<tr></tr>').addClass(i % 2 == 0?
-            'wschat-even' : 'wschat-odd');
-          $tbody.append($tr);
-          $tr.append($('<td></td>').css('vertical-align', 'top').
-            css('text-align', 'right').html(
-              $cell.children('.wschat-thread-msg-user').html() ) );
-          $tr.append($('<td></td>').css('vertical-align', 'top').html(
-            $cell.children('.wschat-thread-msg-body').html() ) );
-          $tr.append($('<td></td>').css('vertical-align', 'top').text(
-            $cell.children('.wschat-thread-msg-date').attr('title') ) );
-          //console.log(JSON.stringify(message) );//$(this).html() );
+          csv += quote(message.nickname);
+          csv += '\t';
+          csv += quote(message.message);
+          csv += '\t';
+          csv += quote(getTimestampLabel(message.date) );
+          csv += '\r\n';
         });
-        // cleanup icons
-        $tbody.find('IMG').each(function() {
-          $(this).replaceWith($(this).attr('title') );
-        });
-        var html = '<!doctype html><html><head>';
-        html += '<meta http-equiv="Content-Type"';
-        html += ' content="text/html;charset=UTF-8" />';
-        html += '<style type="text/css">';
-        html += '.wschat-even { background-color: #f0f0f0; }';
-        html += '</style></head><body>';
-        html += $('<div></div>').append(
-          $('<table></table>').append($tbody) ).html();
-        html += '</body></html>';
-        saveData('text/html', html, getTimestamp() + '.html');
+        /*
+        saveData('application/octet-stream',
+          csv, getTimestamp() + '_UTF-8.txt');
+        */
+        var $tmp = $('<textarea></textarea>').val(csv);
+        $('BODY').append($tmp);
+        $tmp.select();
+        document.execCommand('copy');
+        $tmp.remove();
+
         msgMenu.hideMenu();
       };
 
@@ -2302,7 +2297,7 @@ namespace wschat.client {
               on('click', msgDeleteHandler) );
         }
         if (isSaveDataSupported() && getThreadCellsContent().length > 0) {
-          $menu.append(createMenuItem(chat.messages.SAVE).
+          $menu.append(createMenuItem(chat.messages.COPY_ALL).
               on('click', msgSaveHandler) );
         }
       });
