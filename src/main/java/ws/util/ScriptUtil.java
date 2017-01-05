@@ -22,7 +22,7 @@ public class ScriptUtil {
         ScriptEngineManager sem = new ScriptEngineManager();
         ScriptEngine se = sem.getEngineByName("javascript");
         try {
-            eval(se, "Glue.js");
+            eval(se, "Bridge.js");
             if (se.eval("this.JSON") == null) {
                 // support for old Rhino
                 eval(se, "JSON.js");
