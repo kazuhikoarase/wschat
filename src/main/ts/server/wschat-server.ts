@@ -7,9 +7,9 @@
 'use strict';
 namespace wschat.server {
 
+  declare var Java : any;
+
   declare var context : any;
-  declare var java : any;
-  declare var Packages : any;
   declare var $logger : any;
   declare var $global : any;
   declare var $servletContext : any;
@@ -39,12 +39,12 @@ namespace wschat.server {
   };
 
   var loadStream = function(stream : any) {
-    var bout = new java.io.ByteArrayOutputStream();
+    var bout = new Java.type('java.io.ByteArrayOutputStream')();
     try {
-      var fin = new java.io.BufferedInputStream(stream);
+      var fin = new Java.type('java.io.BufferedInputStream')(stream);
       try {
-        var buf = java.lang.reflect.Array.newInstance(
-              java.lang.Byte.TYPE, 4096);
+        var buf = Java.type('java.lang.reflect.Array').newInstance(
+              Java.type('java.lang.Byte').TYPE, 4096);
         var len : number;
         while ( (len = fin.read(buf) ) != -1) {
           bout.write(buf, 0, len);
@@ -76,39 +76,40 @@ namespace wschat.server {
     if (resIn == null) {
       resIn = getResIn('en');
     }
-    return JSON.parse('' + new java.lang.String(
+    return JSON.parse('' + new Java.type('java.lang.String')(
         loadStream(resIn), 'UTF-8') );
   };
 
   var messageFormat : any = function() {
-    var args = java.lang.reflect.Array.newInstance(
-        java.lang.Class.forName('java.lang.Object'), arguments.length - 1);
+    var args = Java.type('java.lang.reflect.Array').newInstance(
+        Java.type('java.lang.Class').forName('java.lang.Object'),
+        arguments.length - 1);
     for (var i = 1; i < arguments.length; i += 1) {
-      args[i - 1] = new java.lang.String(arguments[i]);
+      args[i - 1] = new Java.type('java.lang.String')(arguments[i]);
     }
-    return '' + java.text.MessageFormat.format(arguments[0], args);
+    return '' + Java.type('java.text.MessageFormat').format(arguments[0], args);
   };
 
   var getTime = function() {
-    return java.lang.System.currentTimeMillis();
+    return Java.type('java.lang.System').currentTimeMillis();
   };
 
   var sync = function(lock : any, sync : any) {
-    Packages.ws.ISync.sync.sync(lock,
-        new Packages.ws.ISync({ sync : sync }) );
+    Java.type('ws.ISync').sync.sync(lock,
+        new Java.type('ws.ISync')({ sync : sync }) );
   };
 
   var createService = function() {
 
-    var wschat = Packages.wschat;
-    var service = wschat.ChatServiceHolder.getInstance($servletContext);
+    var service = Java.type('wschat.ChatServiceHolder').
+      getInstance($servletContext);
 
     var toJavaOpts = function(opts : any) {
-      var javaOpts = new java.util.HashMap();
+      var javaOpts = new Java.type('java.util.HashMap')();
       $.each(opts, function(k, v) {
         javaOpts.put(
-            new java.lang.String('' + k),
-            new java.lang.String('' + v));
+            new Java.type('java.lang.String')('' + k),
+            new Java.type('java.lang.String')('' + v));
       });
       return javaOpts;
     };
@@ -161,7 +162,7 @@ namespace wschat.server {
     var toJsMessage = function(javaMessage : any) : Message {
       var message = JSON.parse(javaMessage.getJsonData() );
       if (message.file && !message.file.deleted) {
-        var file = new java.io.File(getRepository(), message.file.tmpfile);
+        var file = new Java.type('java.io.File')(getRepository(), message.file.tmpfile);
         if (!file.exists() ) {
           message.file.deleted = true;
           javaMessage.setJsonData(JSON.stringify(message) );
@@ -178,7 +179,7 @@ namespace wschat.server {
       };
     };
     var newJavaGroupUser = function(uid : string) {
-      var javaUser = new wschat.GroupUser();
+      var javaUser = new Java.type('wschat.GroupUser')();
       javaUser.setUid(uid);
       javaUser.setJsonData(JSON.stringify(newJsGroupUser(uid) ) );
       return javaUser;
@@ -204,7 +205,7 @@ namespace wschat.server {
       if (user.contacts) {
         javaUser.getContacts().clear();
         $.each(user.contacts, function(uid, contact) {
-          var javaContact = new wschat.Contact();
+          var javaContact = new Java.type('wschat.Contact')();
           javaContact.setUid(uid);
           javaContact.setGid(contact.gid);
           javaUser.getContacts().add(javaContact);
@@ -219,22 +220,22 @@ namespace wschat.server {
       return toJsString(service.getAvatar(uid, 120) );
     };
     var getRepository = function() {
-      return new java.io.File($servletContext.
+      return new Java.type('java.io.File')($servletContext.
           getAttribute('javax.servlet.context.tempdir') );
     };
     var updateAvatar = function(uid : string, file : AttachedFile) {
       var repo = getRepository();
-      var tmpfile = new java.io.File(repo, file.tmpfile);
+      var tmpfile = new Java.type('java.io.File')(repo, file.tmpfile);
       if (!tmpfile.getParentFile().equals(repo) ) {
         throw '' + tmpfile;
       }
-      var data = Packages.ws.util.Base64.toUrl(
+      var data = Java.type('ws.util.Base64').toUrl(
           file.contentType, tmpfile.getCanonicalPath() );
       service.updateAvatar(uid, data, 120);
       tmpfile['delete']();
     };
     var newUser = function(user : NewUser) {
-      var javaUser = new wschat.User();
+      var javaUser = new Java.type('wschat.User')();
       javaUser.setUid(user.uid);
       javaUser.setJsonData(JSON.stringify({
         nickname: user.nickname || user.uid
@@ -315,7 +316,7 @@ namespace wschat.server {
       return toJsGroup(service.getGroup(uid, gid) );
     };
     var newGroup = function(users : string[]) {
-      var javaUsers = new java.util.ArrayList();
+      var javaUsers = new Java.type('java.util.ArrayList')();
       $.each(users, function(i, uid) {
         javaUsers.add(newJavaGroupUser(uid) );
       });
@@ -323,7 +324,7 @@ namespace wschat.server {
           JSON.stringify({})));
     };
     var updateGroup = function(uid : string, group : Group) {
-      var javaGroup = new wschat.Group();
+      var javaGroup = new Java.type('wschat.Group')();
       javaGroup.setGid(group.gid);
       javaGroup.setMinDate(group.minDate);
       javaGroup.setMaxDate(group.maxDate);
@@ -402,13 +403,14 @@ namespace wschat.server {
     var updateMessage = function(uid : string,
         gid : string, message : Message) {
       if (message.deleted && message.file && !message.file.deleted) {
-        var file = new java.io.File(getRepository(), message.file.tmpfile);
+        var file = new Java.type('java.io.File')(
+          getRepository(), message.file.tmpfile);
         if (file.exists() ) {
           file['delete']();
           message.file.deleted = true;
         }
       }
-      var javaMessage = new wschat.Message();
+      var javaMessage = new Java.type('wschat.Message')();
       javaMessage.setMid(message.mid);
       javaMessage.setUid(uid);
       javaMessage.setGid(gid);
@@ -964,6 +966,6 @@ namespace wschat.server {
   };
 
   export function createServer() {
-    return new Packages.ws.IEndpoint(createChatEndpoint() );
+    return new Java.type('ws.IEndpoint')(createChatEndpoint() );
   }
 }

@@ -18,9 +18,9 @@ var JSON = function() {
   };
 
   var javaToJs = function(obj) {
-    if (obj instanceof java.lang.String) {
+    if (obj instanceof Java.type('java.lang.String') ) {
       return '' + obj;
-    } else if (obj instanceof java.lang.Number) {
+    } else if (obj instanceof Java.type('java.lang.Number') ) {
       return +obj.doubleValue();
     } else {
       throw 'unsupported java type:' + obj.getClass().getName();
