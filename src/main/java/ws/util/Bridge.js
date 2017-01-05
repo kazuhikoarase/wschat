@@ -16,5 +16,5 @@ if (typeof Java == 'undefined') {
       }
     };
   }(Packages);
-  java = Packages = undefined;
 }
+Packages = java =  undefined;
