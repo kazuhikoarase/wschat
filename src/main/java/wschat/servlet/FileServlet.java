@@ -81,18 +81,6 @@ public class FileServlet extends HttpServlet {
         super.destroy();
     }
 
-    protected String buildDoGetScript() {
-        StringBuilder script = new StringBuilder();
-
-        return script.toString();
-    }
-
-    protected String buildDoPostScript() {
-        StringBuilder script = new StringBuilder();
-
-        return script.toString();
-    }
-
     @Override
     protected void doGet(
         HttpServletRequest request,
