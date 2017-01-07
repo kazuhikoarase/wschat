@@ -1756,7 +1756,7 @@ namespace wschat.client {
         userUpdate();
       });
     };
-    var createUserAvator = function(user : User) {
+    var createUserAvatar = function(user : User) {
       var $view = $('<span></span>').
         addClass('wschat-user-view').
         css('display', 'inline-block').
@@ -1800,7 +1800,7 @@ namespace wschat.client {
         css('width', (ui.leftWidth - ui.pad) + 'px').
         css('padding', '2px').
         css('cursor', 'default').
-        append(createUserAvator(user) ).
+        append(createUserAvatar(user) ).
         append($body).append($('<br/>').css('clear', 'both') );
     };
 
