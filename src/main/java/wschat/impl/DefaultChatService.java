@@ -173,7 +173,7 @@ extends UserService implements IChatService {
             }
         });
         if (count == 0) {
-            return loadAvatar("default-avatar.jpg");
+            return ""; // loadAvatar("default-avatar.jpg");
         } else if (count != 1) {
             throw new IllegalStateException("count:" + count);
         }
