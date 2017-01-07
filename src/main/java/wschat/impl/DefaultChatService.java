@@ -1,5 +1,7 @@
 package wschat.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +14,7 @@ import java.util.Map;
 
 import javax.script.ScriptEngine;
 
+import ws.util.Base64;
 import ws.util.ImageUtil;
 import ws.util.ScriptUtil;
 import wschat.Contact;
@@ -139,6 +142,26 @@ extends UserService implements IChatService {
         return users;
     }
 
+    protected String loadAvatar(String path) throws Exception {
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      try {
+        InputStream in = getClass().getResourceAsStream(path);
+        try {
+          byte[] buf = new byte[4096];
+          int len;
+          while ( (len = in.read(buf) ) != -1) {
+            out.write(buf, 0, len);
+          }
+        } finally {
+          in.close();
+        }
+      } finally {
+        out.close();
+      }
+      return "data:image/jpeg;base64," +
+        new String(Base64.encode(out.toByteArray() ), "ISO-8859-1");
+    }
+
     @Override
     public String getAvatar(String uid, int size) throws Exception {
         final String[] data = {""};
@@ -150,7 +173,7 @@ extends UserService implements IChatService {
             }
         });
         if (count == 0) {
-            return "";
+            return loadAvatar("default-avatar.jpg");
         } else if (count != 1) {
             throw new IllegalStateException("count:" + count);
         }
