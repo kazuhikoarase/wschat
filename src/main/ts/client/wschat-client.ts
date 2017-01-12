@@ -2815,7 +2815,7 @@ namespace wschat.client {
           ui.valid = true;
         }
       });
-      window.setTimeout(validateUI, 50);
+      window.setTimeout(validateUI, 200);
     };
 
     validateUI();
