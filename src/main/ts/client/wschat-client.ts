@@ -309,6 +309,59 @@ namespace wschat.client {
       userUpdate();
     }, chat.heartBeatInterval);
 
+    var getDefaultAvatar = function() {
+
+      var width = 120;
+      var height = 120;
+      var cv = <any>$('<canvas></canvas>').
+        attr({width : width, height : height})[0];
+      var ctx = cv.getContext('2d');
+      ctx.fillStyle = '#999999';
+      ctx.fillRect(0, 0, width, height);
+
+      // x
+      !function() {
+        ctx.strokeStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(0,0);
+        ctx.lineTo(width, height);
+        ctx.moveTo(width,0);
+        ctx.lineTo(0, height);
+        ctx.stroke();
+      };
+
+      ctx.strokeStyle = 'none';
+      ctx.fillStyle = '#ffffff';
+
+      var w0 = width / 2;
+      var h0 = height / 2 - height * 0.15;
+
+      // head
+      !function() {
+        ctx.beginPath();
+        ctx.arc(w0, h0, width * .3, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.fill();
+      }();
+
+      // body
+      !function() {
+        ctx.beginPath();
+        var w1 = width * .4;
+        var h1= h0 + height * .25;
+        var h2= h0 + height * .25;
+        var h3 = height - 4;
+        ctx.moveTo(w0 - w1, h3);
+        ctx.quadraticCurveTo(w0 - w1, h1, w0, h2);
+        ctx.quadraticCurveTo(w0 + w1, h1, w0 + w1, h3);
+        ctx.closePath();
+        ctx.fill();
+      }();
+
+      var src = cv.toDataURL();
+      return function() { return src; };
+    }();
+
     var actions : Actions = {};
 
     actions.login = function(data) {
@@ -363,7 +416,7 @@ namespace wschat.client {
     };
 
     actions.avatar = function(data) {
-      chat.avatars[data.uid] = data.data;
+      chat.avatars[data.uid] = data.data || getDefaultAvatar();
       if (chat.user.uid == data.uid) {
         userUI.invalidate();
       } else {
@@ -2506,10 +2559,8 @@ namespace wschat.client {
           css('width', ui.avatarSize + 'px');
       } else {
         var $view = createUserView();
-        var avatar = chat.avatars[uid];
-        if (avatar) {
-          appendImage($view, $('<img/>').attr('src', avatar) );
-        }
+        var avatar = chat.avatars[uid] || getDefaultAvatar();
+        appendImage($view, $('<img/>').attr('src', avatar) );
         $user.append($view);
       }
       $user.append($label);
