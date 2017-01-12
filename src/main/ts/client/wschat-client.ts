@@ -1930,10 +1930,7 @@ namespace wschat.client {
         }
         return u1.uid < u2.uid? -1 : 1;
       });
-      var $currUsers = $users.children();
-      for (var i = $currUsers.length - 1; i >= users.length; i -= 1) {
-        $($currUsers[i]).remove();
-      }
+      $users.children().remove();
       $.each(users, function(i, user) {
         var $cell = createUser(user, usersAvatarCache).
           on('mousedown', function(event) {
@@ -1944,11 +1941,8 @@ namespace wschat.client {
             setSelectedGid(null);
             setSelectedUser(user.uid, event.ctrlKey || event.metaKey);
           });
-        if (i < $currUsers.length) {
-          $($currUsers[i]).replaceWith($cell);
-        } else {
-          $users.append($cell);
-        }
+        $users.append($cell);
+
         setAddToGroupAction($cell, user);
       });
       updateSelectedUsers();
