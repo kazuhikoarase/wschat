@@ -42,7 +42,7 @@ namespace wschat.client {
       selectedMid: null
     };
 
-    var userAvatarCache : { [uid : string] : JQuery } = {};
+    var usersAvatarCache : { [uid : string] : JQuery } = {};
 
     var ui = {
       leftWidth: 200,
@@ -419,7 +419,7 @@ namespace wschat.client {
 
     actions.avatar = function(data) {
       chat.avatars[data.uid] = data.data || getDefaultAvatar();
-      delete userAvatarCache[data.uid];
+      delete usersAvatarCache[data.uid];
       if (chat.user.uid == data.uid) {
         userUI.invalidate();
       } else {
@@ -1812,7 +1812,8 @@ namespace wschat.client {
         userUpdate();
       });
     };
-    var createUserAvatar = function(user : User) {
+    var createUserAvatar = function(user : User,
+        avatarCache : { [uid : string] : JQuery}) {
       var $view = $('<span></span>').
         addClass('wschat-user-view').
         css('display', 'inline-block').
@@ -1824,21 +1825,22 @@ namespace wschat.client {
         css('margin-right', '2px');
       var avatar = chat.avatars[user.uid];
       if (avatar) {
-        var $imgCache = userAvatarCache[user.uid];
+        var $imgCache = avatarCache[user.uid];
         if ($imgCache) {
           $imgCache.remove();
           appendImage($view, $imgCache);
         } else {
           loadImage($chatUI, avatar, ui.smallAvatarSize,
             function($img : JQuery) {
-              userAvatarCache[user.uid] = $img;
+              avatarCache[user.uid] = $img;
               appendImage($view, $img);
             });
         }
       }
       return $view;
     };
-    var createUser = function(user : User) {
+    var createUser = function(user : User,
+        avatarCache : { [uid : string] : JQuery}) {
       var txt = user.nickname || user.uid;
       var $body = $('<span></span>').
         css('display', 'inline-block').
@@ -1863,7 +1865,7 @@ namespace wschat.client {
         css('width', (ui.leftWidth - ui.pad) + 'px').
         css('padding', '2px').
         css('cursor', 'default').
-        append(createUserAvatar(user) ).
+        append(createUserAvatar(user, avatarCache) ).
         append($body).append($('<br/>').css('clear', 'both') );
     };
 
@@ -1871,7 +1873,8 @@ namespace wschat.client {
       draggable(
         $chatUI,
         function() {
-          return createUser(user);
+          // no-cache
+          return createUser(user, {});
         },
         $cell,
         $threadUsers,
@@ -1932,7 +1935,7 @@ namespace wschat.client {
         $($currUsers[i]).remove();
       }
       $.each(users, function(i, user) {
-        var $cell = createUser(user).
+        var $cell = createUser(user, usersAvatarCache).
           on('mousedown', function(event) {
             event.preventDefault();
           }).
