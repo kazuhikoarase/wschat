@@ -42,6 +42,8 @@ namespace wschat.client {
       selectedMid: null
     };
 
+    var userAvatarCache : { [uid : string] : JQuery } = {};
+
     var ui = {
       leftWidth: 200,
 
@@ -417,6 +419,7 @@ namespace wschat.client {
 
     actions.avatar = function(data) {
       chat.avatars[data.uid] = data.data || getDefaultAvatar();
+      delete userAvatarCache[data.uid];
       if (chat.user.uid == data.uid) {
         userUI.invalidate();
       } else {
@@ -1821,10 +1824,17 @@ namespace wschat.client {
         css('margin-right', '2px');
       var avatar = chat.avatars[user.uid];
       if (avatar) {
-        loadImage($chatUI, avatar, ui.smallAvatarSize,
-          function($img : JQuery) {
-            appendImage($view, $img);
-          });
+        var $imgCache = userAvatarCache[user.uid];
+        if ($imgCache) {
+          $imgCache.remove();
+          appendImage($view, $imgCache);
+        } else {
+          loadImage($chatUI, avatar, ui.smallAvatarSize,
+            function($img : JQuery) {
+              userAvatarCache[user.uid] = $img;
+              appendImage($view, $img);
+            });
+        }
       }
       return $view;
     };
