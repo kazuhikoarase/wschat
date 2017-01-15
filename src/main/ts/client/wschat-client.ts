@@ -465,9 +465,34 @@ namespace wschat.client {
     actions.exitFromGroup = function(data) {
     };
 
-    actions.message = function(data) {
-      putMessage(data.gid, data.message);
-    };
+    actions.message = function() {
+
+      var queue : any[] = [];
+      var alive = false;
+
+      var putMessageIndirect = function() {
+        var start = getTime();
+        while (queue.length > 0 && getTime() - start < 50) {
+          var data = queue.shift();
+          putMessage(data.gid, data.message);
+        }
+        window.setTimeout(function() {
+          if (queue.length == 0) {
+            alive = false;
+          } else {
+            putMessageIndirect();
+          }
+        }, 50);
+      };
+
+      return function(data : any) {
+        queue.push(data);
+        if (!alive) {
+          alive = true;
+          putMessageIndirect();
+        }
+      };
+    }();
 
     actions.newGroup = function(data) {
       setSelectedGid(data.gid);
@@ -2136,7 +2161,21 @@ namespace wschat.client {
         return !(h1 < h2 && h1 + threadScrollTop + 4 < h2);
       }();
 
+      var $bottom = function() {
+        var $currCells = $cellsContent.children('.wschat-thread-cell');
+        return $currCells.length > 0?
+          $($currCells[$currCells.length - 1]) : null;
+      }();
+      var lastTop = 0;
+      if ($bottom) {
+        lastTop = $bottom.offset().top;
+      }
+
       update($cellsContent, $cells);
+
+      if ($bottom) {
+        threadScrollTop +=  $bottom.offset().top  - lastTop;
+      }
 
       // adjust scrollTop
       $cells.children('.wschat-thread-msg-pad').remove();
@@ -2719,8 +2758,6 @@ namespace wschat.client {
             $btn.addClass('wschat-prev-button').
               on('click', function() {
                 chat.groupPrevs[gid] = i + 1;
-                group.messages = {};
-                threadUI.invalidate();
                 fetchMessages(gid, {lastDays: prevMessage.lastDays});
                 updateSearchHeader();
               });
