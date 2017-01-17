@@ -19,21 +19,25 @@ HSQLDB + Apache Ant or PostgreSQL
 
 In this case, the userId would be taken from http session.
 
-Edit chat-server.js.
+Edit wschat-server-ext.ts.
 
-```javascript
-  actions.login = function(data) {
+```typescript
+  service.doLogin = function(uid : string) {
     // TODO overwrite uid at here.
-    data.uid = '' + $request.getHttpSession().getAttribute('userId');
-    chat.user = chatService.getUser(data.uid);
-    if (chat.user == null) {
+    uid = '' + $request.getHttpSession().getAttribute('userId');
+    var user = service.getUser(uid);
+    if (user == null) {
       // TODO dynamically create a user.
-      chatService.newUser({
-        uid: data.uid,
-        nickname: data.uid
+      service.newUser({
+        uid: uid,
+        nickname: uid
       });
-      chat.user = chatService.getUser(data.uid);
+      user = service.getUser(data.uid);
     }
+    return user;
+  };
+
+  service.searchUsers = function(uid : string, keyword : string) {;
 ```
 
 Create a servlet extends FileServlet and modify web.xml with your servlet.
