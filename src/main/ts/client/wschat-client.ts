@@ -1073,6 +1073,10 @@ namespace wschat.client {
       on('keydown', function(event) {
         if (event.keyCode == 13 && !event.shiftKey) {
           event.preventDefault();
+          if (!chat.user || chat.user.date == 0) {
+            console.log('offline');
+            return;
+          }
           var msg = rtrim($(this).val());
           if (msg.length != 0 && msg.length <= 1000) {
             if (msgEditor.isEditing() ) {
