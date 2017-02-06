@@ -61,5 +61,10 @@
   "TYPING": "Typing",
   "UPLOADING": "Uploading",
 
+  "ONLINE": "Online",
+  "OFFLINE": "Offline",
+  "IDLE": "Idle",
+  "BUSY": "Busy",
+
   "TRAILER": ""
 }

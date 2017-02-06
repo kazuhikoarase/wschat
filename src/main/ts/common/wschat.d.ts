@@ -44,6 +44,7 @@ declare module wschat {
     uid : string
     nickname : string
     message : string
+    state : string
     date : number
     idleTime : number
     gid : string
@@ -129,5 +130,9 @@ declare module wschat {
     TYPING : string
     CONFIRM_ATTACH_IMAGE : string
     DROP_HERE_A_FILE : string
+    ONLINE : string
+    OFFLINE : string
+    IDLE : string
+    BUSY : string
   }
 }

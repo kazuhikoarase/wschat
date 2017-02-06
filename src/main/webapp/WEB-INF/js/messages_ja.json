@@ -59,5 +59,10 @@
   "TYPING": "Typing",
   "UPLOADING": "Uploading",
 
+  "ONLINE": "オンライン",
+  "OFFLINE": "オフライン",
+  "IDLE": "離席中",
+  "BUSY": "取り込み中",
+
   "TRAILER": ""
 }

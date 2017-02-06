@@ -244,6 +244,9 @@ namespace wschat.client {
     var getUserState = function(user : User) {
       if (user && chat.date != 0 &&
           (chat.date - user.date) < chat.offlineTimeout) {
+        if (user.state) {
+          return user.state;
+        }
         if (user.idleTime > chat.idleTimeout) {
           return 'idle';
         }
@@ -254,13 +257,34 @@ namespace wschat.client {
 
     var createUserState = function(user : User) {
       var userState = getUserState(user);
-      var color = userState == 'online'? '#00ff00' :
-          (userState == 'idle'? '#ffee00' : '#cccccc');
+      var color : string;
+      var title : string;
+      switch(userState) {
+      case 'online':
+        color = '#00ff00';
+        title = chat.messages.ONLINE;
+        break;
+      case 'idle':
+        color = '#ffee00';
+        title = chat.messages.IDLE;
+        break;
+      case 'busy':
+        color = '#ff0000';
+        title = chat.messages.BUSY;
+        break;
+      default : 
+        color = '#cccccc';
+        title = chat.messages.OFFLINE;
+        break;
+      }
       return createSVG(12, 12).css('vertical-align', 'middle').
-        append(createSVGElement('circle').
-          attr({'cx': 6, 'cy': 6, 'r': 4}).
-          css('fill', color).
-          css('stroke', 'none') );
+        append(createSVGElement('g').
+          append(createSVGElement('circle').
+            attr({'cx': 6, 'cy': 6, 'r': 4}).
+            css('fill', color).
+            css('stroke', 'none') ).
+          append(createSVGElement('title').text(title) ) );
+        ;
     };
 
     var createGroupState = function(group : Group) {
@@ -1833,7 +1857,10 @@ namespace wschat.client {
           chat.user.uid;
         userUI.invalidate();
         userUpdate();
-      }).prepend(createUserState(chat.user) );
+      }).prepend(createUserState(chat.user).
+          on('mousedown', function(event) {
+//            console.log('user state');
+          } ) );
       appendEditor(ui.avatarSize, 140, chat.user.message, chat.messages.TODAYS_FEELING, true).
           on('valueChange', function() {
         chat.user.message = $(this).data('controller').val();
@@ -2204,7 +2231,6 @@ namespace wschat.client {
       if ($cells.length == 0) {
         $cell.insertAfter($cellsContent.children('.wschat-search-header') );
       } else {
-        // TODO performance tuning (nested loop..)
         for (var i = 0; i < $cells.length; i += 1) {
           var $target = $($cells[i]);
           if (date < $target.data('message').date) {
