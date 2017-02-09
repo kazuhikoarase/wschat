@@ -616,6 +616,7 @@ namespace wschat.client {
           uid: chat.user.uid,
           nickname: chat.user.nickname || null,
           message: chat.user.message || null,
+          state: chat.user.state || null,
           date: null,
           idleTime: getTime() - chat.lastActiveTime
         }
@@ -1842,6 +1843,39 @@ namespace wschat.client {
       var $info = $('<div></div>').css('height', '36px');
       $user.append($info);
 
+      var userState_clickHandler = function(event : JQueryEventObject) {
+        if (getUserState(chat.user) == 'offline') {
+          return;
+        }
+        var items = [
+          { label : chat.messages.ONLINE, state : 'online'},
+          { label : chat.messages.IDLE, state : 'idle'},
+          { label : chat.messages.BUSY, state : 'busy'}
+        ];
+        var stateMenu = createMenu($chatUI, function($menu : JQuery) {
+          $.each(items, function(i, item) {
+            var $chk = createSVG(12, 12).css('vertical-align', 'middle');
+            var state = chat.user.state? chat.user.state : 'online';
+            if (state == item.state) {
+              $chk.append(createSVGElement('path').
+                attr('d', 'M 2 6 L 6 10 L 10 2').css('fill', 'none').
+                css('stroke-width', '2').css('stroke', '#666666') );
+            }
+            $menu.append(createMenuItem(item.label).prepend(
+              createUserState(<any>{
+                state : item.state,
+                date : chat.date
+              }) ).prepend($chk).on('click', function(event) {
+                chat.user.state = item.state == 'online'? null : item.state;
+                userUI.invalidate();
+                userUpdate();
+                stateMenu.hideMenu();
+              }) );
+          });
+        });
+        stateMenu.showMenu($(this) );
+      };
+
       var appendEditor = function(width : number, maxlength : number,
         value : string, defaultMessage : string, decorate? : boolean
       ) {
@@ -1858,9 +1892,7 @@ namespace wschat.client {
         userUI.invalidate();
         userUpdate();
       }).prepend(createUserState(chat.user).
-          on('mousedown', function(event) {
-//            console.log('user state');
-          } ) );
+          on('click', userState_clickHandler) );
       appendEditor(ui.avatarSize, 140, chat.user.message, chat.messages.TODAYS_FEELING, true).
           on('valueChange', function() {
         chat.user.message = $(this).data('controller').val();
