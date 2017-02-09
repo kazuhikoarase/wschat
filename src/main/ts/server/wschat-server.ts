@@ -201,7 +201,8 @@ namespace wschat.server {
       var oldUser = toJsUserJSON(javaUser);
       javaUser.setJsonData(JSON.stringify({
         nickname: user.nickname,
-        message: user.message
+        message: user.message,
+        state: user.state
       }));
       if (user.contacts) {
         javaUser.getContacts().clear();
@@ -252,6 +253,7 @@ namespace wschat.server {
         user.uid = toJsString(javaUser.getUid());
         user.nickname = user.nickname || user.uid;
         delete user.message;
+        delete user.state;
         users.push(user);
       }
       return users;
@@ -569,7 +571,8 @@ namespace wschat.server {
       data.user = {
         uid: chat.user.uid,
         nickname: chat.user.nickname,
-        message: chat.user.message
+        message: chat.user.message,
+        state: chat.user.state
       };
       data.status = 'success';
       data.messages = chat.messages;
@@ -590,6 +593,7 @@ namespace wschat.server {
             gid: contact.gid,
             nickname: user.nickname,
             message: user.message,
+            state: user.state,
             date: 0
           }
         });
@@ -744,6 +748,7 @@ namespace wschat.server {
               gid: gid,
               nickname: user.nickname,
               message: user.message,
+              state: user.state,
               date: getTime()
             }
           }, uid2);
@@ -935,6 +940,7 @@ namespace wschat.server {
               gid: contact.gid,
               nickname: chat.user.nickname,
               message: chat.user.message,
+              state : chat.user.state,
               date: 0
             }
           }, uid);

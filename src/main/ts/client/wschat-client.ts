@@ -2008,7 +2008,8 @@ namespace wschat.client {
         users.push(user);
       });
       var getUserStateOrder = function(state : string) {
-        return (state == 'online' || state == 'idle')? 0 : 1;
+        return (state == 'online' || state == 'idle' ||
+          state == 'busy')? 0 : 1;
       };
       users.sort(function(u1, u2) {
         var s1 = getUserStateOrder(getUserState(u1) );
