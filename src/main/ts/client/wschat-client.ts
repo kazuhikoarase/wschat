@@ -244,9 +244,6 @@ namespace wschat.client {
     var getUserState = function(user : User) {
       if (user && chat.date != 0 &&
           (chat.date - user.date) < chat.offlineTimeout) {
-        if (user.state) {
-          return user.state;
-        }
         if (user.idleTime > chat.idleTimeout) {
           return 'idle';
         }
@@ -257,6 +254,9 @@ namespace wschat.client {
 
     var createUserState = function(user : User) {
       var userState = getUserState(user);
+      if (user && user.state) {
+        userState = user.state;
+      }
       var color : string;
       var title : string;
       switch(userState) {
@@ -328,6 +328,7 @@ namespace wschat.client {
     var userChanged = function(user1 : User, user2 : User) {
       return user1.nickname != user2.nickname ||
         user1.message != user2.message ||
+        user1.state != user2.state ||
         getUserState(user1) != getUserState(user2);
     };
 
@@ -2008,8 +2009,7 @@ namespace wschat.client {
         users.push(user);
       });
       var getUserStateOrder = function(state : string) {
-        return (state == 'online' || state == 'idle' ||
-          state == 'busy')? 0 : 1;
+        return (state == 'online' || state == 'idle')? 0 : 1;
       };
       users.sort(function(u1, u2) {
         var s1 = getUserStateOrder(getUserState(u1) );
