@@ -254,7 +254,7 @@ namespace wschat.client {
 
     var createUserState = function(user : User) {
       var userState = getUserState(user);
-      if (user && user.state) {
+      if (userState != 'offline' && user.state) {
         userState = user.state;
       }
       var color : string;
