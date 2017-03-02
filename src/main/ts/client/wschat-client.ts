@@ -269,7 +269,7 @@ namespace wschat.client {
         title = chat.messages.IDLE;
         break;
       case 'busy':
-        color = '#ff0000';
+        color = '#ff6633';
         title = chat.messages.BUSY;
         break;
       default : 
