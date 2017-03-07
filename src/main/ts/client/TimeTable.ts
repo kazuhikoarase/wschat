@@ -171,6 +171,73 @@ namespace wschat.client {
       */
     };
 
+    var editor = function() {
+
+      var $textfield : JQuery = null;
+      var $label : JQuery;
+
+      var beginEdit = function($status : JQuery) {
+        var ttOff = $tt.offset();
+        var off = $status.offset();
+        $label = $status.find('.wschat-tt-label');
+        $label.css('display', 'none');
+        $textfield = createStatusEditor().
+          css('position', 'absolute').
+          css('left', (off.left - ttOff.left + 2) + 'px').
+          css('top', (off.top - ttOff.top - 1) + 'px').
+          css('width', $status.innerWidth() + 'px').
+          css('height', $status.innerHeight() + 'px').
+          val($status.data('model').status.comment).
+          on('keyup', function(event) {
+            switch(event.keyCode) {
+            case 13 : // enter
+              $tt.trigger('updateUserData', {
+                action : 'update',
+                dataId : $status.data('model').status.dataId,
+                id : 'comment',
+                value : $textfield.val() });
+              endEdit();
+              break;
+            case 27 : // esc
+              endEdit();
+              break;
+            }
+          });
+        $tt.append($textfield);
+        editor.currentDataId = $status.data('model').status.dataId;
+        window.setTimeout(function() {
+          $(document).on('mousedown', doc_mousedownHandler);
+        }, 0);
+      };
+
+      var endEdit = function() {
+        if ($textfield != null) {
+          console.log('endEdit');
+          $label.css('display', '');
+          $(document).off('mousedown', doc_mousedownHandler);
+          $textfield.remove();
+          $textfield = null;
+          editor.currentDataId = null;
+        }
+      };
+
+      var doc_mousedownHandler = function(event : JQueryEventObject) {
+        if ($(event.target).closest('.wschat-editor').length != 0) {
+          return;
+        }
+        endEdit();
+      };
+
+      var editor = {
+        currentDataId : null as string,
+        beginEdit : function($status : JQuery) {
+          endEdit();
+          beginEdit($status);
+        }
+      };
+      return editor;
+    }();
+
     var $tt = $('<div></div>').
       css('display', 'inline-block').
       css('position', 'relative').
@@ -182,7 +249,11 @@ namespace wschat.client {
         if ($(event.target).closest('.wschat-tt-status-picker').length == 1) {
 
           mouseOp = 'pick';
-
+          $block = $('<div></div>').css('position', 'absolute').css({
+            left : '0px', top : '0px', right : '0px', bottom : '0px'}).
+            css('opacity', '0').css('cursor', 'ew-resize').
+            css('background-color', '#ff0000');
+          $tt.append($block);
           var $picker = $(event.target).closest('.wschat-tt-status-picker');
           var statusModel = $picker.closest('.wschat-tt-status').data('model');
           var pickerModel = $picker.data('model');
@@ -206,7 +277,7 @@ namespace wschat.client {
 
           var time = new Date().getTime() ;
           if (time - lastMousedown < 300) {
-            $status.trigger('beginEdit');
+            editor.beginEdit($status);
           }
           lastMousedown = time;
 
@@ -300,6 +371,7 @@ namespace wschat.client {
 
     var lastPoint : Point = null;
     var picker : Picker = null;
+    var $block : JQuery = null;
     var mousemove = {
       pick : function(event : JQueryEventObject) {
         var statusModel = picker.statusModel;
@@ -332,6 +404,7 @@ namespace wschat.client {
     };
     var mouseup = {
       pick : function(event : JQueryEventObject) {
+        $block.remove();
         var statusModel = picker.statusModel;
         var pickerModel = picker.pickerModel;
         if (pickerModel.target == 'timeFrom' ||
@@ -465,6 +538,7 @@ namespace wschat.client {
         css('border', '1px solid #666666').
         css('opacity', '0.5');
       var $label = $('<div></div>').
+        addClass('wschat-tt-label').
         css('position', 'absolute').
         css('left', '1px').css('right', '1px').
         css('top', '1px').css('bottom', '1px').
@@ -475,58 +549,7 @@ namespace wschat.client {
       var $layer = $('<div></div>').css('position', 'relative').
         append($rect).append($label).append($st).append($ed);
 
-      var $textfield : JQuery = null;
-
-      var beginEdit = function() {
-        $label.css('display', 'none');
-        $textfield = createStatusEditor().
-          css('left', '1px').css('top', '0px').
-          css('width', model.rect.width + 'px').
-          css('height', model.rect.height + 'px').
-          val($ui.data('model').status.comment).
-          on('keyup', function(event) {
-            switch(event.keyCode) {
-            case 13 : // enter
-              $tt.trigger('updateUserData', {
-                action : 'update',
-                dataId : $ui.data('model').status.dataId,
-                id : 'comment',
-                value : $textfield.val() });
-              endEdit();
-              break;
-            case 27 : // esc
-              endEdit();
-              break;
-            }
-          });
-        $layer.append($textfield);
-        window.setTimeout(function() {
-          $(document).on('mousedown', doc_mousedownHandler);
-        }, 0);
-      };
-
-      var endEdit = function() {
-        if ($textfield != null) {
-          $label.css('display', '');
-          $(document).off('mousedown', doc_mousedownHandler);
-          $textfield.remove();
-          $textfield = null;
-        }
-      };
-
-      var doc_mousedownHandler = function(event : JQueryEventObject) {
-        if ($(event.target).closest('.wschat-editor').length != 0) {
-          return;
-        }
-        endEdit();
-      };
-
-      var $ui = createBlock().addClass('wschat-tt-status').
-        append($layer).
-        on('beginEdit', function(event) {
-          endEdit();
-          beginEdit();
-        });
+      var $ui = createBlock().addClass('wschat-tt-status').append($layer);
 
       var status = {
         setRect : function(rect : Rect) {
@@ -818,6 +841,20 @@ namespace wschat.client {
         ctx.stroke();
       });
 
+      statusUICache = function(statusUICache : StatusUI[]) {
+        var _newStatusUICache : StatusUI[] = [];
+        for (var i = 0; i < statusUICache.length; i += 1) {
+          var statusUI = statusUICache[i];
+          if (editor.currentDataId !=
+              statusUI.$ui.data('model').status.dataId) {
+            _newStatusUICache.push(statusUI);
+          } else {
+            newStatusUICache.push(statusUI);
+          }
+        }
+        return _newStatusUICache;
+      }(statusUICache);
+
       !function(updateStatus : (u : number, user : TimeTableUser, s : number, status : TimeTableStatus) => void) {
         for (var u = 0; u < model.users.length; u += 1) {
           var user = model.users[u];
@@ -828,6 +865,10 @@ namespace wschat.client {
           }
         };
       }(function(u, user, s, status) {
+
+        if (editor.currentDataId == status.dataId) {
+          return;
+        }
 
         if (!status._cache) {
           status._cache = {
