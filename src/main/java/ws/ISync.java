@@ -5,6 +5,6 @@ package ws;
  * @author Kazuhiko Arase
  */
 public interface ISync {
-    void sync();
-    Sync sync = new Sync();
+  void sync();
+  Sync sync = new Sync();
 }

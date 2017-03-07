@@ -10,12 +10,12 @@ import javax.websocket.server.ServerEndpointConfig;
  */
 public class WSConfigurator extends ServerEndpointConfig.Configurator {
 
-    @Override
-    public void modifyHandshake(
-        ServerEndpointConfig config, 
-        HandshakeRequest request, 
-        HandshakeResponse response
-    ) {
-        config.getUserProperties().put("request", request);
-    }
+  @Override
+  public void modifyHandshake(
+    ServerEndpointConfig config, 
+    HandshakeRequest request, 
+    HandshakeResponse response
+  ) {
+    config.getUserProperties().put("request", request);
+  }
 }

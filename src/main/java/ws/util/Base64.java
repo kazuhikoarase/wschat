@@ -15,78 +15,78 @@ import java.io.OutputStream;
  */
 public class Base64 {
 
-    private Base64() {
-    }
+  private Base64() {
+  }
 
-    public static String toUrl(
-        String contentType,
-        String path
-    ) throws IOException {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        OutputStream out = new Base64EncodeOutputStream(bout);
-        try {
-            InputStream in = new BufferedInputStream(
-                    new FileInputStream(new File(path) ) );
-            try {
-                byte[] buf = new byte[4096];
-                int len;
-                while ( (len = in.read(buf) ) != -1) {
-                    out.write(buf, 0, len);
-                }
-            } finally {
-                in.close();
-            }
-        } finally {
-            out.close();
+  public static String toUrl(
+    String contentType,
+    String path
+  ) throws IOException {
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+    OutputStream out = new Base64EncodeOutputStream(bout);
+    try {
+      InputStream in = new BufferedInputStream(
+          new FileInputStream(new File(path) ) );
+      try {
+        byte[] buf = new byte[4096];
+        int len;
+        while ( (len = in.read(buf) ) != -1) {
+          out.write(buf, 0, len);
         }
-        return "data:" + contentType + ";base64," +
-            new String(bout.toByteArray(), "ISO-8859-1");
+      } finally {
+        in.close();
+      }
+    } finally {
+      out.close();
+    }
+    return "data:" + contentType + ";base64," +
+      new String(bout.toByteArray(), "ISO-8859-1");
+  }
+
+  public static byte[] encode(byte[] data) throws IOException {
+
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
+
+    try {
+
+      Base64EncodeOutputStream out = new Base64EncodeOutputStream(bout);
+
+      try {
+        out.write(data);
+      } finally {
+        out.close();
+      }
+
+    } finally {
+      bout.close();
     }
 
-    public static byte[] encode(byte[] data) throws IOException {
+    return bout.toByteArray();
+  }
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+  public static byte[] decode(byte[] data) throws IOException {
 
-        try {
+    ByteArrayOutputStream bout = new ByteArrayOutputStream();
 
-            Base64EncodeOutputStream out = new Base64EncodeOutputStream(bout);
+    try {
 
-            try {
-                out.write(data);
-            } finally {
-                out.close();
-            }
+      Base64DecodeInputStream in = new Base64DecodeInputStream(new ByteArrayInputStream(data) );
 
-        } finally {
-            bout.close();
-        }
+      try {
 
-        return bout.toByteArray();
-    }
-
-    public static byte[] decode(byte[] data) throws IOException {
-
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-
-        try {
-
-            Base64DecodeInputStream in = new Base64DecodeInputStream(new ByteArrayInputStream(data) );
-
-            try {
-
-                int b;
-                while ( (b = in.read() ) != -1) {
-                    bout.write(b);
-                }
-
-            } finally {
-                in.close(); 
-            }
-
-        } finally {
-            bout.close();
+        int b;
+        while ( (b = in.read() ) != -1) {
+          bout.write(b);
         }
 
-        return bout.toByteArray();
+      } finally {
+        in.close(); 
+      }
+
+    } finally {
+      bout.close();
     }
+
+    return bout.toByteArray();
+  }
 }

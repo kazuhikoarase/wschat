@@ -23,90 +23,90 @@ import ws.util.ScriptUtil;
  */
 public class WSEndpoint extends Endpoint {
 
-    private static final ConcurrentHashMap<String,Object> global;
-    protected static final Logger logger;
+  private static final ConcurrentHashMap<String,Object> global;
+  protected static final Logger logger;
 
-    static {
-        global = new ConcurrentHashMap<String,Object>();
-        global.put("contextMap", new ConcurrentHashMap<String,Context>() );
-        logger = Logger.getLogger(WSEndpoint.class.getName() );
+  static {
+    global = new ConcurrentHashMap<String,Object>();
+    global.put("contextMap", new ConcurrentHashMap<String,Context>() );
+    logger = Logger.getLogger(WSEndpoint.class.getName() );
+  }
+
+  public WSEndpoint() {
+  }
+
+  protected ConcurrentHashMap<String,Object> getGlobal() {
+    return global;
+  }
+
+  @SuppressWarnings("unchecked")
+  protected ConcurrentHashMap<String,Context> getContextMap() {
+    return (ConcurrentHashMap<String,Context>)global.get("contextMap");
+  }
+
+  protected IEndpoint createEndpoint(
+      Session session, EndpointConfig config) {
+    try {
+
+      ServletContext servletContext = (ServletContext)config.
+          getUserProperties().get("servletContext");
+      String scriptPath = (String)config.
+          getUserProperties().get("scriptPath");
+      String factory = (String)config.
+          getUserProperties().get("factory");
+
+      ScriptEngine se = ScriptUtil.newScriptEngine();
+      se.put(ScriptEngine.FILENAME, scriptPath);
+      se.put("$global", global);
+      se.put("$logger", logger);
+      se.put("$session", session);
+      se.put("$servletContext", servletContext);
+      se.put("$request", config.getUserProperties().get("request") );
+
+      // clear properties.
+      config.getUserProperties().clear();
+      Reader in = new InputStreamReader(
+        servletContext.getResourceAsStream(scriptPath), "UTF-8");
+      try {
+        se.eval(in);
+      } finally {
+        in.close();
+      }
+      return (IEndpoint)se.eval(factory);
+    } catch(RuntimeException e) {
+      throw e;
+    } catch(Exception e) {
+      throw new RuntimeException(e);
     }
+  }
 
-    public WSEndpoint() {
+  @Override
+  public void onOpen(Session session, EndpointConfig config) {
+    final Context context = new Context(session,
+        createEndpoint(session, config) );
+    session.addMessageHandler(new MessageHandler.Whole<String>() {
+      @Override
+      public void onMessage(String message) {
+        context.getEndpoint().onMessage(message);
+      }
+    });
+    getContextMap().put(session.getId(), context);
+    context.getEndpoint().onOpen(config);
+  }
+
+  @Override
+  public void onClose(Session session, CloseReason closeReason) {
+    Context context = getContextMap().get(session.getId() );
+    context.getEndpoint().onClose(closeReason);
+    getContextMap().remove(session.getId() );
+  }
+
+  @Override
+  public void onError(Session session, Throwable t) {
+    if (t instanceof IOException) {
+      // ignore
+    } else {
+      logger.log(Level.SEVERE, t.getMessage(), t);
     }
-
-    protected ConcurrentHashMap<String,Object> getGlobal() {
-        return global;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected ConcurrentHashMap<String,Context> getContextMap() {
-        return (ConcurrentHashMap<String,Context>)global.get("contextMap");
-    }
-
-    protected IEndpoint createEndpoint(
-            Session session, EndpointConfig config) {
-        try {
-
-            ServletContext servletContext = (ServletContext)config.
-                    getUserProperties().get("servletContext");
-            String scriptPath = (String)config.
-                    getUserProperties().get("scriptPath");
-            String factory = (String)config.
-                    getUserProperties().get("factory");
-
-            ScriptEngine se = ScriptUtil.newScriptEngine();
-            se.put(ScriptEngine.FILENAME, scriptPath);
-            se.put("$global", global);
-            se.put("$logger", logger);
-            se.put("$session", session);
-            se.put("$servletContext", servletContext);
-            se.put("$request", config.getUserProperties().get("request") );
-
-            // clear properties.
-            config.getUserProperties().clear();
-            Reader in = new InputStreamReader(
-                servletContext.getResourceAsStream(scriptPath), "UTF-8");
-            try {
-                se.eval(in);
-            } finally {
-                in.close();
-            }
-            return (IEndpoint)se.eval(factory);
-        } catch(RuntimeException e) {
-            throw e;
-        } catch(Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public void onOpen(Session session, EndpointConfig config) {
-        final Context context = new Context(session,
-                createEndpoint(session, config) );
-        session.addMessageHandler(new MessageHandler.Whole<String>() {
-            @Override
-            public void onMessage(String message) {
-                context.getEndpoint().onMessage(message);
-            }
-        });
-        getContextMap().put(session.getId(), context);
-        context.getEndpoint().onOpen(config);
-    }
-
-    @Override
-    public void onClose(Session session, CloseReason closeReason) {
-        Context context = getContextMap().get(session.getId() );
-        context.getEndpoint().onClose(closeReason);
-        getContextMap().remove(session.getId() );
-    }
-
-    @Override
-    public void onError(Session session, Throwable t) {
-        if (t instanceof IOException) {
-            // ignore
-        } else {
-            logger.log(Level.SEVERE, t.getMessage(), t);
-        }
-    }
+  }
 }

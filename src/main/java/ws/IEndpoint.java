@@ -8,7 +8,7 @@ import javax.websocket.EndpointConfig;
  * @author Kazuhiko Arase
  */
 public interface IEndpoint {
-    void onOpen(EndpointConfig config);
-    void onClose(CloseReason closeReason);
-    void onMessage(String message);
+  void onOpen(EndpointConfig config);
+  void onClose(CloseReason closeReason);
+  void onMessage(String message);
 }

@@ -12,64 +12,64 @@ import javax.sql.DataSource;
  */
 public class ConnManager {
 
-    private static ConnManager instance = null;
+  private static ConnManager instance = null;
 
-    public static ConnManager getInstance() {
-        if (instance == null) {
-            instance = new ConnManager();
-        }
-        return instance;
+  public static ConnManager getInstance() {
+    if (instance == null) {
+      instance = new ConnManager();
     }
+    return instance;
+  }
 
-    private final ThreadLocal<Connection> localConn = new ThreadLocal<Connection>();
+  private final ThreadLocal<Connection> localConn = new ThreadLocal<Connection>();
 
-    private final DataSource dataSource;
+  private final DataSource dataSource;
 
-    private ConnManager() {
+  private ConnManager() {
+    try {
+      Context context = new InitialContext();
+      dataSource = (DataSource)context.lookup("java:comp/env/jdbc/WSCHAT_DS");
+    } catch(Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public Connection getConnection() throws Exception {
+    Connection conn = dataSource.getConnection();
+    conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+    conn.setAutoCommit(false);
+    return conn;
+  }
+
+  public Object tran(Task task) throws Exception {
+    Connection conn = localConn.get();
+    if (conn == null) {
+      conn = getConnection();
+      try {
+        localConn.set(conn);
         try {
-            Context context = new InitialContext();
-            dataSource = (DataSource)context.lookup("java:comp/env/jdbc/WSCHAT_DS");
-        } catch(Exception e) {
-            throw new RuntimeException(e);
+          return task.invoke();
+        } finally {
+          localConn.remove();
         }
+      } finally {
+        conn.rollback();
+        conn.close();
+      }
+    } else {
+      return task.invoke();
     }
+  }
 
-    public Connection getConnection() throws Exception {
-        Connection conn = dataSource.getConnection();
-        conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-        conn.setAutoCommit(false);
-        return conn;
-    }
+  public interface Task {
+    Object invoke() throws Exception ;
+  }
 
-    public Object tran(Task task) throws Exception {
-        Connection conn = localConn.get();
-        if (conn == null) {
-            conn = getConnection();
-            try {
-                localConn.set(conn);
-                try {
-                    return task.invoke();
-                } finally {
-                    localConn.remove();
-                }
-            } finally {
-                conn.rollback();
-                conn.close();
-            }
-        } else {
-            return task.invoke();
-        }
+  public Connection current() {
+    Connection conn = localConn.get();
+    if (conn == null) {
+      throw new NullPointerException("not in tran");
     }
-
-    public interface Task {
-        Object invoke() throws Exception ;
-    }
-
-    public Connection current() {
-        Connection conn = localConn.get();
-        if (conn == null) {
-            throw new NullPointerException("not in tran");
-        }
-        return conn;
-    }
+    return conn;
+  }
 }
