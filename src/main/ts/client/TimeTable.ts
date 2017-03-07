@@ -25,6 +25,8 @@ namespace wschat.client {
     setColor : (color : string) => void
     setTitle : (title : string) => void
     setVisible : (visible : boolean) => void
+    setEditable : (editable : boolean) => void
+    isEditable : () => boolean
     $ui : JQuery
   }
 
@@ -273,11 +275,14 @@ namespace wschat.client {
           mouseOp = 'scroll';
 
           var $status = $(event.target).closest('.wschat-tt-status');
-          toFront($status.data('model') );
 
           var time = new Date().getTime() ;
           if (time - lastMousedown < 300) {
-            editor.beginEdit($status);
+            var statusModel = $status.data('model');
+            if (statusModel.status.uid == chat.user.uid) {
+              toFront(statusModel);
+              editor.beginEdit($status);
+            }
           }
           lastMousedown = time;
 
@@ -525,7 +530,8 @@ namespace wschat.client {
         title : '',
         color : '',
         rect : { x : 0, y : 0, width: 0, height : 0 },
-        visible : true
+        visible : true,
+        editable : true
       };
 
       var pickerWidth = 4;
@@ -608,6 +614,17 @@ namespace wschat.client {
           }
           model.visible = visible;
           status.$ui.css('display', model.visible? '' : 'none');
+        },
+        setEditable : function(editable : boolean) {
+          if (model.editable == editable) {
+            return;
+          }
+          $st.css('display', editable? '' : 'none');
+          $ed.css('display', editable? '' : 'none');
+          model.editable = editable;
+        },
+        isEditable : function() {
+          return model.editable;
         },
         $ui : $ui
       };
@@ -910,6 +927,7 @@ namespace wschat.client {
         statusUI.setText(status.comment);
         statusUI.setTitle(title);
         statusUI.setColor('#9999ff');
+        statusUI.setEditable(status.uid == chat.user.uid);
       });
 
       while (labelUICache.length > 0) {
