@@ -18,6 +18,7 @@ declare module wschat.client {
     fid : number
     users : { [uid : string] : User }
     groups : { [gid : string] : Group }
+    userData : { [dataId : string] : any }
     selectedUids : { [uid : string] : boolean }
     selectedUid : string
     selectedGid : string
@@ -51,7 +52,7 @@ declare module wschat.client {
   }
 
   interface Dialog {
-    showDialog : ($content : JQuery) => void
+    showDialog : ($content : JQuery) => JQuery
     hideDialog : () => void
   }
 
@@ -59,6 +60,12 @@ declare module wschat.client {
     beginEdit : (message : string) => void
     isEditing : () => boolean
     endEdit : (reason? : string, msg? : string) => void
+  }
+
+  interface TimeTable {
+    $ui : JQuery,
+    refreshData : () => void,
+    dlg? : Dialog
   }
 
   interface UI {
@@ -75,6 +82,7 @@ declare module wschat.client {
     login? : (data : any) => void
     user? : (data : any) => void
     avatar? : (data : any) => void
+    userData? : (data : any) => void
     searchUsers? : (data : any) => void
     requestAddToContacts? : (data : any) => void
     acceptContact? : (data : any) => void

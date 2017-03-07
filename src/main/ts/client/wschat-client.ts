@@ -13,6 +13,7 @@ namespace wschat.client {
       user: null,
       users: {},
       avatars: {},
+      userData : {},
       userStates: {},
       userIdleTimes: {},
       groups: {},
@@ -417,6 +418,7 @@ namespace wschat.client {
         chat.user = data.user;
         if (changed) {
           userUI.invalidate();
+          statusUI.invalidate();
           //userUpdate();
         }
       } else {
@@ -438,6 +440,7 @@ namespace wschat.client {
           usersUI.invalidate();
           groupsUI.invalidate();
           threadUsersUI.invalidate();
+          statusUI.invalidate();
         }
       }
     };
@@ -451,6 +454,15 @@ namespace wschat.client {
         usersUI.invalidate();
         threadUsersUI.invalidate();
       }
+    };
+
+    actions.userData = function(data) {
+      if (data['delete']) {
+        delete chat.userData[data.dataId];
+      } else {
+        chat.userData[data.data.dataId] = data.data;
+      }
+      statusUI.invalidate();
     };
 
     actions.searchUsers = function(data) {
@@ -926,6 +938,14 @@ namespace wschat.client {
     var threadUsersUI = baseUI();
     var threadUI = baseUI();
     var msgUI = baseUI();
+
+    var timeTable : TimeTable = null;
+    var statusUI = baseUI();
+    statusUI.validate = function() {
+      if (timeTable != null) {
+        timeTable.refreshData();
+      }
+    };
 
     // build ui
     var $user = $('<div></div>').addClass('wschat-user').
@@ -1505,6 +1525,7 @@ namespace wschat.client {
         return $content;
       };
       var hideDialog = function() {
+        $dlg.children().trigger('hideDialog');
         $dlg.remove();
         $chatUI.off('mousedown', mouseDownHandler);
       };
@@ -1894,12 +1915,66 @@ namespace wschat.client {
         userUpdate();
       }).prepend(createUserState(chat.user).
           on('click', userState_clickHandler) );
-      appendEditor(ui.avatarSize, 140, chat.user.message, chat.messages.TODAYS_FEELING, true).
+      appendEditor(ui.avatarSize - ui.gap, 140, chat.user.message, chat.messages.TODAYS_FEELING, true).
           on('valueChange', function() {
         chat.user.message = $(this).data('controller').val();
         userUI.invalidate();
         userUpdate();
-      });
+      }).prepend(function() {
+              var $cv = $('<canvas width="9" height="9"></canvas>').
+                css('margin', '1px 1px 1px 2px').
+                css('vertical-align', 'middle').on('click', function(event) {
+                  if (timeTable != null) {
+                    timeTable.dlg.hideDialog();
+                  }
+                  var off = $cv.offset();
+                  timeTable = createTimeTable(chat);
+                  timeTable.refreshData();
+                  timeTable.$ui.on('updateUserData', function(event, data) {
+
+                    if (data.action == 'update') {
+                      var userData = chat.userData[data.dataId];
+                      if (userData && userData[data.id] != data.value) {
+                        userData[data.id] = data.value;
+                        send({
+                          action : 'updateUserData',
+                          userData : userData
+                        });
+                      }
+                    } else if (data.action == 'create') {
+                      send({
+                        action : 'updateUserData',
+                        userData : data.userData,
+                        create : true
+                      });
+                    } else if (data.action == 'delete') {
+                      var userData = chat.userData[data.dataId];
+                      if (userData && userData.uid == chat.user.uid) {
+                        send({
+                          action : 'updateUserData',
+                          userData : userData,
+                          'delete' : true
+                        });
+                      }
+                    }
+                  
+                  });
+                  timeTable.dlg = createDialog();
+                  timeTable.dlg.showDialog(timeTable.$ui).
+                    on('hideDialog', function() {
+                      timeTable = null;
+                    }).parent().css({'left': off.left + 'px',
+                      'top': (off.top + $cv.outerHeight() ) + 'px' });
+                });
+              var ctx = (<any>$cv)[0].getContext('2d');
+              ctx.fillStyle = '#999999';
+              ctx.fillRect(0, 0, 9, 9);
+              ctx.clearRect(1, 1, 7, 7);
+              for (var i = 2; i <= 6; i += 2) {
+                ctx.fillRect(2, i, 5, 1);
+              }
+              return $cv;
+            }() );
     };
     var createUserAvatar = function(user : User,
         avatarCache : { [uid : string] : JQuery}) {

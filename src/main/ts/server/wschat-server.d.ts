@@ -36,12 +36,18 @@ declare module wschat.server {
     fetchMessages: (uid: String, gid: String, opts: FetchOptions) => {
         [mid: string]: Message;
     };
+    newDataId: () => string;
+    updateUserData: (userData : any) => any;
+    getUserData: (dataId : string) => any;
+    deleteUserData: (dataId : string) => void;
+    fetchUserData: (uid : string) => any[];
   }
 
   interface ServerActions {
     login? : (data : any) => void
     user? : (data : any) => void
     updateAvatar? : (data : any) => void
+    updateUserData? : (data : any) => void
     searchUsers? : (data : any) => void
     newGroup? : (data : { gid : string,
     users? : string[], message : string }) => void

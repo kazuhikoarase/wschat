@@ -140,4 +140,33 @@ namespace wschat.client {
           off2.top, off2.top + $u2.outerHeight());
     };
   }();
+
+  export var createCal = function() {
+    var $cal = $('<canvas></canvas>').
+      attr('width', '16').attr('height', '16').css('vertical-align', 'top');
+    var ctx = (<any>$cal)[0].getContext('2d');
+    var defColor = '#ffffff';
+    var accColor = '#ffcccc';
+    for (var i = 0; i < 5; i += 1) {
+      for (var j = 0; j < 5; j += 1) {
+        var x = i * 3 + 1;
+        var y = j * 3 + 1;
+        if (j == 0 && i >= 1 && i <= 3) {
+          if (i == 1) {
+            ctx.fillStyle = defColor;
+            ctx.fillRect(x, y, 8, 2);
+          }
+        } else {
+          ctx.fillStyle = (i == 3 && j == 3)? accColor : defColor;
+          ctx.fillRect(x, y, 2, 2);
+        }
+      }
+    }
+    var $calBody = $('<span></span>').addClass('wschat-tt-cal').
+      css('display', 'inline-block').
+      css('background-color', '#999999').
+      css('width', '16px').css('height', '16px').append($cal);
+    return $calBody;
+  };
+
 }

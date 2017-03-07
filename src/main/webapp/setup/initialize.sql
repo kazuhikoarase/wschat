@@ -5,6 +5,9 @@ create sequence SEQ_GID as bigint start with 1 increment by 1;
 drop sequence SEQ_MID if exists;
 create sequence SEQ_MID as bigint start with 1 increment by 1;
 
+drop sequence SEQ_DATA_ID if exists;
+create sequence SEQ_DATA_ID as bigint start with 1 increment by 1;
+
 drop table USERS if exists;
 create table USERS (
   UID varchar(32) not null,
@@ -54,11 +57,24 @@ create table AVATARS (
   primary key (UID)
 );
 
+drop table USER_DATA if exists;
+create table USER_DATA (
+  DATA_ID bigint not null,
+  DATA_TYPE varchar(8) not null,
+  UID varchar(32) not null,
+  DATE bigint not null,
+  JSON_DATA varchar(1024) not null,
+  primary key (DATA_ID)
+);
+
 drop index MESSAGES_IDX1 if exists;
 create index MESSAGES_IDX1 on MESSAGES (DATE); 
 
 drop index MESSAGES_IDX2 if exists;
 create index MESSAGES_IDX2 on MESSAGES (DATE desc); 
+
+drop index USER_DATA_IDX1 if exists;
+create index USER_DATA_IDX1 on USER_DATA (UID); 
 
 drop table DUAL if exists;
 create table DUAL (DUMMY varchar(1) );

@@ -20,6 +20,7 @@ import wschat.GroupUser;
 import wschat.IChatService;
 import wschat.Message;
 import wschat.User;
+import wschat.UserData;
 import wschat.sql.ConnManager;
 
 /**
@@ -54,6 +55,10 @@ extends UserService implements IChatService {
 
   protected String getNextMid() throws Exception {
     return getNextValue("SEQ_MID");
+  }
+
+  protected String getNextDataId() throws Exception {
+    return getNextValue("SEQ_DATA_ID");
   }
 
   @Override
@@ -381,6 +386,76 @@ extends UserService implements IChatService {
           }
         });
     return messages;
+  }
+
+  @Override
+  public String newDataId() throws Exception {
+    return getNextDataId();
+  }
+
+  @Override
+  public UserData getUserData(String dataId) throws Exception {
+    final UserData userData = new UserData();
+    userData.setDataId(dataId);
+    int count = executeQuery("select DATA_TYPE,UID,JSON_DATA from USER_DATA where DATA_ID=?",
+        new Object[]{ stringToLong(dataId) }, new ResultHandler() {
+      @Override
+      public void handle(ResultSet rs) throws Exception {
+        userData.setDataType(rs.getString(1) );
+        userData.setUid(rs.getString(2) );
+        userData.setJsonData(rs.getString(3) );
+      }
+    });
+    if (count == 0) {
+      return null;
+    } else if (count != 1) {
+      throw new IllegalStateException("count:" + count);
+    }
+    return userData;
+  }
+
+  @Override
+  public void updateUserData(UserData userData) throws Exception {
+    int count = executeQuery("select DATA_ID from USER_DATA where DATA_ID=? for update",
+        new Object[]{ stringToLong(userData.getDataId() )}, null);
+    if (count == 0) {
+      executeUpdate("insert into USER_DATA (DATA_ID,DATA_TYPE,UID,DATE,JSON_DATA) values (?,?,?,?,?)",
+          new Object[]{ stringToLong(userData.getDataId() ),
+          userData.getDataType(), userData.getUid(),
+          System.currentTimeMillis(), userData.getJsonData() });
+    } else {
+      executeUpdate("update USER_DATA set DATE=?, JSON_DATA=? where DATA_ID=?",
+          new Object[]{ System.currentTimeMillis(), userData.getJsonData(),
+          stringToLong(userData.getDataId() ) });
+    }
+    current().commit();
+  }
+
+  @Override
+  public void deleteUserData(String dataId) throws Exception {
+    executeUpdate("delete from USER_DATA where DATA_ID=?",
+        new Object[]{ stringToLong(dataId) });
+    current().commit();
+  }
+
+  @Override
+  public List<UserData> fetchUserData(String uid) throws Exception {
+    final List<UserData> userDataList = new ArrayList<UserData>();
+    executeQuery("select DATA_ID,DATA_TYPE,UID,JSON_DATA from USER_DATA" +
+          " where UID=? order by DATA_ID",
+        new Object[]{ uid },
+        new ResultHandler() {
+          @Override
+          public void handle(ResultSet rs) throws Exception {
+            UserData userData = new UserData();
+            userData.setDataId(longToString(rs.getLong(1) ) );
+            userData.setDataType(rs.getString(2) );
+            userData.setUid(rs.getString(3) );
+            userData.setJsonData(rs.getString(4) );
+            userDataList.add(userData);
+          }
+        });
+    return userDataList;
   }
 
   protected static long stringToLong(String v) {

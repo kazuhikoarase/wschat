@@ -25,4 +25,10 @@ public interface IChatService extends IUserService {
 
   void updateAvatar(String uid, String data, int size) throws Exception;
   String getAvatar(String uid, int size) throws Exception;
+
+  String newDataId() throws Exception;
+  UserData getUserData(String dataId) throws Exception;
+  void updateUserData(UserData userData) throws Exception;
+  void deleteUserData(String dataId) throws Exception;
+  List<UserData> fetchUserData(String uid) throws Exception;
 }

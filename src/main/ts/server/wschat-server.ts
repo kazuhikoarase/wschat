@@ -99,7 +99,7 @@ namespace wschat.server {
         new (Java.type('ws.ISync'))({ sync : sync }) );
   };
 
-  var createService = function() {
+  var createService = function() : ChatService {
 
     var service = Java.type('wschat.ChatServiceHolder').
       getInstance($servletContext);
@@ -421,7 +421,7 @@ namespace wschat.server {
       javaMessage.setJsonData(JSON.stringify(message) );
       service.updateMessage(javaMessage);
     };
-    var fetchMessages = function(uid : String, gid : String,
+    var fetchMessages = function(uid : string, gid : string,
         opts : FetchOptions) {
       var javaOpts = toJavaOpts(opts || {});
       var messages : { [mid:string]:Message } = {};
@@ -431,6 +431,33 @@ namespace wschat.server {
         messages[message.mid] = message;
       }
       return messages;
+    };
+
+    var newDataId = function() {
+      return '' + service.newDataId();
+    };
+    var updateUserData = function(userData : any) {
+      var javaUserData = new (Java.type('wschat.UserData'))();
+      javaUserData.setDataId(userData.dataId);
+      javaUserData.setDataType(userData.dataType);
+      javaUserData.setUid(userData.uid);
+      javaUserData.setJsonData(JSON.stringify(userData) );
+      service.updateUserData(javaUserData);
+      return userData;
+    };
+    var getUserData = function(dataId : string) : any {
+      return JSON.parse(service.getUserData(dataId).getJsonData() );
+    };
+    var deleteUserData = function(dataId : string) {
+      service.deleteUserData(dataId);
+    };
+    var fetchUserData = function(uid : string) {
+      var javaUserDataList = service.fetchUserData(uid);
+      var userDataList : any[] = [];
+      for (var i = 0; i < javaUserDataList.size(); i += 1) {
+        userDataList.push(JSON.parse(javaUserDataList.get(i).getJsonData() ) );
+      }
+      return userDataList;
     };
 
     var putUserSession = function(uid : string, sid : string, data : any) {
@@ -479,7 +506,13 @@ namespace wschat.server {
       newMid: newMid,
       getMessage: getMessage,
       updateMessage: updateMessage,
-      fetchMessages: fetchMessages
+      fetchMessages: fetchMessages,
+
+      newDataId: newDataId,
+      updateUserData: updateUserData,
+      getUserData: getUserData,
+      deleteUserData: deleteUserData,
+      fetchUserData: fetchUserData
     };
   };
 
@@ -578,11 +611,21 @@ namespace wschat.server {
       data.messages = chat.messages;
       send(data);
 
-      send({
-        action: 'avatar',
-        uid: chat.user.uid,
-        data: chatService.getAvatar(chat.user.uid)
-      });
+      var sendUserData = function(uid : string) {
+        send({
+          action: 'avatar',
+          uid: uid,
+          data: chatService.getAvatar(uid)
+        });
+        $.each(chatService.fetchUserData(uid), function(i, userData) {
+          send({
+            action: 'userData',
+            data: userData
+          });
+        });
+      };
+
+      sendUserData(chat.user.uid);
 
       $.each(chat.user.contacts, function(uid, contact) {
         var user = chatService.getUser(uid);
@@ -603,11 +646,7 @@ namespace wschat.server {
           group: group
         });
 
-        send({
-          action: 'avatar',
-          uid: user.uid,
-          data: chatService.getAvatar(user.uid)
-        });
+        sendUserData(user.uid);
       });
     };
 
@@ -640,6 +679,34 @@ namespace wschat.server {
       $.each(chat.user.contacts, function(uid, contact) {
         if (chatService.containsUser(chat.user.uid, uid) ) {
           send(avatarData, uid);
+        }
+      });
+    };
+
+    actions.updateUserData = function(data) {
+
+      var userData : any = {
+        action: 'userData'
+      };
+
+      if (data['delete']) {
+        chatService.deleteUserData(data.userData.dataId);
+        userData.dataId = data.userData.dataId;
+        userData['delete'] = true;
+      } else if (data.create) {
+        data.userData.dataId = chatService.newDataId();
+        data.userData.uid = chat.user.uid;
+        chatService.updateUserData(data.userData);
+        userData.data = chatService.getUserData(data.userData.dataId);
+      } else {
+        chatService.updateUserData(data.userData);
+        userData.data = chatService.getUserData(data.userData.dataId);
+      }
+
+      send(userData, chat.user.uid);
+      $.each(chat.user.contacts, function(uid, contact) {
+        if (chatService.containsUser(chat.user.uid, uid) ) {
+          send(userData, uid);
         }
       });
     };
