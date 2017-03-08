@@ -436,13 +436,13 @@ namespace wschat.server {
     var newDataId = function() {
       return '' + service.newDataId();
     };
-    var updateUserData = function(userData : any) {
+    var updateUserData = function(userData : any, date : string) {
       var javaUserData = new (Java.type('wschat.UserData'))();
       javaUserData.setDataId(userData.dataId);
       javaUserData.setDataType(userData.dataType);
       javaUserData.setUid(userData.uid);
       javaUserData.setJsonData(JSON.stringify(userData) );
-      service.updateUserData(javaUserData);
+      service.updateUserData(javaUserData, date || null);
       return userData;
     };
     var getUserData = function(dataId : string) : any {
@@ -696,10 +696,10 @@ namespace wschat.server {
       } else if (data.create) {
         data.userData.dataId = chatService.newDataId();
         data.userData.uid = chat.user.uid;
-        chatService.updateUserData(data.userData);
+        chatService.updateUserData(data.userData, data.date);
         userData.data = chatService.getUserData(data.userData.dataId);
       } else {
-        chatService.updateUserData(data.userData);
+        chatService.updateUserData(data.userData, data.date);
         userData.data = chatService.getUserData(data.userData.dataId);
       }
 

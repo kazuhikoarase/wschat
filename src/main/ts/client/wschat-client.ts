@@ -1941,12 +1941,14 @@ namespace wschat.client {
                         userData[data.id] = data.value;
                         send({
                           action : 'updateUserData',
+                          date : userData.timeTo,
                           userData : userData
                         });
                       }
                     } else if (data.action == 'create') {
                       send({
                         action : 'updateUserData',
+                        date : data.timeTo,
                         userData : data.userData,
                         create : true
                       });
@@ -1955,12 +1957,12 @@ namespace wschat.client {
                       if (userData && userData.uid == chat.user.uid) {
                         send({
                           action : 'updateUserData',
+                          date : userData.timeTo,
                           userData : userData,
                           'delete' : true
                         });
                       }
                     }
-                  
                   });
                   timeTable.dlg = createDialog();
                   timeTable.dlg.showDialog(timeTable.$ui).

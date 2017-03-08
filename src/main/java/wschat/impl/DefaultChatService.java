@@ -415,17 +415,20 @@ extends UserService implements IChatService {
   }
 
   @Override
-  public void updateUserData(UserData userData) throws Exception {
+  public void updateUserData(UserData userData, String date) throws Exception {
+    final long time = date != null?
+        new SimpleDateFormat("yyyyMMddHHmm").parse(date).getTime() :
+        System.currentTimeMillis();
     int count = executeQuery("select DATA_ID from USER_DATA where DATA_ID=? for update",
         new Object[]{ stringToLong(userData.getDataId() )}, null);
     if (count == 0) {
       executeUpdate("insert into USER_DATA (DATA_ID,DATA_TYPE,UID,DATE,JSON_DATA) values (?,?,?,?,?)",
           new Object[]{ stringToLong(userData.getDataId() ),
           userData.getDataType(), userData.getUid(),
-          System.currentTimeMillis(), userData.getJsonData() });
+          time, userData.getJsonData() });
     } else {
       executeUpdate("update USER_DATA set DATE=?, JSON_DATA=? where DATA_ID=?",
-          new Object[]{ System.currentTimeMillis(), userData.getJsonData(),
+          new Object[]{ time, userData.getJsonData(),
           stringToLong(userData.getDataId() ) });
     }
     current().commit();

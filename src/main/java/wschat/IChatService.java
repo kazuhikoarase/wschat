@@ -28,7 +28,7 @@ public interface IChatService extends IUserService {
 
   String newDataId() throws Exception;
   UserData getUserData(String dataId) throws Exception;
-  void updateUserData(UserData userData) throws Exception;
+  void updateUserData(UserData userData, String date) throws Exception;
   void deleteUserData(String dataId) throws Exception;
   List<UserData> fetchUserData(String uid) throws Exception;
 }

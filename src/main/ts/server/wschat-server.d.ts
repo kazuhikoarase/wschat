@@ -37,7 +37,7 @@ declare module wschat.server {
         [mid: string]: Message;
     };
     newDataId: () => string;
-    updateUserData: (userData : any) => any;
+    updateUserData: (userData : any, date : string) => any;
     getUserData: (dataId : string) => any;
     deleteUserData: (dataId : string) => void;
     fetchUserData: (uid : string) => any[];

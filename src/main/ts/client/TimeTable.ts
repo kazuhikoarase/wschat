@@ -118,7 +118,7 @@ namespace wschat.client {
       bodyWidth : 600,
       bodyHeight : 200,
       cellHeight : 32,
-      hourInPixel : 16,
+      hourInPixel : 12,
       oddBgColor : '#f0f0f0'
     };
 
@@ -770,25 +770,33 @@ namespace wschat.client {
       var newLabelUICache : LabelUI[] = [];
       var newStatusUICache : StatusUI[] = [];
 
-      var labelWidth = 50;
+      var dateLabelWidth = 50;
+      var hourLabelWidth = 20;
+      var stepWidth = 8;
       var stepInHours : number;
       var timeUnitInHours : number;
 
-      if (style.hourInPixel * 12 < labelWidth) {
-        stepInHours = 3;
+      if (style.hourInPixel * 12 < hourLabelWidth) {
         timeUnitInHours = 24;
-      } else if (style.hourInPixel * 6 < labelWidth) {
-        stepInHours = 1;
+      } else if (style.hourInPixel * 6 < hourLabelWidth) {
         timeUnitInHours = 12;
-      } else if (style.hourInPixel * 3 < labelWidth) {
-        stepInHours = 1;
+      } else if (style.hourInPixel * 3 < hourLabelWidth) {
         timeUnitInHours = 6;
-      } else if (style.hourInPixel < labelWidth) {
-        stepInHours = 1;
+      } else if (style.hourInPixel < hourLabelWidth) {
         timeUnitInHours = 3;
       } else {
-        stepInHours = 1;
         timeUnitInHours = 1;
+      }
+      if (style.hourInPixel * 12 < stepWidth) {
+        stepInHours = 24;
+      } else if (style.hourInPixel * 6 < stepWidth) {
+        stepInHours = 12;
+      } else if (style.hourInPixel * 3 < stepWidth) {
+        stepInHours = 6;
+      } else if (style.hourInPixel < stepWidth) {
+        stepInHours = 3;
+      } else {
+        stepInHours = 1;
       }
 
       var timeline = function(update : (data : TimelineData) => void) {
@@ -920,10 +928,15 @@ namespace wschat.client {
           return;
         }
 
+        var minH = Math.min(24, Math.ceil(dateLabelWidth / style.hourInPixel) );
+        if (h != 0 && h < minH) {
+          return;
+        }
+
         var rect = {
             x : data.x + 1,
             y : 1,
-            width : style.hourInPixel * timeUnitInHours - 2,
+            width : style.hourInPixel * (h == 0? minH : timeUnitInHours) - 2,
             height : style.colHeaderHeight - 2
           };
 
