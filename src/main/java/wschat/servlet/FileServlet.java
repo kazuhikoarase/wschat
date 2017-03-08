@@ -287,12 +287,23 @@ public class FileServlet extends HttpServlet {
         file.delete();
       }
     }
-    int updateCount = executeUpdate(
-      "delete from MESSAGES where DATE<" +
-      (System.currentTimeMillis() -
-          DAY_IN_MILLIS * messageExpireInDays) );
-    if (updateCount > 0) {
-      logger.info(updateCount + " messages are deleted.");
+    {
+      int updateCount = executeUpdate(
+        "delete from MESSAGES where DATE<" +
+        (System.currentTimeMillis() -
+            DAY_IN_MILLIS * messageExpireInDays) );
+      if (updateCount > 0) {
+        logger.info(updateCount + " messages are deleted.");
+      }
+    }
+    {
+      int updateCount = executeUpdate(
+        "delete from USER_DATA where DATE<" +
+        (System.currentTimeMillis() -
+            DAY_IN_MILLIS * messageExpireInDays) );
+      if (updateCount > 0) {
+        logger.info(updateCount + " messages are deleted.");
+      }
     }
   }
 
