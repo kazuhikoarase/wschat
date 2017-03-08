@@ -820,7 +820,7 @@ namespace wschat.client {
         var rect = {
             x : data.x + 1,
             y : 1,
-            width : style.hourInPixel * 4 - 2,
+            width : style.hourInPixel * 2 - 2,
             height : style.colHeaderHeight - 2
           };
 
@@ -841,7 +841,7 @@ namespace wschat.client {
         if (h == 0) {
           var date = new Date();
           date.setTime(data.time);
-          rect.width *= 8;
+          rect.width += style.hourInPixel * 2;
           labelUI.setText( (date.getMonth() + 1) + '/' +
               date.getDate() + '(' + model.days[date.getDay()] + ')');
           labelUI.setTitle(date.getFullYear() + '/' +
