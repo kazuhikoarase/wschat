@@ -135,5 +135,6 @@ declare module wschat {
     OFFLINE : string
     IDLE : string
     BUSY : string
+    WHERE_ARE_YOU : string
   }
 }

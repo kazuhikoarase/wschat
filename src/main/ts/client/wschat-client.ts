@@ -1923,7 +1923,9 @@ namespace wschat.client {
       }).prepend(function() {
               var $cv = $('<canvas width="9" height="9"></canvas>').
                 css('margin', '1px 1px 1px 2px').
-                css('vertical-align', 'middle').on('click', function(event) {
+                css('vertical-align', 'middle').
+                attr('title', chat.messages.WHERE_ARE_YOU).
+                on('click', function(event) {
                   if (timeTable != null) {
                     timeTable.dlg.hideDialog();
                   }
