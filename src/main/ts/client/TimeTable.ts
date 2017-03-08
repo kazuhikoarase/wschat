@@ -106,7 +106,8 @@ namespace wschat.client {
 
   export var createTimeTable = function(
     chat : Chat,
-    applyDecoration : ($target : JQuery) => JQuery
+    applyDecoration : ($target : JQuery) => JQuery,
+    getSortedUsers : () => User[]
   ) : TimeTable {
 
     var style = {
@@ -993,9 +994,12 @@ namespace wschat.client {
       if (chat.user) {
         addUser(chat.user.uid, chat.user.nickname, true);
       }
-      for (var uid in chat.users) {
-        addUser(uid, chat.users[uid].nickname, false);
-      }
+      !function() {
+        var users = getSortedUsers();
+        for (var i = 0; i < users.length; i += 1) {
+          addUser(users[i].uid, users[i].nickname, false);
+        }
+      }();
       for (var dataId in chat.userData) {
         var userData = chat.userData[dataId];
         if (userData.dataType != 'status') {

@@ -1928,7 +1928,8 @@ namespace wschat.client {
                     timeTable.dlg.hideDialog();
                   }
                   var off = $cv.offset();
-                  timeTable = createTimeTable(chat, applyDecoration);
+                  timeTable = createTimeTable(chat,
+                    applyDecoration, getSortedUsers);
                   timeTable.refreshData();
                   timeTable.$ui.on('updateUserData', function(event, data) {
 
@@ -2078,7 +2079,7 @@ namespace wschat.client {
         ['add', 'reject']);
     };
 
-    usersUI.validate = function() {
+    var getSortedUsers = function() {
       var users : User[] = [];
       $.each(chat.users, function(uid, user) {
         users.push(user);
@@ -2094,6 +2095,11 @@ namespace wschat.client {
         }
         return u1.uid < u2.uid? -1 : 1;
       });
+      return users;
+    };
+
+    usersUI.validate = function() {
+      var users = getSortedUsers();
       $users.children().remove();
       $.each(users, function(i, user) {
         var $cell = createUser(user, usersAvatarCache).
