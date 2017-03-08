@@ -112,7 +112,7 @@ namespace wschat.client {
 
     var style = {
       colHeaderHeight : 20,
-      rowHeaderWidth : 100,
+      rowHeaderWidth : 120,
       bodyWidth : 600,
       bodyHeight : 200,
       cellHeight : 32,
@@ -244,8 +244,10 @@ namespace wschat.client {
     }();
 
     var $tt = $('<div></div>').
-      css('display', 'inline-block').
+      css('display', 'block').
       css('position', 'relative').
+      css('width', (style.rowHeaderWidth + style.bodyWidth) + 'px').
+      css('height', (style.colHeaderHeight + style.bodyHeight) + 'px').
       append($colHeader.css('float', 'right') ).
       append($rowHeader.css('float', 'left').css('clear', 'right') ).
       append($body.css('float', 'left') ).
@@ -976,12 +978,6 @@ namespace wschat.client {
 
       labelUICache = newLabelUICache;
       statusUICache = newStatusUICache;
-      /*
-      console.log('cache:' + labelUICache.length + ',' +
-          $colHeader.children().length + ',' +
-          statusUICache.length + ',' +
-          $body.children().length);
-          */
     };
 
     var refreshData = function() {
