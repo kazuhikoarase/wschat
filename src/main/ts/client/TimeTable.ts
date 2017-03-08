@@ -30,12 +30,6 @@ namespace wschat.client {
     $ui : JQuery
   }
 
-  interface Picker {
-    statusModel : StatusModel
-    pickerModel : PickerModel
-    time : number
-  }
-
   interface StatusModel {
     status : TimeTableStatus
   }
@@ -104,6 +98,14 @@ namespace wschat.client {
       s.substring(10, 12);
   };
 
+  var intersect = function(rect1 : Rect, rect2 : Rect) {
+    return !(
+        rect1.x > rect2.x + rect2.width ||
+        rect1.y > rect2.y + rect2.height ||
+        rect1.x + rect1.width < rect2.x ||
+        rect1.y + rect1.height < rect2.y);
+  };
+
   export var createTimeTable = function(
     chat : Chat,
     applyDecoration : ($target : JQuery) => JQuery,
@@ -117,17 +119,17 @@ namespace wschat.client {
       bodyHeight : 200,
       cellHeight : 32,
       hourInPixel : 16,
-      timeUnitInHours : 6,
       oddBgColor : '#f0f0f0'
     };
 
+    var HOUR_IN_MILLIS = 3600000;
+
     var model = {
-      timeOffset : -(new Date().getTime() - 3600000 * 12),
+      timeOffset : -(new Date().getTime() - HOUR_IN_MILLIS * 12),
       userOffset : 0,
       users : [] as TimeTableUser[],
       statusMap : {} as { [ uid : string ] : TimeTableStatus[] },
-//      users : createDummy(opts.numDummys),
-      minTimeStep : 15 * 60000,
+      minTimeStep : 15 * 60000, // 15min
       days : [] as string[]
     };
 
@@ -141,6 +143,7 @@ namespace wschat.client {
     var $colHeader = createScrollPane().
       addClass('wschat-tt-colHeader').
       css('overflow', 'hidden').
+      css('cursor', 'ew-resize').
       css('width', style.bodyWidth +  'px').
       css('height', style.colHeaderHeight + 'px');
     var $rowHeader = createScrollPane().
@@ -159,9 +162,6 @@ namespace wschat.client {
       css('cursor', 'move').
       css('width', style.bodyWidth +  'px').
       css('height', style.bodyHeight + 'px');
-
-    var mouseOp = '';
-    var lastMousedown = 0;
 
     var toFront = function(statusModel : StatusModel) {
       /*
@@ -217,7 +217,6 @@ namespace wschat.client {
 
       var endEdit = function() {
         if ($textfield != null) {
-          console.log('endEdit');
           $label.css('display', '');
           $(document).off('mousedown', doc_mousedownHandler);
           $textfield.remove();
@@ -243,155 +242,155 @@ namespace wschat.client {
       return editor;
     }();
 
-    var $tt = $('<div></div>').
-      css('display', 'block').
-      css('position', 'relative').
-      css('width', (style.rowHeaderWidth + style.bodyWidth) + 'px').
-      css('height', (style.colHeaderHeight + style.bodyHeight) + 'px').
-      append($colHeader.css('float', 'right') ).
-      append($rowHeader.css('float', 'left').css('clear', 'right') ).
-      append($body.css('float', 'left') ).
-      append($('<br/>').css('clear', 'left') ).
-      on('mousedown', function(event) {
-        if ($(event.target).closest('.wschat-tt-status-picker').length == 1) {
+    var tt_mousedownHandler = function(event : JQueryEventObject) {
 
-          mouseOp = 'pick';
+      var mouseOp : MouseOp = createDefaultMouseOp();
 
-          $block = $('<div></div>').css('position', 'absolute').css({
-            left : '0px', top : '0px', right : '0px', bottom : '0px'}).
-            css('opacity', '0').css('cursor', 'ew-resize').
-            css('background-color', '#ff0000');
-          $tt.append($block);
+      if ($(event.target).closest('.wschat-tt-status-picker').length == 1) {
+        mouseOp = pickMouseOp;
+      } else if ($(event.target).closest('.wschat-editor').length == 1) {
+      } else if ($(event.target).closest('.wschat-tt-status').length == 1) {
+        mouseOp = scrollMouseOp;
+      } else if ($(event.target).closest('.wschat-tt-body').length == 1) {
+        mouseOp = scrollMouseOp;
+      } else if ($(event.target).closest('.wschat-tt-colHeader').length == 1) {
+        mouseOp = zoomMouseOp;
+      }
 
-          var $picker = $(event.target).closest('.wschat-tt-status-picker');
-          var statusModel = $picker.closest('.wschat-tt-status').data('model');
-          var pickerModel = $picker.data('model');
-          picker = {
-            statusModel : statusModel,
-            pickerModel : pickerModel,
-            time : strToTime(statusModel.status[pickerModel.target])
-          };
-          toFront(statusModel);
+      mouseOp.mousedown(event);
+      mouseOp.lastPageX = event.pageX;
+      mouseOp.lastPageY = event.pageY;
 
-        } else if ($(event.target).closest('.wschat-editor').length == 1) {
+      if ($(event.target).closest('INPUT').length == 0) {
+        event.preventDefault();
+      }
 
-          mouseOp = 'nop';
+      var doc_mousemoveHandler = function(event : JQueryEventObject) {
+        mouseOp.mousemove(event);
+        mouseOp.lastPageX = event.pageX;
+        mouseOp.lastPageY = event.pageY;
+      };
+      var doc_mouseupHandler = function(event : JQueryEventObject) {
+        mouseOp.mouseup(event);
+        $(document).off('mousemove', doc_mousemoveHandler).
+          off('mouseup', doc_mouseupHandler);
+      };
+      $(document).on('mousemove', doc_mousemoveHandler).
+        on('mouseup', doc_mouseupHandler);
+    };
 
-        } else if ($(event.target).closest('.wschat-tt-status').length == 1) {
-          
-          mouseOp = 'scroll';
-
-          var $status = $(event.target).closest('.wschat-tt-status');
-
-          var time = new Date().getTime() ;
-          if (time - lastMousedown < 300) {
-            var statusModel = $status.data('model');
-            if (statusModel.status.uid == chat.user.uid) {
-              toFront(statusModel);
-              editor.beginEdit($status);
-            }
-          }
-          lastMousedown = time;
-
-        } else {
-          mouseOp = 'scroll';
+    var tt_contextmenuHandler = function(event : JQueryEventObject) {
+      var contextPos = { x : event.pageX, y : event.pageY };
+      var $status = $(event.target).closest('.wschat-tt-status');
+      var $body = $(event.target).closest('.wschat-tt-body');
+      if ($status.length != 0) {
+        event.preventDefault();
+        var statusModel : StatusModel = $status.data('model');
+        if (statusModel.status.uid != chat.user.uid) {
+          return;
         }
-
-        lastPoint = { x : event.pageX, y : event.pageY };
-
-        if ($(event.target).closest('INPUT').length == 0) {
-          event.preventDefault();
-        }
-
-        $(document).on('mousemove', doc_mousemoveHandler).
-          on('mouseup', doc_mouseupHandler);
-      }).on('contextmenu', function(event) {
-        var contextPos = { x : event.pageX, y : event.pageY };
-        var $status = $(event.target).closest('.wschat-tt-status');
-        var $body = $(event.target).closest('.wschat-tt-body');
-        if ($status.length != 0) {
-          event.preventDefault();
-          var statusModel : StatusModel = $status.data('model');
-          if (statusModel.status.uid != chat.user.uid) {
+        var menu = createMenu($tt, function($menu) {
+          $menu.append(createMenuItem(chat.messages.DELETE).
+            on('mousedown', function(event) {
+              event.stopImmediatePropagation();
+            } ).
+            on('click', function(event) {
+              $tt.trigger('updateUserData', {
+                action : 'delete',
+                dataId : statusModel.status.dataId
+              });
+              menu.hideMenu();
+            } ) );
+        });
+        var off = $tt.offset();
+        menu.showMenu($tt).
+            css('left', (event.pageX - off.left) + 'px').
+            css('top', (event.pageY - off.top) + 'px');
+      } else if ($body.length != 0) {
+        event.preventDefault();
+        var menu = createMenu($tt, function($menu) {
+          var off = $body.offset();
+          if (contextPos.y - off.top > style.cellHeight) {
             return;
           }
-          var menu = createMenu($tt, function($menu) {
-            $menu.append(createMenuItem(chat.messages.DELETE).
-              on('mousedown', function(event) {
-                event.stopImmediatePropagation();
-              } ).
-              on('click', function(event) {
-                $tt.trigger('updateUserData', {
-                  action : 'delete',
-                  dataId : statusModel.status.dataId
-                });
-                menu.hideMenu();
-              } ) );
-          });
-          var off = $tt.offset();
-          menu.showMenu($tt).
-              css('left', (event.pageX - off.left) + 'px').
-              css('top', (event.pageY - off.top) + 'px');
-        } else if ($body.length != 0) {
-          event.preventDefault();
-          var menu = createMenu($tt, function($menu) {
-            var off = $body.offset();
-            if (contextPos.y - off.top > style.cellHeight) {
-              return;
-            }
-            $menu.append(createMenuItem(chat.messages.NEW).
-              on('mousedown', function(event) {
-                event.stopImmediatePropagation();
-              } ).
-              on('click', function(event) {
-                var off = $body.offset();
-                var time = trimTime( (contextPos.x - off.left) *
-                  3600000 / style.hourInPixel - model.timeOffset,
-                  3600000);
-                $tt.trigger('updateUserData', {
-                  action : 'create',
-                  userData : {
-                    dataType : 'status',
-                    timeFrom : timeToStr(time),
-                    timeTo : timeToStr(time + 3600000 * 4),
-                    comment : ''
-                  }
-                });
-                menu.hideMenu();
-              } ) );
-          });
-          var off = $tt.offset();
-          menu.showMenu($tt).
-              css('left', (event.pageX - off.left) + 'px').
-              css('top', (event.pageY - off.top) + 'px');
-        } else if ($(event.target).closest('.wschat-menu').length != 0) {
-          event.preventDefault();
-        }
-      });
-    var doc_mousemoveHandler = function(event : JQueryEventObject) {
-      (<any>mousemove)[mouseOp](event);
-      lastPoint = { x : event.pageX, y : event.pageY };
-    };
-    var doc_mouseupHandler = function(event : JQueryEventObject) {
-      (<any>mouseup)[mouseOp](event);
-      $(document).off('mousemove', doc_mousemoveHandler).
-        off('mouseup', doc_mouseupHandler);
+          $menu.append(createMenuItem(chat.messages.NEW).
+            on('mousedown', function(event) {
+              event.stopImmediatePropagation();
+            } ).
+            on('click', function(event) {
+              var off = $body.offset();
+              var time = trimTime( (contextPos.x - off.left) *
+                HOUR_IN_MILLIS / style.hourInPixel - model.timeOffset,
+                HOUR_IN_MILLIS);
+              $tt.trigger('updateUserData', {
+                action : 'create',
+                userData : {
+                  dataType : 'status',
+                  timeFrom : timeToStr(time),
+                  timeTo : timeToStr(time + HOUR_IN_MILLIS * 4),
+                  comment : ''
+                }
+              });
+              menu.hideMenu();
+            } ) );
+        });
+        var off = $tt.offset();
+        menu.showMenu($tt).
+            css('left', (event.pageX - off.left) + 'px').
+            css('top', (event.pageY - off.top) + 'px');
+      } else if ($(event.target).closest('.wschat-menu').length != 0) {
+        event.preventDefault();
+      }
     };
 
-    var trimTime = function(time : number, timeStep = model.minTimeStep) {
-      return Math.round(time / timeStep) * timeStep;
+    interface MouseOp {
+      lastPageX : number
+      lastPageY : number
+      mousedown : (event : JQueryEventObject) => void
+      mousemove : (event : JQueryEventObject) => void
+      mouseup : (event : JQueryEventObject) => void
+    }
+
+    var createDefaultMouseOp = function() {
+      var mouseOp = {
+        lastPageX : 0,
+        lastPageY : 0,
+        mousedown : function(event : JQueryEventObject) {},
+        mousemove : function(event : JQueryEventObject) {},
+        mouseup : function(event : JQueryEventObject) {}
+      };
+      return mouseOp;
     };
 
-    var lastPoint : Point = null;
-    var picker : Picker = null;
-    var $block : JQuery = null;
-    var $marker : JQuery = null;
-    var mousemove = {
-      pick : function(event : JQueryEventObject) {
-        var statusModel = picker.statusModel;
-        var pickerModel = picker.pickerModel;
-        picker.time += (event.pageX - lastPoint.x) /
-          style.hourInPixel * 3600000;
+    var pickMouseOp = function() {
+
+      var mouseOp = createDefaultMouseOp();
+
+      var pickerModel : PickerModel;
+      var statusModel : StatusModel;
+      var time : number;
+      var $block : JQuery = null;
+      var $marker : JQuery = null;
+
+      mouseOp.mousedown = function(event) {
+
+        $block = $('<div></div>').css('position', 'absolute').css({
+          left : '0px', top : '0px', right : '0px', bottom : '0px'}).
+          css('opacity', '0').css('cursor', 'ew-resize').
+          css('background-color', '#ff0000');
+        $tt.append($block);
+
+        var $picker = $(event.target).closest('.wschat-tt-status-picker');
+        statusModel = $picker.closest('.wschat-tt-status').data('model');
+        pickerModel = $picker.data('model');
+        time = strToTime( (<any>statusModel.status)[pickerModel.target])
+        toFront(statusModel);
+      };
+
+      mouseOp.mousemove = function(event) {
+
+        time += (event.pageX - mouseOp.lastPageX) /
+          style.hourInPixel * HOUR_IN_MILLIS;
         statusModel.status._cache = null;
 
         if ($marker == null) {
@@ -407,43 +406,34 @@ namespace wschat.client {
         if (pickerModel.target == 'timeFrom') {
           statusModel.status.timeFrom = timeToStr(Math.min(
             strToTime(statusModel.status.timeTo) - model.minTimeStep,
-            trimTime(picker.time) ) );
+            trimTime(time) ) );
           update();
         } else if (pickerModel.target == 'timeTo') {
           statusModel.status.timeTo = timeToStr(Math.max(
             strToTime(statusModel.status.timeFrom) + model.minTimeStep,
-            trimTime(picker.time) ) );
+            trimTime(time) ) );
           update();
         } else {
           return;
         }
+
         var text = (<any>statusModel).status[pickerModel.target];
         var off = $tt.offset();
         $marker.text( formatTime(strToTime(text) ) );
         $marker.css('left', (event.pageX - off.left) + 'px').
           css('top', (event.pageY - off.top - $marker.outerHeight() - 4) + 'px');
-      },
-      scroll : function(event : JQueryEventObject) {
-        model.timeOffset += (event.pageX - lastPoint.x) / style.hourInPixel * 3600000;
-        model.userOffset += event.pageY - lastPoint.y;
-        var min = style.bodyHeight - style.cellHeight * model.users.length;
-        model.userOffset = Math.min(Math.max(min, model.userOffset), 0);
-        $rowHeader.scrollTop(-model.userOffset);
-        update();
-      },
-      nop : function(event : JQueryEventObject) {
-      }
-    };
-    var mouseup = {
-      pick : function(event : JQueryEventObject) {
+      };
+
+      mouseOp.mouseup = function(event) {
 
         $block.remove();
         $block = null;
-        $marker.remove();
-        $marker = null;
 
-        var statusModel = picker.statusModel;
-        var pickerModel = picker.pickerModel;
+        if ($marker != null) {
+          $marker.remove();
+          $marker = null;
+        }
+
         if (pickerModel.target == 'timeFrom' ||
             pickerModel.target == 'timeTo') {
           $tt.trigger('updateUserData', {
@@ -452,20 +442,79 @@ namespace wschat.client {
             id : pickerModel.target,
             value : (<any>statusModel.status)[pickerModel.target] });
         }
-      },
-      scroll : function(event : JQueryEventObject) {
-      },
-      nop : function(event : JQueryEventObject) {
+      };
+
+      return mouseOp;
+    }();
+
+    var scrollMouseOp = function() {
+
+      var mouseOp = createDefaultMouseOp();
+
+      var lastMousedown = 0;
+
+      mouseOp.mousedown = function(event) {
+        if ($(event.target).closest('.wschat-tt-status').length == 1) {
+          var time = new Date().getTime() ;
+          if (time - lastMousedown < 300) {
+            var $status = $(event.target).closest('.wschat-tt-status');
+            var statusModel = $status.data('model');
+            if (statusModel.status.uid == chat.user.uid) {
+              toFront(statusModel);
+              editor.beginEdit($status);
+            }
+          }
+          lastMousedown = time;
+        }
+      };
+
+      mouseOp.mousemove = function(event : JQueryEventObject) {
+        model.timeOffset += (event.pageX - mouseOp.lastPageX) / style.hourInPixel * HOUR_IN_MILLIS;
+        model.userOffset += event.pageY - mouseOp.lastPageY;
+        var min = style.bodyHeight - style.cellHeight * model.users.length;
+        model.userOffset = Math.min(Math.max(min, model.userOffset), 0);
+        $rowHeader.scrollTop(-model.userOffset);
+        update();
       }
+
+      return mouseOp;
+    }();
+
+    var zoomMouseOp = function() {
+
+      var mouseOp = createDefaultMouseOp();
+      var dragTime : number;
+      mouseOp.mousedown = function(event) {
+        var off = $colHeader.offset(); 
+        dragTime = (event.pageX - off.left) *
+          HOUR_IN_MILLIS / style.hourInPixel - model.timeOffset
+      };
+      mouseOp.mousemove = function(event) {
+        var off = $colHeader.offset(); 
+        var hourInPixel = (event.pageX - off.left) *
+          HOUR_IN_MILLIS / (dragTime + model.timeOffset);
+        style.hourInPixel = Math.max(1, hourInPixel);
+        update();
+      };
+      return mouseOp;
+    }();
+
+    var $tt = $('<div></div>').
+      css('display', 'block').
+      css('position', 'relative').
+      css('width', (style.rowHeaderWidth + style.bodyWidth) + 'px').
+      css('height', (style.colHeaderHeight + style.bodyHeight) + 'px').
+      append($colHeader.css('float', 'right') ).
+      append($rowHeader.css('float', 'left').css('clear', 'right') ).
+      append($body.css('float', 'left') ).
+      append($('<br/>').css('clear', 'left') ).
+      on('mousedown', tt_mousedownHandler).
+      on('contextmenu', tt_contextmenuHandler);
+
+    var trimTime = function(time : number, timeStep = model.minTimeStep) {
+      return Math.round(time / timeStep) * timeStep;
     };
 
-    var intersect = function(rect1 : Rect, rect2 : Rect) {
-      return !(
-          rect1.x > rect2.x + rect2.width ||
-          rect1.y > rect2.y + rect2.height ||
-          rect1.x + rect1.width < rect2.x ||
-          rect1.y + rect1.height < rect2.y);
-    };
 
     var createStatusEditor = function() {
       return $('<input type="text" />').
@@ -710,29 +759,6 @@ namespace wschat.client {
         valid? : boolean
       }
 
-      var timeline = function(update : (data : TimelineData) => void) {
-        var startTime = function() {
-          var off = new Date();
-          off.setTime(Math.floor(-model.timeOffset) );
-          return new Date(
-              off.getFullYear(),
-              off.getMonth(),
-              off.getDate() ).getTime();
-        }();
-        var h = 0;
-        while (true) {
-          var x = (startTime + h * 3600000 + model.timeOffset) *
-            style.hourInPixel / 3600000;
-          if (0 <= x && x < bodyRect.width) {
-            update({ hours : h, x : x, time : startTime + h * 3600000 });
-          }
-          if (x >= bodyRect.width) {
-            break;
-          }
-          h += 1;
-        }
-      };
-
       var colHeaderRect = { x : 0, y : 0,
           width : style.bodyWidth,
           height : style.colHeaderHeight };
@@ -744,35 +770,58 @@ namespace wschat.client {
       var newLabelUICache : LabelUI[] = [];
       var newStatusUICache : StatusUI[] = [];
 
-      var ctx : any;
+      var labelWidth = 50;
+      var stepInHours : number;
+      var timeUnitInHours : number;
 
-      ctx = (<any>$colHeaderBg)[0].getContext('2d');
-      ctx.clearRect(0, 0, style.bodyWidth, style.colHeaderHeight);
+      if (style.hourInPixel * 12 < labelWidth) {
+        stepInHours = 3;
+        timeUnitInHours = 24;
+      } else if (style.hourInPixel * 6 < labelWidth) {
+        stepInHours = 1;
+        timeUnitInHours = 12;
+      } else if (style.hourInPixel * 3 < labelWidth) {
+        stepInHours = 1;
+        timeUnitInHours = 6;
+      } else if (style.hourInPixel < labelWidth) {
+        stepInHours = 1;
+        timeUnitInHours = 3;
+      } else {
+        stepInHours = 1;
+        timeUnitInHours = 1;
+      }
+
+      var timeline = function(update : (data : TimelineData) => void) {
+        var startTime = function() {
+          var off = new Date();
+          off.setTime(Math.floor(-model.timeOffset) );
+          return new Date(
+              off.getFullYear(),
+              off.getMonth(),
+              off.getDate() ).getTime();
+        }();
+        var h = 0;
+        while (true) {
+          var x = (startTime + h * HOUR_IN_MILLIS + model.timeOffset) *
+            style.hourInPixel / HOUR_IN_MILLIS;
+          if (0 <= x && x < bodyRect.width) {
+            update({ hours : h, x : x, time : startTime + h * HOUR_IN_MILLIS });
+          }
+          if (x >= bodyRect.width) {
+            break;
+          }
+          h += stepInHours;
+        }
+      };
 
       var d0 : TimelineData = null;
       timeline(function(data) {
-
         if (!d0) {
           d0 = data;
         }
-
-        ctx.beginPath();
-        ctx.moveTo(data.x, 0);
-        ctx.lineTo(data.x, style.colHeaderHeight);
-        ctx.closePath();
-        ctx.strokeStyle = data.hours % 24 == 0? '#666666' :
-          data.hours % style.timeUnitInHours == 0? '#cccccc' : '#eeeeee';
-        ctx.stroke();
-
       });
-      ctx.beginPath();
-      ctx.moveTo(0, style.colHeaderHeight - 1);
-      ctx.lineTo(style.bodyWidth, style.colHeaderHeight - 1);
-      ctx.closePath();
-      ctx.strokeStyle = '#666666';
-      ctx.stroke();
 
-      !function(updateDate : (data : TimelineData) => void) {
+      var hourline = function(updateDate : (data : TimelineData) => void) {
 
         var x : number;
         var hours : number;
@@ -793,7 +842,7 @@ namespace wschat.client {
 
           x -= style.hourInPixel;
           hours = (hours + 23) % 24;
-          time -= 3600000;
+          time -= HOUR_IN_MILLIS;
         }
 
         x = d0.x;
@@ -804,7 +853,7 @@ namespace wschat.client {
 
           x += style.hourInPixel;
           hours = (hours + 1) % 24;
-          time += 3600000;
+          time += HOUR_IN_MILLIS;
 
           data = { x : x, hours : hours, time : time, valid : true };
           updateDate(data);
@@ -812,18 +861,69 @@ namespace wschat.client {
             break;
           }
         }
+      };
 
-      }(function(data) {
+      var ctx : any;
+
+      ctx = (<any>$colHeaderBg)[0].getContext('2d');
+      ctx.clearRect(0, 0, style.bodyWidth, style.colHeaderHeight);
+
+      hourline(function(data) {
+        var rect = {
+            x : data.x,
+            y : 0,
+            width : style.hourInPixel * 24,
+            height : style.colHeaderHeight
+          };
+
+        if (!intersect(rect, colHeaderRect) ) {
+          data.valid = false;
+          return;
+        }
+
+        if (data.hours % 24 == 0) {
+          var date = new Date();
+          date.setTime(data.time);
+          if (date.getDay() == 0 || date.getDay() == 6) {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+          }
+        }
+      });
+
+      timeline(function(data) {
+
+        if (data.hours % 24 != 0 && data.hours % timeUnitInHours != 0) {
+          return;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(data.x, 0);
+        ctx.lineTo(data.x, style.colHeaderHeight);
+        ctx.closePath();
+        ctx.strokeStyle = data.hours % 24 == 0? '#666666' :
+          data.hours % timeUnitInHours == 0? '#cccccc' : '#eeeeee';
+        ctx.stroke();
+      });
+
+      ctx.beginPath();
+      ctx.moveTo(0, style.colHeaderHeight - 1);
+      ctx.lineTo(style.bodyWidth, style.colHeaderHeight - 1);
+      ctx.closePath();
+      ctx.strokeStyle = '#666666';
+      ctx.stroke();
+
+      hourline(function(data) {
 
         var h = data.hours % 24;
-        if (h % style.timeUnitInHours != 0) {
+        if (h % timeUnitInHours != 0) {
           return;
         }
 
         var rect = {
             x : data.x + 1,
             y : 1,
-            width : style.hourInPixel * 2 - 2,
+            width : style.hourInPixel * timeUnitInHours - 2,
             height : style.colHeaderHeight - 2
           };
 
@@ -844,7 +944,6 @@ namespace wschat.client {
         if (h == 0) {
           var date = new Date();
           date.setTime(data.time);
-          rect.width += style.hourInPixel * 2;
           labelUI.setText( (date.getMonth() + 1) + '/' +
               date.getDate() + '(' + model.days[date.getDay()] + ')');
           labelUI.setTitle(date.getFullYear() + '/' +
@@ -889,7 +988,7 @@ namespace wschat.client {
         ctx.lineTo(data.x, style.bodyHeight);
         ctx.closePath();
         ctx.strokeStyle = data.hours % 24 == 0? '#666666' :
-          data.hours % style.timeUnitInHours == 0? '#cccccc' : '#eeeeee';
+          data.hours % timeUnitInHours == 0? '#cccccc' : '#eeeeee';
         ctx.stroke();
       });
 
@@ -933,10 +1032,10 @@ namespace wschat.client {
 
         var rect = {
           x : (status._cache.timeFrom + model.timeOffset) *
-            style.hourInPixel / 3600000,
+            style.hourInPixel / HOUR_IN_MILLIS,
           y : style.cellHeight * u + model.userOffset + 2,
           width : (status._cache.timeTo - status._cache.timeFrom) *
-            style.hourInPixel / 3600000,
+            style.hourInPixel / HOUR_IN_MILLIS,
           height : style.cellHeight - 4
         };
 
