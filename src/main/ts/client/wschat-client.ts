@@ -1928,7 +1928,7 @@ namespace wschat.client {
                     timeTable.dlg.hideDialog();
                   }
                   var off = $cv.offset();
-                  timeTable = createTimeTable(chat);
+                  timeTable = createTimeTable(chat, applyDecoration);
                   timeTable.refreshData();
                   timeTable.$ui.on('updateUserData', function(event, data) {
 

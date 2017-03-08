@@ -96,7 +96,7 @@ namespace wschat.client {
 
   var formatTime = function(time : number, timeOnly? : boolean) {
     var s = timeToStr(time);
-    return timeOnly? s.substring(8, 10) + ':' + s.substring(10, 12) :
+    return timeOnly? (+s.substring(8, 10) ) + ':' + s.substring(10, 12) :
       s.substring(0, 4) + '/' +
       (+s.substring(4, 6) ) + '/' +
       (+s.substring(6, 8) ) + ' ' +
@@ -104,21 +104,24 @@ namespace wschat.client {
       s.substring(10, 12);
   };
 
-  export var createTimeTable = function(chat : Chat) : TimeTable {
+  export var createTimeTable = function(
+    chat : Chat,
+    applyDecoration : ($target : JQuery) => JQuery
+  ) : TimeTable {
 
     var style = {
       colHeaderHeight : 20,
       rowHeaderWidth : 100,
       bodyWidth : 600,
       bodyHeight : 200,
-      cellHeight : 20,
+      cellHeight : 32,
       hourInPixel : 16,
+      timeUnitInHours : 6,
       oddBgColor : '#f0f0f0'
     };
 
     var model = {
-      timeOffset : -strToTime(timeToStr(new Date().getTime() ).
-        substring(0, 8) + '0000'),
+      timeOffset : -(new Date().getTime() - 3600000 * 12),
       userOffset : 0,
       users : [] as TimeTableUser[],
       statusMap : {} as { [ uid : string ] : TimeTableStatus[] },
@@ -186,9 +189,8 @@ namespace wschat.client {
         $textfield = createStatusEditor().
           css('position', 'absolute').
           css('left', (off.left - ttOff.left + 2) + 'px').
-          css('top', (off.top - ttOff.top - 1) + 'px').
+          css('top', (off.top - ttOff.top + 2) + 'px').
           css('width', $status.innerWidth() + 'px').
-          css('height', $status.innerHeight() + 'px').
           val($status.data('model').status.comment).
           on('keyup', function(event) {
             switch(event.keyCode) {
@@ -251,11 +253,13 @@ namespace wschat.client {
         if ($(event.target).closest('.wschat-tt-status-picker').length == 1) {
 
           mouseOp = 'pick';
+
           $block = $('<div></div>').css('position', 'absolute').css({
             left : '0px', top : '0px', right : '0px', bottom : '0px'}).
             css('opacity', '0').css('cursor', 'ew-resize').
             css('background-color', '#ff0000');
           $tt.append($block);
+
           var $picker = $(event.target).closest('.wschat-tt-status-picker');
           var statusModel = $picker.closest('.wschat-tt-status').data('model');
           var pickerModel = $picker.data('model');
@@ -370,6 +374,7 @@ namespace wschat.client {
       $(document).off('mousemove', doc_mousemoveHandler).
         off('mouseup', doc_mouseupHandler);
     };
+
     var trimTime = function(time : number, timeStep = model.minTimeStep) {
       return Math.round(time / timeStep) * timeStep;
     };
@@ -377,6 +382,7 @@ namespace wschat.client {
     var lastPoint : Point = null;
     var picker : Picker = null;
     var $block : JQuery = null;
+    var $marker : JQuery = null;
     var mousemove = {
       pick : function(event : JQueryEventObject) {
         var statusModel = picker.statusModel;
@@ -384,6 +390,17 @@ namespace wschat.client {
         picker.time += (event.pageX - lastPoint.x) /
           style.hourInPixel * 3600000;
         statusModel.status._cache = null;
+
+        if ($marker == null) {
+          $marker = $('<div></div>').
+            css('position', 'absolute').
+            css('pointer-events', 'none').
+            css('padding', '2px 4px 2px 4px').
+            css('border', '1px solid #999999').
+            css('background-color', '#f0f0f0');
+          $tt.append($marker);
+        }
+
         if (pickerModel.target == 'timeFrom') {
           statusModel.status.timeFrom = timeToStr(Math.min(
             strToTime(statusModel.status.timeTo) - model.minTimeStep,
@@ -394,7 +411,14 @@ namespace wschat.client {
             strToTime(statusModel.status.timeFrom) + model.minTimeStep,
             trimTime(picker.time) ) );
           update();
+        } else {
+          return;
         }
+        var text = (<any>statusModel).status[pickerModel.target];
+        var off = $tt.offset();
+        $marker.text( formatTime(strToTime(text) ) );
+        $marker.css('left', (event.pageX - off.left) + 'px').
+          css('top', (event.pageY - off.top - $marker.outerHeight() - 4) + 'px');
       },
       scroll : function(event : JQueryEventObject) {
         model.timeOffset += (event.pageX - lastPoint.x) / style.hourInPixel * 3600000;
@@ -409,7 +433,12 @@ namespace wschat.client {
     };
     var mouseup = {
       pick : function(event : JQueryEventObject) {
+
         $block.remove();
+        $block = null;
+        $marker.remove();
+        $marker = null;
+
         var statusModel = picker.statusModel;
         var pickerModel = picker.pickerModel;
         if (pickerModel.target == 'timeFrom' ||
@@ -546,8 +575,8 @@ namespace wschat.client {
       var $label = $('<div></div>').
         addClass('wschat-tt-label').
         css('position', 'absolute').
-        css('left', '1px').css('right', '1px').
-        css('top', '1px').css('bottom', '1px').
+        css('left', '2px').css('right', '2px').
+        css('top', '2px').css('bottom', '2px').
         css('vertical-align', 'top').
         css('white-space', 'nowrap').
         css('overflow', 'hidden');
@@ -590,7 +619,7 @@ namespace wschat.client {
             return;
           }
           model.text = text;
-          $label.text(text);
+          applyDecoration($label.text(text) );
         },
         setColor : function(color : string) {
           if (model.color == color) {
@@ -654,14 +683,17 @@ namespace wschat.client {
       $.each(model.users, function(u, user) {
         var x = 0;
         var y = style.cellHeight * u;
-        var width = 200 - 6;
+        var width = style.rowHeaderWidth - 6;
         var height = style.cellHeight - 6;
         $rowHeader.append(createBlock().css({
           padding : '3px',
           left : x + 'px', top : y + 'px',
           width : width + 'px', height : height + 'px',
-          backgroundColor: u % 2 == 0? '': style.oddBgColor,
-          overflow: 'hidden', whiteSpace : 'nowrap' } ).
+          backgroundColor : u % 2 == 0? '': style.oddBgColor,
+          verticalAlign : 'middle', 
+          overflow : 'hidden', whiteSpace : 'nowrap',
+          textOverflow : 'ellipsis' } ).
+          attr('title', user.nickname || user.uid).
           text(user.nickname || user.uid) );
       });
     };
@@ -726,7 +758,7 @@ namespace wschat.client {
         ctx.lineTo(data.x, style.colHeaderHeight);
         ctx.closePath();
         ctx.strokeStyle = data.hours % 24 == 0? '#666666' :
-          data.hours % 4 == 0? '#cccccc' : '#eeeeee';
+          data.hours % style.timeUnitInHours == 0? '#cccccc' : '#eeeeee';
         ctx.stroke();
 
       });
@@ -781,7 +813,7 @@ namespace wschat.client {
       }(function(data) {
 
         var h = data.hours % 24;
-        if (h % 4 != 0) {
+        if (h % style.timeUnitInHours != 0) {
           return;
         }
 
@@ -854,7 +886,7 @@ namespace wschat.client {
         ctx.lineTo(data.x, style.bodyHeight);
         ctx.closePath();
         ctx.strokeStyle = data.hours % 24 == 0? '#666666' :
-          data.hours % 4 == 0? '#cccccc' : '#eeeeee';
+          data.hours % style.timeUnitInHours == 0? '#cccccc' : '#eeeeee';
         ctx.stroke();
       });
 
