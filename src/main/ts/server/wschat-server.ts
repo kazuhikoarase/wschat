@@ -590,6 +590,14 @@ namespace wschat.server {
       });
     };
 
+    var validUserData = function(userData : any, toUid : string) {
+      var _private : boolean = userData['private'];
+      _private = typeof _private != 'undefined'? _private : false;
+      console.log(userData.uid + ' to ' + toUid +
+        ' - ' + userData.dataType + ' - ' + _private);
+      return !_private || userData.uid == toUid;
+    };
+
     var actions : ServerActions = {};
 
     actions.login = function(data) {
@@ -618,10 +626,12 @@ namespace wschat.server {
           data: chatService.getAvatar(uid)
         });
         $.each(chatService.fetchUserData(uid), function(i, userData) {
-          send({
-            action: 'userData',
-            data: userData
-          });
+          if (validUserData(userData, chat.user.uid) ) {
+            send({
+              action: 'userData',
+              data: userData
+            });
+          }
         });
       };
 
@@ -702,11 +712,15 @@ namespace wschat.server {
         chatService.updateUserData(data.userData, data.date);
         userData.data = chatService.getUserData(data.userData.dataId);
       }
-
-      send(userData, chat.user.uid);
+      var sendUserData = function(uid : string) {
+        if (validUserData(userData.data, uid) ) {
+          send(userData, uid);
+        }
+      };
+      sendUserData(chat.user.uid);
       $.each(chat.user.contacts, function(uid, contact) {
         if (chatService.containsUser(chat.user.uid, uid) ) {
-          send(userData, uid);
+          sendUserData(uid);
         }
       });
     };

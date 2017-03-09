@@ -462,7 +462,9 @@ namespace wschat.client {
       } else {
         chat.userData[data.data.dataId] = data.data;
       }
-      statusUI.invalidate();
+      if (data.data.dataType == 'status') {
+        statusUI.invalidate();
+      }
     };
 
     actions.searchUsers = function(data) {
