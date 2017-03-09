@@ -2197,8 +2197,10 @@ namespace wschat.client {
       $groups.children().remove();
       var groups : Group[] = [];
       $.each(chat.groups, function(gid, group) {
+        var msgCount = 0;
         var newMsgCount = 0;
         $.each(group.messages, function(mid, message) {
+          msgCount += 1;
           if (message.newMsg) {
             newMsgCount += 1;
           }
@@ -2206,6 +2208,10 @@ namespace wschat.client {
             group.maxDate = message.date;
           }
         });
+        if (msgCount == 0) {
+          // msg not available.
+          return;
+        }
         group.newMsg = newMsgCount > 0;
         if (group.newMsg) {
           newMsg = true;
