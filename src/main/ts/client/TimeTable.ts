@@ -136,18 +136,17 @@ namespace wschat.client {
     var createBlock = function() {
       return $('<div></div>').css('position', 'absolute');
     };
-    var createScrollPane = function() {
-      return $('<div></div>').css('display', 'inline-block').
-      css('position', 'relative');
-    };
-    var $colHeader = createScrollPane().
+
+    var $colHeader = $('<div></div>').
       addClass('wschat-tt-colHeader').
+      css('position', 'absolute').
       css('overflow', 'hidden').
       css('cursor', 'ew-resize').
       css('width', style.bodyWidth +  'px').
       css('height', style.colHeaderHeight + 'px');
-    var $rowHeader = createScrollPane().
+    var $rowHeader = $('<div></div>').
       addClass('wschat-tt-rowHeader').
+      css('position', 'absolute').
       css('overflow-x', 'hidden').
       css('overflow-y', 'auto').
       css('width', style.rowHeaderWidth +  'px').
@@ -156,8 +155,9 @@ namespace wschat.client {
         model.userOffset = -$rowHeader.scrollTop();
         update();
       });
-    var $body = createScrollPane().
+    var $body = $('<div></div>').
       addClass('wschat-tt-body').
+      css('position', 'absolute').
       css('overflow', 'hidden').
       css('cursor', 'move').
       css('width', style.bodyWidth +  'px').
@@ -179,6 +179,7 @@ namespace wschat.client {
 
     var editor = function() {
 
+      var $clip : JQuery = null;
       var $textfield : JQuery = null;
       var $label : JQuery;
       var statusModel : StatusModel;
@@ -186,13 +187,15 @@ namespace wschat.client {
       var beginEdit = function($status : JQuery) {
         var ttOff = $tt.offset();
         var off = $status.offset();
-        $label = $status.find('.wschat-tt-label');
+        $label = $status.children('.wschat-tt-label');
         $label.css('display', 'none');
         statusModel = $status.data('model');
         $textfield = createStatusEditor().
           css('position', 'absolute').
-          css('left', (off.left - ttOff.left + 2) + 'px').
-          css('top', (off.top - ttOff.top + 2) + 'px').
+          css('left', (off.left - ttOff.left -
+            style.rowHeaderWidth + 2) + 'px').
+          css('top', (off.top - ttOff.top -
+            style.colHeaderHeight + 2) + 'px').
           css('width', $status.innerWidth() + 'px').
           val(statusModel.status.comment).
           on('keyup', function(event) {
@@ -205,7 +208,16 @@ namespace wschat.client {
               break;
             }
           });
-        $tt.append($textfield);
+        $clip = $('<div></div>').
+          css('position', 'absolute').
+          css('overflow', 'hidden').
+          css({
+            left : style.rowHeaderWidth + 'px',
+            top : style.colHeaderHeight + 'px',
+            width : style.bodyWidth + 'px',
+            height : style.bodyHeight + 'px' });
+        $clip.append($textfield);
+        $tt.append($clip);
         editor.currentDataId = statusModel.status.dataId;
         window.setTimeout(function() {
           $textfield.focus();
@@ -224,7 +236,7 @@ namespace wschat.client {
           }
           $label.css('display', '');
           $(document).off('mousedown', doc_mousedownHandler);
-          $textfield.remove();
+          $clip.remove();
           $textfield = null;
           editor.currentDataId = null;
         }
@@ -536,10 +548,13 @@ namespace wschat.client {
       css('position', 'relative').
       css('width', (style.rowHeaderWidth + style.bodyWidth) + 'px').
       css('height', (style.colHeaderHeight + style.bodyHeight) + 'px').
-      append($colHeader.css('float', 'right') ).
-      append($rowHeader.css('float', 'left').css('clear', 'right') ).
-      append($body.css('float', 'left') ).
-      append($('<br/>').css('clear', 'left') ).
+      append($colHeader.css({
+        left : style.rowHeaderWidth + 'px', top : '0px' }) ).
+      append($rowHeader.css({
+        left : '0px', top : style.colHeaderHeight + 'px' }) ).
+      append($body.css({
+        left : style.rowHeaderWidth + 'px',
+        top : style.colHeaderHeight + 'px' }) ).
       on('mousedown', tt_mousedownHandler).
       on('contextmenu', tt_contextmenuHandler);
 
@@ -586,10 +601,7 @@ namespace wschat.client {
         css('white-space', 'nowrap').
         css('overflow', 'hidden');
 
-      var $layer = $('<div></div>').css('position', 'relative').
-        append($label);
-
-      var $ui = createBlock().append($layer);
+      var $ui = createBlock().append($label);
 
       var label = {
         setRect : function(rect : Rect) {
@@ -603,9 +615,6 @@ namespace wschat.client {
           $ui.css({
             left : rect.x + 'px',
             top : rect.y + 'px',
-            width : rect.width + 'px',
-            height : rect.height + 'px'});
-          $layer.css({
             width : rect.width + 'px',
             height : rect.height + 'px'});
         },
@@ -665,10 +674,8 @@ namespace wschat.client {
         css('white-space', 'nowrap').
         css('overflow', 'hidden');
 
-      var $layer = $('<div></div>').css('position', 'relative').
+      var $ui = createBlock().addClass('wschat-tt-status').
         append($rect).append($label).append($st).append($ed);
-
-      var $ui = createBlock().addClass('wschat-tt-status').append($layer);
 
       var status = {
         setRect : function(rect : Rect) {
@@ -682,9 +689,6 @@ namespace wschat.client {
           $ui.css({
             left : rect.x + 'px',
             top : rect.y + 'px',
-            width : rect.width + 'px',
-            height : rect.height + 'px'});
-          $layer.css({
             width : rect.width + 'px',
             height : rect.height + 'px'});
           $st.css({
