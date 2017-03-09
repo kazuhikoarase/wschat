@@ -181,42 +181,47 @@ namespace wschat.client {
 
       var $textfield : JQuery = null;
       var $label : JQuery;
+      var statusModel : StatusModel;
 
       var beginEdit = function($status : JQuery) {
         var ttOff = $tt.offset();
         var off = $status.offset();
         $label = $status.find('.wschat-tt-label');
         $label.css('display', 'none');
+        statusModel = $status.data('model');
         $textfield = createStatusEditor().
           css('position', 'absolute').
           css('left', (off.left - ttOff.left + 2) + 'px').
           css('top', (off.top - ttOff.top + 2) + 'px').
           css('width', $status.innerWidth() + 'px').
-          val($status.data('model').status.comment).
+          val(statusModel.status.comment).
           on('keyup', function(event) {
             switch(event.keyCode) {
             case 13 : // enter
-              $tt.trigger('updateUserData', {
-                action : 'update',
-                dataId : $status.data('model').status.dataId,
-                id : 'comment',
-                value : $textfield.val() });
-              endEdit();
+              endEdit(true);
               break;
             case 27 : // esc
-              endEdit();
+              endEdit(false);
               break;
             }
           });
         $tt.append($textfield);
-        editor.currentDataId = $status.data('model').status.dataId;
+        editor.currentDataId = statusModel.status.dataId;
         window.setTimeout(function() {
+          $textfield.focus();
           $(document).on('mousedown', doc_mousedownHandler);
         }, 0);
       };
 
-      var endEdit = function() {
+      var endEdit = function(commit : boolean) {
         if ($textfield != null) {
+          if (commit) {
+            $tt.trigger('updateUserData', {
+              action : 'update',
+              dataId : statusModel.status.dataId,
+              id : 'comment',
+              value : $textfield.val() });
+          }
           $label.css('display', '');
           $(document).off('mousedown', doc_mousedownHandler);
           $textfield.remove();
@@ -229,13 +234,13 @@ namespace wschat.client {
         if ($(event.target).closest('.wschat-editor').length != 0) {
           return;
         }
-        endEdit();
+        endEdit(true);
       };
 
       var editor = {
         currentDataId : null as string,
         beginEdit : function($status : JQuery) {
-          endEdit();
+          endEdit(true);
           beginEdit($status);
         }
       };
