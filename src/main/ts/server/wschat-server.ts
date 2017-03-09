@@ -593,8 +593,6 @@ namespace wschat.server {
     var validUserData = function(userData : any, toUid : string) {
       var _private : boolean = userData['private'];
       _private = typeof _private != 'undefined'? _private : false;
-      console.log(userData.uid + ' to ' + toUid +
-        ' - ' + userData.dataType + ' - ' + _private);
       return !_private || userData.uid == toUid;
     };
 

@@ -179,6 +179,7 @@ namespace wschat.client {
 
     var editor = function() {
 
+      var maxlength = 140;
       var $clip : JQuery = null;
       var $textfield : JQuery = null;
       var $label : JQuery;
@@ -191,6 +192,7 @@ namespace wschat.client {
         $label.css('display', 'none');
         statusModel = $status.data('model');
         $textfield = createStatusEditor().
+          attr('maxlength', '' + maxlength).
           css('position', 'absolute').
           css('left', (off.left - ttOff.left -
             style.rowHeaderWidth + 2) + 'px').
@@ -228,11 +230,15 @@ namespace wschat.client {
       var endEdit = function(commit : boolean) {
         if ($textfield != null) {
           if (commit) {
+            var value = $textfield.val();
+            if (value.length > maxlength) {
+              value = value.substring(0, maxlength);
+            }
             $tt.trigger('updateUserData', {
               action : 'update',
               dataId : statusModel.status.dataId,
               id : 'comment',
-              value : $textfield.val() });
+              value : value });
           }
           $label.css('display', '');
           $(document).off('mousedown', doc_mousedownHandler);

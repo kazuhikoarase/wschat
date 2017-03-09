@@ -458,7 +458,7 @@ namespace wschat.client {
 
     actions.userData = function(data) {
       if (data['delete']) {
-        delete chat.userData[data.data.dataId];
+        delete chat.userData[data.dataId || data.data.dataId];
       } else {
         chat.userData[data.data.dataId] = data.data;
       }
@@ -2105,9 +2105,8 @@ namespace wschat.client {
     };
 
     usersUI.validate = function() {
-      var users = getSortedUsers();
       $users.children().remove();
-      $.each(users, function(i, user) {
+      $.each(getSortedUsers(), function(i, user) {
         var $cell = createUser(user, usersAvatarCache).
           on('mousedown', function(event) {
             event.preventDefault();
