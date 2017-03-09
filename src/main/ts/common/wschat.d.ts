@@ -136,5 +136,7 @@ declare module wschat {
     IDLE : string
     BUSY : string
     WHERE_ARE_YOU : string
+    COPY_TO_NEXT_DAY : string
+    COPY_TO_NEXT_WEEK : string
   }
 }

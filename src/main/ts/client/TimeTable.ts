@@ -116,7 +116,7 @@ namespace wschat.client {
       colHeaderHeight : 20,
       rowHeaderWidth : 120,
       bodyWidth : 600,
-      bodyHeight : 200,
+      bodyHeight : 240,
       cellHeight : 32,
       hourInPixel : 12,
       oddBgColor : '#f0f0f0'
@@ -289,6 +289,19 @@ namespace wschat.client {
         if (statusModel.status.uid != chat.user.uid) {
           return;
         }
+        var copyTo = function(offset : number) {
+          $tt.trigger('updateUserData', {
+            action : 'create',
+            userData : {
+              dataType : 'status',
+              timeFrom : timeToStr(strToTime(
+                statusModel.status.timeFrom) + offset),
+              timeTo : timeToStr(strToTime(
+                statusModel.status.timeTo) + offset),
+              comment : statusModel.status.comment
+            }
+          });
+        };
         var menu = createMenu($tt, function($menu) {
           $menu.append(createMenuItem(chat.messages.DELETE).
             on('mousedown', function(event) {
@@ -299,6 +312,20 @@ namespace wschat.client {
                 action : 'delete',
                 dataId : statusModel.status.dataId
               });
+              menu.hideMenu();
+            } ) ).append(createMenuItem(chat.messages.COPY_TO_NEXT_DAY).
+            on('mousedown', function(event) {
+              event.stopImmediatePropagation();
+            } ).
+            on('click', function(event) {
+              copyTo(HOUR_IN_MILLIS * 24);
+              menu.hideMenu();
+            } ) ).append(createMenuItem(chat.messages.COPY_TO_NEXT_WEEK).
+            on('mousedown', function(event) {
+              event.stopImmediatePropagation();
+            } ).
+            on('click', function(event) {
+              copyTo(HOUR_IN_MILLIS * 24 * 7);
               menu.hideMenu();
             } ) );
         });

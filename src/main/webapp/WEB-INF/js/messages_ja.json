@@ -66,6 +66,8 @@
   "BUSY": "取り込み中",
 
   "WHERE_ARE_YOU": "いまどこ？",
+  "COPY_TO_NEXT_DAY": "翌日にコピー",
+  "COPY_TO_NEXT_WEEK": "翌週にコピー",
 
   "TRAILER": ""
 }

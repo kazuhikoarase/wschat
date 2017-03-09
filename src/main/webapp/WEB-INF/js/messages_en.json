@@ -68,6 +68,8 @@
   "BUSY": "Busy",
 
   "WHERE_ARE_YOU": "Where are you?",
+  "COPY_TO_NEXT_DAY": "Copy to next day",
+  "COPY_TO_NEXT_WEEK": "Copy to next week",
 
   "TRAILER": ""
 }
