@@ -458,7 +458,7 @@ namespace wschat.client {
 
     actions.userData = function(data) {
       if (data['delete']) {
-        delete chat.userData[data.dataId];
+        delete chat.userData[data.data.dataId];
       } else {
         chat.userData[data.data.dataId] = data.data;
       }

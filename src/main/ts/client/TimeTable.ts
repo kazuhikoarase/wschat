@@ -352,11 +352,10 @@ namespace wschat.client {
             css('top', (event.pageY - off.top) + 'px');
       } else if ($body.length != 0) {
         event.preventDefault();
+        if (contextPos.y - $body.offset().top > style.cellHeight) {
+          return;
+        }
         var menu = createMenu($tt, function($menu) {
-          var off = $body.offset();
-          if (contextPos.y - off.top > style.cellHeight) {
-            return;
-          }
           $menu.append(createMenuItem(chat.messages.NEW).
             on('mousedown', function(event) {
               event.stopImmediatePropagation();
