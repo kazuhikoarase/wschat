@@ -138,5 +138,7 @@ declare module wschat {
     WHERE_ARE_YOU : string
     COPY_TO_NEXT_DAY : string
     COPY_TO_NEXT_WEEK : string
+    COLOR : string
+    ADD_TO_CONTACT_LIST : string
   }
 }

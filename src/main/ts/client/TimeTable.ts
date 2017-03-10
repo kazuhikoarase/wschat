@@ -50,6 +50,7 @@ namespace wschat.client {
     timeFrom : string
     timeTo : string
     comment : string
+    color? : string
     _cache? : TimeTableStatusCache
   }
   interface TimeTableStatusCache {
@@ -325,32 +326,136 @@ namespace wschat.client {
             }
           });
         };
-        var menu = createMenu($tt, function($menu) {
-          $menu.append(createMenuItem(chat.messages.DELETE).
-            on('mousedown', function(event) {
-              event.stopImmediatePropagation();
-            } ).
-            on('click', function(event) {
-              $tt.trigger('updateUserData', {
-                action : 'delete',
-                dataId : statusModel.status.dataId
+
+        var colorMenu :  {
+          showMenu: ($target: JQuery) => JQuery;
+          hideMenu: () => void;
+        } = null;
+        var onColorChooser = false;
+
+        var createColorChooser = function() {
+
+          var border = 1;
+          var rows = 3;
+          var cols = 4;
+          var gap = 2;
+          var r = 12;
+          var w = (r + border * 2) * cols + gap * (cols - 1);
+          var h = (r + border * 2) * rows + gap * (rows - 1);
+          var $body = $('<div></div>').
+            css('position', 'relative').
+            css('width', w + 'px').
+            css('height', h + 'px');
+          var strokeColor = '#666666';
+
+          var createColorCell = function(x : number, y : number) {
+            var h = ~~( (y * cols + x) / (rows * cols) * 360);
+            var color = 'hsl(' + h + ',100%,80%)';
+            return $('<div></div>').
+              css('position', 'absolute').
+              css('left', ( (gap + r + border * 2) * x) + 'px').
+              css('top', ( (gap + r + border * 2) * y) + 'px').
+              css('width', r + 'px').
+              css('height', r + 'px').
+              css('opacity', '0.5').
+              css('border-width', border + 'px').
+              css('border-style', 'solid').
+              css('border-color', strokeColor).
+              css('background-color', color).
+              on('mouseover', function(event){
+                $(this).css('border-color', 'hsl(' + h + ',100%,50%)');
+              }).
+              on('mouseout', function(event){
+                $(this).css('border-color', strokeColor);
+              }).
+              on('click', function(event){
+                $(this).trigger('colorSelect', {color : color});
               });
-              menu.hideMenu();
-            } ) ).append(createMenuItem(chat.messages.COPY_TO_NEXT_DAY).
-            on('mousedown', function(event) {
-              event.stopImmediatePropagation();
-            } ).
-            on('click', function(event) {
-              copyTo(HOUR_IN_MILLIS * 24);
-              menu.hideMenu();
-            } ) ).append(createMenuItem(chat.messages.COPY_TO_NEXT_WEEK).
-            on('mousedown', function(event) {
-              event.stopImmediatePropagation();
-            } ).
-            on('click', function(event) {
-              copyTo(HOUR_IN_MILLIS * 24 * 7);
-              menu.hideMenu();
-            } ) );
+          };
+          for (var y = 0; y < rows; y += 1) {
+            for (var x = 0; x < cols; x += 1) {
+              $body.append(createColorCell(x, y) );
+            }
+          }
+          return $body;
+        };
+
+        var createColorMenu = function($target : JQuery) {
+          return createMenu($target, function($menu) {
+            $menu.append(createMenuItem('').
+              css('background-color', '#ffffff').
+              append(createColorChooser().
+              on('colorSelect', function(event, data) {
+                $tt.trigger('updateUserData', {
+                  action : 'update',
+                  dataId : statusModel.status.dataId,
+                  id : 'color',
+                  value : data.color });
+                colorMenu.hideMenu();
+                colorMenu = null;
+                menu.hideMenu();
+              }) ) );
+            });
+        };
+
+        var menu = createMenu($tt, function($menu) {
+          $menu.append(createMenuItem(chat.messages.COLOR).
+              on('mousedown', function(event) {
+                event.stopImmediatePropagation();
+              } ).
+              on('mouseover', function(event) {
+                if (colorMenu == null) {
+                  colorMenu = createColorMenu($(this) );
+                  colorMenu.showMenu($(this) ).
+                    css('left', ($(this).outerWidth() - 1) + 'px').
+                    css('top', '-1px').
+                    on('mouseover', function(event) {
+                      onColorChooser = true;
+                    } ).
+                    on('mouseout', function(event) {
+                      onColorChooser = false;
+                    } );
+                }
+              } ).
+              on('mouseout', function(event) {
+                callLater(function() {
+                  if (colorMenu != null && !onColorChooser) {
+                    colorMenu.hideMenu();
+                    colorMenu = null;
+                  }
+                });
+              } ).
+              on('click', function(event) {
+//                copyTo(HOUR_IN_MILLIS * 24);
+//                menu.hideMenu();
+              } ) ).
+            append(createMenuItem(chat.messages.COPY_TO_NEXT_DAY).
+              on('mousedown', function(event) {
+                event.stopImmediatePropagation();
+              } ).
+              on('click', function(event) {
+                copyTo(HOUR_IN_MILLIS * 24);
+                menu.hideMenu();
+              } ) ).
+            append(createMenuItem(chat.messages.COPY_TO_NEXT_WEEK).
+              on('mousedown', function(event) {
+                event.stopImmediatePropagation();
+              } ).
+              on('click', function(event) {
+                copyTo(HOUR_IN_MILLIS * 24 * 7);
+                menu.hideMenu();
+              } ) ).
+            append(createMenuItem(chat.messages.DELETE).
+              on('mousedown', function(event) {
+                event.stopImmediatePropagation();
+              } ).
+              on('click', function(event) {
+                $tt.trigger('updateUserData', {
+                  action : 'delete',
+                  dataId : statusModel.status.dataId
+                });
+                menu.hideMenu();
+              } ) );
         });
         var off = $tt.offset();
         menu.showMenu($tt).
@@ -1114,7 +1219,7 @@ namespace wschat.client {
         statusUI.setRect(rect);
         statusUI.setText(status.comment);
         statusUI.setTitle(title);
-        statusUI.setColor('#9999ff');
+        statusUI.setColor(status.color || 'hsl(240,100%,80%)');
         statusUI.setEditable(status.uid == chat.user.uid);
       });
 
@@ -1159,13 +1264,11 @@ namespace wschat.client {
         if (!statusMap[userData.uid]) {
           statusMap[userData.uid] = [];
         }
-        statusMap[userData.uid].push({
-          dataId : userData.dataId,
-          uid : userData.uid,
-          timeFrom : userData.timeFrom,
-          timeTo : userData.timeTo,
-          comment : userData.comment
-        });
+        var status : any = {};
+        for (var k in userData) {
+          status[k] = userData[k];
+        }
+        statusMap[userData.uid].push(status);
       }
       model.days = chat.messages.DAY_LABELS.split(/,/g);
       model.users = users;
