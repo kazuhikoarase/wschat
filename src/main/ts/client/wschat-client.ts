@@ -1939,8 +1939,16 @@ namespace wschat.client {
 
                     if (data.action == 'update') {
                       var userData = chat.userData[data.dataId];
-                      if (userData && userData[data.id] != data.value) {
-                        userData[data.id] = data.value;
+                      var changed = false;
+                      if (userData) {
+                        for (var k in data.userData) {
+                          changed = changed || userData[k] != data.userData[k];
+                        }
+                      }
+                      if (userData && changed) {
+                        for (var k in data.userData) {
+                          userData[k] = data.userData[k];
+                        }
                         send({
                           action : 'updateUserData',
                           date : userData.timeTo,

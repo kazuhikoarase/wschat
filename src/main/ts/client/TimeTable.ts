@@ -238,8 +238,7 @@ namespace wschat.client {
             $tt.trigger('updateUserData', {
               action : 'update',
               dataId : statusModel.status.dataId,
-              id : 'comment',
-              value : value });
+              userData : { comment : value } });
           }
           $label.css('display', '');
           $(document).off('mousedown', doc_mousedownHandler);
@@ -303,6 +302,104 @@ namespace wschat.client {
         on('mouseup', doc_mouseupHandler);
     };
 
+    var createColorMenuItem = function() {
+
+      var colorMenu :  {
+          showMenu: ($target: JQuery) => JQuery;
+          hideMenu: () => void;
+        } = null;
+      var onColorChooser = false;
+
+      var createColorChooser = function() {
+
+        var border = 1;
+        var rows = 3;
+        var cols = 4;
+        var gap = 2;
+        var r = 12;
+        var w = (r + border * 2) * cols + gap * (cols - 1);
+        var h = (r + border * 2) * rows + gap * (rows - 1);
+
+        var $body = $('<div></div>').
+          css('position', 'relative').
+          css('width', w + 'px').
+          css('height', h + 'px');
+        var strokeColor = '#666666';
+
+        var createColorCell = function(x : number, y : number) {
+          var h = ~~( (y * cols + x) / (rows * cols) * 360);
+          var color = 'hsl(' + h + ',100%,80%)';
+          return $('<div></div>').
+            css('position', 'absolute').
+            css('left', ( (gap + r + border * 2) * x) + 'px').
+            css('top', ( (gap + r + border * 2) * y) + 'px').
+            css('width', r + 'px').
+            css('height', r + 'px').
+            css('opacity', '0.5').
+            css('border-width', border + 'px').
+            css('border-style', 'solid').
+            css('border-color', strokeColor).
+            css('background-color', color).
+            on('mouseover', function(event){
+              $(this).css('border-color', 'hsl(' + h + ',100%,50%)');
+            }).
+            on('mouseout', function(event){
+              $(this).css('border-color', strokeColor);
+            }).
+            on('click', function(event){
+              $(this).trigger('colorSelect', {color : color});
+            });
+        };
+        for (var y = 0; y < rows; y += 1) {
+          for (var x = 0; x < cols; x += 1) {
+            $body.append(createColorCell(x, y) );
+          }
+        }
+        return $body;
+      };
+
+      var createColorMenu = function($target : JQuery) {
+        return createMenu($target, function($menu) {
+          $menu.append(createMenuItem('').
+            css('background-color', '#ffffff').
+            append(createColorChooser().
+            on('colorSelect', function(event, data) {
+              colorMenu.hideMenu();
+              colorMenu = null;
+              $menuItem.trigger('colorSelect', data);
+            }) ) );
+          });
+      };
+
+      var $menuItem = createMenuItem(chat.messages.COLOR).
+        on('mousedown', function(event) {
+          event.stopImmediatePropagation();
+        } ).
+        on('mouseover', function(event) {
+          if (colorMenu == null) {
+            colorMenu = createColorMenu($(this) );
+            colorMenu.showMenu($(this) ).
+              css('left', ($(this).outerWidth() - 1) + 'px').
+              css('top', '-1px').
+              on('mouseover', function(event) {
+                onColorChooser = true;
+              } ).
+              on('mouseout', function(event) {
+                onColorChooser = false;
+              } );
+          }
+        } ).
+        on('mouseout', function(event) {
+          callLater(function() {
+            if (colorMenu != null && !onColorChooser) {
+              colorMenu.hideMenu();
+              colorMenu = null;
+            }
+          });
+        } );
+      return $menuItem;
+    };
+
     var tt_contextmenuHandler = function(event : JQueryEventObject) {
       var contextPos = { x : event.pageX, y : event.pageY };
       var $status = $(event.target).closest('.wschat-tt-status');
@@ -327,108 +424,15 @@ namespace wschat.client {
           });
         };
 
-        var colorMenu :  {
-          showMenu: ($target: JQuery) => JQuery;
-          hideMenu: () => void;
-        } = null;
-        var onColorChooser = false;
-
-        var createColorChooser = function() {
-
-          var border = 1;
-          var rows = 3;
-          var cols = 4;
-          var gap = 2;
-          var r = 12;
-          var w = (r + border * 2) * cols + gap * (cols - 1);
-          var h = (r + border * 2) * rows + gap * (rows - 1);
-          var $body = $('<div></div>').
-            css('position', 'relative').
-            css('width', w + 'px').
-            css('height', h + 'px');
-          var strokeColor = '#666666';
-
-          var createColorCell = function(x : number, y : number) {
-            var h = ~~( (y * cols + x) / (rows * cols) * 360);
-            var color = 'hsl(' + h + ',100%,80%)';
-            return $('<div></div>').
-              css('position', 'absolute').
-              css('left', ( (gap + r + border * 2) * x) + 'px').
-              css('top', ( (gap + r + border * 2) * y) + 'px').
-              css('width', r + 'px').
-              css('height', r + 'px').
-              css('opacity', '0.5').
-              css('border-width', border + 'px').
-              css('border-style', 'solid').
-              css('border-color', strokeColor).
-              css('background-color', color).
-              on('mouseover', function(event){
-                $(this).css('border-color', 'hsl(' + h + ',100%,50%)');
-              }).
-              on('mouseout', function(event){
-                $(this).css('border-color', strokeColor);
-              }).
-              on('click', function(event){
-                $(this).trigger('colorSelect', {color : color});
-              });
-          };
-          for (var y = 0; y < rows; y += 1) {
-            for (var x = 0; x < cols; x += 1) {
-              $body.append(createColorCell(x, y) );
-            }
-          }
-          return $body;
-        };
-
-        var createColorMenu = function($target : JQuery) {
-          return createMenu($target, function($menu) {
-            $menu.append(createMenuItem('').
-              css('background-color', '#ffffff').
-              append(createColorChooser().
-              on('colorSelect', function(event, data) {
-                $tt.trigger('updateUserData', {
-                  action : 'update',
-                  dataId : statusModel.status.dataId,
-                  id : 'color',
-                  value : data.color });
-                colorMenu.hideMenu();
-                colorMenu = null;
-                menu.hideMenu();
-              }) ) );
-            });
-        };
-
         var menu = createMenu($tt, function($menu) {
-          $menu.append(createMenuItem(chat.messages.COLOR).
-              on('mousedown', function(event) {
-                event.stopImmediatePropagation();
-              } ).
-              on('mouseover', function(event) {
-                if (colorMenu == null) {
-                  colorMenu = createColorMenu($(this) );
-                  colorMenu.showMenu($(this) ).
-                    css('left', ($(this).outerWidth() - 1) + 'px').
-                    css('top', '-1px').
-                    on('mouseover', function(event) {
-                      onColorChooser = true;
-                    } ).
-                    on('mouseout', function(event) {
-                      onColorChooser = false;
-                    } );
-                }
-              } ).
-              on('mouseout', function(event) {
-                callLater(function() {
-                  if (colorMenu != null && !onColorChooser) {
-                    colorMenu.hideMenu();
-                    colorMenu = null;
-                  }
-                });
-              } ).
-              on('click', function(event) {
-//                copyTo(HOUR_IN_MILLIS * 24);
-//                menu.hideMenu();
-              } ) ).
+          $menu.append(createColorMenuItem().
+            on('colorSelect', function(event, data) {
+              $tt.trigger('updateUserData', {
+                action : 'update',
+                dataId : statusModel.status.dataId,
+                userData : { color :  data.color } });
+              menu.hideMenu();
+            } ) ).
             append(createMenuItem(chat.messages.COPY_TO_NEXT_DAY).
               on('mousedown', function(event) {
                 event.stopImmediatePropagation();
@@ -573,7 +577,7 @@ namespace wschat.client {
 
         var text = (<any>statusModel).status[pickerModel.target];
         var off = $tt.offset();
-        $marker.text( formatTime(strToTime(text) ) );
+        $marker.text(formatTime(strToTime(text) ) );
         $marker.css('left', (event.pageX - off.left) + 'px').
           css('top', (event.pageY - off.top - $marker.outerHeight() - 4) + 'px');
       };
@@ -590,11 +594,12 @@ namespace wschat.client {
 
         if (pickerModel.target == 'timeFrom' ||
             pickerModel.target == 'timeTo') {
+          var userData : any = {};
+          userData[pickerModel.target] = (<any>statusModel.status)[pickerModel.target];
           $tt.trigger('updateUserData', {
             action : 'update',
             dataId : statusModel.status.dataId,
-            id : pickerModel.target,
-            value : (<any>statusModel.status)[pickerModel.target] });
+            userData : userData });
         }
       };
 
@@ -607,29 +612,71 @@ namespace wschat.client {
 
       var lastMousedown = 0;
 
+      var statusModel : StatusModel;
+      var timeFrom : number;
+      var timeTo : number;
+      var move = false;
+
       mouseOp.mousedown = function(event) {
+
+        var time = new Date().getTime();
+        var dblclick = time - lastMousedown < 300;
+
+        move = false;
+
         if ($(event.target).closest('.wschat-tt-status').length == 1) {
-          var time = new Date().getTime() ;
-          if (time - lastMousedown < 300) {
-            var $status = $(event.target).closest('.wschat-tt-status');
-            var statusModel = $status.data('model');
-            if (statusModel.status.uid == chat.user.uid) {
+          var $status = $(event.target).closest('.wschat-tt-status');
+          statusModel = $status.data('model');
+          if (statusModel.status.uid == chat.user.uid) {
+            if (dblclick) {
               toFront(statusModel);
               editor.beginEdit($status);
+            } else {
+              move = true;
+              timeFrom = strToTime(statusModel.status.timeFrom);
+              timeTo = strToTime(statusModel.status.timeTo);
+              toFront(statusModel);
             }
           }
-          lastMousedown = time;
         }
+
+        lastMousedown = time;
       };
 
       mouseOp.mousemove = function(event : JQueryEventObject) {
-        model.timeOffset += (event.pageX - mouseOp.lastPageX) / style.hourInPixel * HOUR_IN_MILLIS;
-        model.userOffset += event.pageY - mouseOp.lastPageY;
-        var min = style.bodyHeight - style.cellHeight * model.users.length;
-        model.userOffset = Math.min(Math.max(min, model.userOffset), 0);
-        $rowHeader.scrollTop(-model.userOffset);
-        update();
+        if (move) {
+          // move
+          var dt = (event.pageX - mouseOp.lastPageX) /
+            style.hourInPixel * HOUR_IN_MILLIS;
+          timeFrom += dt;
+          timeTo += dt;
+          statusModel.status._cache = null;
+  
+          statusModel.status.timeFrom = timeToStr(trimTime(timeFrom) );
+          statusModel.status.timeTo = timeToStr(trimTime(timeTo) );
+          update();
+        } else {
+          // scroll
+          model.timeOffset += (event.pageX - mouseOp.lastPageX) / style.hourInPixel * HOUR_IN_MILLIS;
+          model.userOffset += event.pageY - mouseOp.lastPageY;
+          var min = style.bodyHeight - style.cellHeight * model.users.length;
+          model.userOffset = Math.min(Math.max(min, model.userOffset), 0);
+          $rowHeader.scrollTop(-model.userOffset);
+          update();
+        }
       }
+
+      mouseOp.mouseup = function(event) {
+        if (move) {
+          $tt.trigger('updateUserData', {
+            action : 'update',
+            dataId : statusModel.status.dataId,
+            userData : {
+              timeFrom : statusModel.status.timeFrom,
+              timeTo : statusModel.status.timeTo
+            } });
+        }
+      };
 
       return mouseOp;
     }();
