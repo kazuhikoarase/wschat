@@ -1353,7 +1353,7 @@ namespace wschat.client {
           addUser(users[i].uid, users[i].nickname, false);
         }
       }();
-      statusMap = util.createStatusMap();
+      statusMap = util.createStatusMap(users);
       model.days = chat.messages.DAY_LABELS.split(/,/g);
       model.users = users;
       model.statusMap = statusMap;

@@ -63,32 +63,60 @@ namespace wschat.client {
     };
 
     var util = function() {
+
       var userDataMap : { [dataId : string] : any } = {};
-      return {
-        createStatusMap : function() {
-          var statusMap : { [uid : string] : any[] } = {};
+
+      var dataIdsByUserCache : { [uid : string] : string[] } = null;
+
+      var getDataIdsByUser = function(uid : string) : string[] {
+        if (!dataIdsByUserCache) {
+          dataIdsByUserCache = {};
           for (var dataId in userDataMap) {
             var userData = userDataMap[dataId];
-            if (userData.dataType != 'status') {
-              continue;
-            } else if (typeof userData.timeFrom != 'string') {
-              continue;
+            if (!dataIdsByUserCache[userData.uid]) {
+              dataIdsByUserCache[userData.uid] = [];
             }
-            if (!statusMap[userData.uid]) {
-              statusMap[userData.uid] = [];
-            }
-            var status : any = {};
-            for (var k in userData) {
-              status[k] = userData[k];
-            }
-            statusMap[userData.uid].push(status);
+            dataIdsByUserCache[userData.uid].push(dataId);
           }
-          return statusMap;
-        },
+        }
+        return dataIdsByUserCache[uid] || [];
+      };
+
+      var createStatusMap = function(users : { uid : string }[]) {
+        var statusMap : { [uid : string] : any[] } = {};
+        var putCloneStatus = function(dataId : string) {
+          var userData = userDataMap[dataId];
+          if (userData.dataType != 'status') {
+            return;
+          } else if (typeof userData.timeFrom != 'string') {
+            return;
+          }
+          if (!statusMap[userData.uid]) {
+            statusMap[userData.uid] = [];
+          }
+          var status : any = {};
+          for (var k in userData) {
+            status[k] = userData[k];
+          }
+          statusMap[userData.uid].push(status);
+        }
+        for (var u = 0; u < users.length; u += 1) {
+          var dataIds = getDataIdsByUser(users[u].uid);
+          for (var d = 0; d < dataIds.length; d += 1) {
+            putCloneStatus(dataIds[d]);
+          }
+        }
+        return statusMap;
+      };
+
+      return {
+        createStatusMap : createStatusMap,
         putUserData : function(userData : any) {
+          dataIdsByUserCache = null;
           userDataMap[userData.dataId] = userData;
         },
         deleteUserDataByDataId : function(dataId : string) {
+          dataIdsByUserCache = null;
           delete userDataMap[dataId];
         },
         getUserDataByDataId(dataId : string) {
