@@ -680,7 +680,7 @@ namespace wschat.client {
             statusModel.status.timeTo) );
           $marker.css('left', (event.pageX - off.left) + 'px').
             css('top', (event.pageY - off.top - $marker.outerHeight() - 4) + 'px');
-        
+
         } else {
           // scroll
           model.timeOffset += (event.pageX - mouseOp.lastPageX) / style.hourInPixel * HOUR_IN_MILLIS;
