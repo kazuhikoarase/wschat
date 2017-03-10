@@ -89,6 +89,10 @@ namespace wschat.client {
     return date.getTime();
   };
 
+  var sameDate = function(t1 : string, t2 : string) {
+    return t1.substring(0, 8) == t2.substring(0, 8)
+  };
+
   var formatTime = function(time : number, timeOnly? : boolean) {
     var s = timeToStr(time);
     return timeOnly? (+s.substring(8, 10) ) + ':' + s.substring(10, 12) :
@@ -520,6 +524,15 @@ namespace wschat.client {
       return mouseOp;
     };
 
+    var createMarker = function() {
+      return $('<div></div>').
+        css('position', 'absolute').
+        css('pointer-events', 'none').
+        css('padding', '2px 4px 2px 4px').
+        css('border', '1px solid #999999').
+        css('background-color', '#f0f0f0');
+    };
+    
     var pickMouseOp = function() {
 
       var mouseOp = createDefaultMouseOp();
@@ -552,12 +565,7 @@ namespace wschat.client {
         statusModel.status._cache = null;
 
         if ($marker == null) {
-          $marker = $('<div></div>').
-            css('position', 'absolute').
-            css('pointer-events', 'none').
-            css('padding', '2px 4px 2px 4px').
-            css('border', '1px solid #999999').
-            css('background-color', '#f0f0f0');
+          $marker = createMarker();
           $tt.append($marker);
         }
 
@@ -615,6 +623,7 @@ namespace wschat.client {
       var statusModel : StatusModel;
       var timeFrom : number;
       var timeTo : number;
+      var $marker : JQuery = null;
       var move = false;
 
       mouseOp.mousedown = function(event) {
@@ -643,9 +652,19 @@ namespace wschat.client {
         lastMousedown = time;
       };
 
+      var getMarkerText = function(timeFrom : string, timeTo : string) {
+        return formatTime(strToTime(timeFrom) ) + ' - ' +
+          formatTime(strToTime(timeTo), sameDate(timeFrom, timeTo) );
+      };
+
       mouseOp.mousemove = function(event : JQueryEventObject) {
         if (move) {
           // move
+          if ($marker == null) {
+            $marker = createMarker();
+            $tt.append($marker);
+          }
+
           var dt = (event.pageX - mouseOp.lastPageX) /
             style.hourInPixel * HOUR_IN_MILLIS;
           timeFrom += dt;
@@ -655,6 +674,13 @@ namespace wschat.client {
           statusModel.status.timeFrom = timeToStr(trimTime(timeFrom) );
           statusModel.status.timeTo = timeToStr(trimTime(timeTo) );
           update();
+
+          var off = $tt.offset();
+          $marker.text(getMarkerText(statusModel.status.timeFrom,
+            statusModel.status.timeTo) );
+          $marker.css('left', (event.pageX - off.left) + 'px').
+            css('top', (event.pageY - off.top - $marker.outerHeight() - 4) + 'px');
+        
         } else {
           // scroll
           model.timeOffset += (event.pageX - mouseOp.lastPageX) / style.hourInPixel * HOUR_IN_MILLIS;
@@ -668,6 +694,12 @@ namespace wschat.client {
 
       mouseOp.mouseup = function(event) {
         if (move) {
+
+          if ($marker != null) {
+            $marker.remove();
+            $marker = null;
+          }
+
           $tt.trigger('updateUserData', {
             action : 'update',
             dataId : statusModel.status.dataId,
@@ -1229,8 +1261,7 @@ namespace wschat.client {
 
         if (!status._cache) {
           status._cache = {
-            sameDate : status.timeFrom.substring(0, 8) ==
-              status.timeTo.substring(0, 8),
+            sameDate : sameDate(status.timeFrom, status.timeTo),
             timeFrom : strToTime(status.timeFrom),
             timeTo : strToTime(status.timeTo)
           };
