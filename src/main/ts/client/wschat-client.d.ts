@@ -12,13 +12,18 @@ declare module wschat.client {
     mobile? : boolean
   }
 
+  interface ChatUtil {
+    getSortedUsers : () => User[]
+    applyDecoration : ($target : JQuery) => JQuery
+    createStatusMap : () => { [uid : string] : any[] }
+  }
+
   interface Chat {
     user : User
     date : number
     fid : number
     users : { [uid : string] : User }
     groups : { [gid : string] : Group }
-    userData : { [dataId : string] : any }
     selectedUids : { [uid : string] : boolean }
     selectedUid : string
     selectedGid : string

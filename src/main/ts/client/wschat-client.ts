@@ -13,7 +13,6 @@ namespace wschat.client {
       user: null,
       users: {},
       avatars: {},
-      userData : {},
       userStates: {},
       userIdleTimes: {},
       groups: {},
@@ -63,12 +62,64 @@ namespace wschat.client {
       smallAvatarSize: 36
     };
 
-    var applyDecoration = function($target : JQuery) {
-      if (opts.decorator) {
-        opts.decorator($target);
-      }
-      return $target;
-    };
+    var util = function() {
+      var userDataMap : { [dataId : string] : any } = {};
+      return {
+        createStatusMap : function() {
+          var statusMap : { [uid : string] : any[] } = {};
+          for (var dataId in userDataMap) {
+            var userData = userDataMap[dataId];
+            if (userData.dataType != 'status') {
+              continue;
+            } else if (typeof userData.timeFrom != 'string') {
+              continue;
+            }
+            if (!statusMap[userData.uid]) {
+              statusMap[userData.uid] = [];
+            }
+            var status : any = {};
+            for (var k in userData) {
+              status[k] = userData[k];
+            }
+            statusMap[userData.uid].push(status);
+          }
+          return statusMap;
+        },
+        putUserData : function(userData : any) {
+          userDataMap[userData.dataId] = userData;
+        },
+        deleteUserDataByDataId : function(dataId : string) {
+          delete userDataMap[dataId];
+        },
+        getUserDataByDataId(dataId : string) {
+          return userDataMap[dataId];
+        },
+        applyDecoration : function($target : JQuery) {
+          if (opts.decorator) {
+            opts.decorator($target);
+          }
+          return $target;
+        },
+        getSortedUsers : function() {
+          var users : User[] = [];
+          $.each(chat.users, function(uid, user) {
+            users.push(user);
+          });
+          var getUserStateOrder = function(state : string) {
+            return (state == 'online' || state == 'idle')? 0 : 1;
+          };
+          users.sort(function(u1, u2) {
+            var s1 = getUserStateOrder(getUserState(u1) );
+            var s2 = getUserStateOrder(getUserState(u2) );
+            if (s1 != s2) {
+              return s1 < s2? -1 : 1;
+            }
+            return u1.uid < u2.uid? -1 : 1;
+          });
+          return users;
+        }
+      };
+    }();
 
     var isActive = function() {
       var active = true;
@@ -458,9 +509,9 @@ namespace wschat.client {
 
     actions.userData = function(data) {
       if (data['delete']) {
-        delete chat.userData[data.dataId || data.data.dataId];
+        util.deleteUserDataByDataId(data.dataId || data.data.dataId);
       } else {
-        chat.userData[data.data.dataId] = data.data;
+        util.putUserData(data.data);
       }
       if (data.data.dataType == 'status') {
         statusUI.invalidate();
@@ -1771,7 +1822,7 @@ namespace wschat.client {
         }
         if (decorate) {
           $text.attr('title', $text.text() );
-          applyDecoration($text);
+          util.applyDecoration($text);
         }
         $editor.val(val());
       };
@@ -1932,13 +1983,12 @@ namespace wschat.client {
                     timeTable.dlg.hideDialog();
                   }
                   var off = $cv.offset();
-                  timeTable = createTimeTable(chat,
-                    applyDecoration, getSortedUsers);
+                  timeTable = createTimeTable(chat, util);
                   timeTable.refreshData();
                   timeTable.$ui.on('updateUserData', function(event, data) {
 
                     if (data.action == 'update') {
-                      var userData = chat.userData[data.dataId];
+                      var userData = util.getUserDataByDataId(data.dataId);
                       var changed = false;
                       if (userData) {
                         for (var k in data.userData) {
@@ -1963,7 +2013,7 @@ namespace wschat.client {
                         create : true
                       });
                     } else if (data.action == 'delete') {
-                      var userData = chat.userData[data.dataId];
+                      var userData = util.getUserDataByDataId(data.dataId);
                       if (userData && userData.uid == chat.user.uid) {
                         send({
                           action : 'updateUserData',
@@ -2034,7 +2084,7 @@ namespace wschat.client {
         append($('<span></span>').css('vertical-align', 'middle').
             text(txt) ).
         append($('<br/>') ).
-        append(applyDecoration( $('<span></span>').
+        append(util.applyDecoration( $('<span></span>').
             text(user.message || '\u3000').
             attr('title', user.message) ) );
       return $('<div></div>').
@@ -2093,28 +2143,9 @@ namespace wschat.client {
         ['add', 'reject']);
     };
 
-    var getSortedUsers = function() {
-      var users : User[] = [];
-      $.each(chat.users, function(uid, user) {
-        users.push(user);
-      });
-      var getUserStateOrder = function(state : string) {
-        return (state == 'online' || state == 'idle')? 0 : 1;
-      };
-      users.sort(function(u1, u2) {
-        var s1 = getUserStateOrder(getUserState(u1) );
-        var s2 = getUserStateOrder(getUserState(u2) );
-        if (s1 != s2) {
-          return s1 < s2? -1 : 1;
-        }
-        return u1.uid < u2.uid? -1 : 1;
-      });
-      return users;
-    };
-
     usersUI.validate = function() {
       $users.children().remove();
-      $.each(getSortedUsers(), function(i, user) {
+      $.each(util.getSortedUsers(), function(i, user) {
         var $cell = createUser(user, usersAvatarCache).
           on('mousedown', function(event) {
             event.preventDefault();
@@ -2630,7 +2661,7 @@ namespace wschat.client {
           } else {
             var $line = $('<span></span>').text(line);
             $body.append($line);
-            applyDecoration($line);
+            util.applyDecoration($line);
           }
         });
 

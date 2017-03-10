@@ -56,7 +56,7 @@ namespace wschat.client {
   interface TimeTableStatusCache {
     timeFrom : number
     timeTo : number
-    sameDate : boolean
+    timeFormat : string
   }
 
   var timeToStr = function() {
@@ -89,18 +89,40 @@ namespace wschat.client {
     return date.getTime();
   };
 
-  var sameDate = function(t1 : string, t2 : string) {
-    return t1.substring(0, 8) == t2.substring(0, 8)
+  var TimeFormat = {
+    Time : 'Time',
+    MonthDateTime : 'MonthDateTime',
+    Full : 'Full'
+  }
+
+  var getTimeFormat = function(t1 : string, t2 : string) {
+    if (t1.substring(0, 8) == t2.substring(0, 8) ) {
+      return TimeFormat.Time;
+    } else if (t1.substring(0, 4) == t2.substring(0, 4) ) {
+      return TimeFormat.MonthDateTime;
+    } else {
+      return TimeFormat.Full;
+    }
   };
 
-  var formatTime = function(time : number, timeOnly? : boolean) {
+  var formatTime = function(time : number, format : string = TimeFormat.Full) {
     var s = timeToStr(time);
-    return timeOnly? (+s.substring(8, 10) ) + ':' + s.substring(10, 12) :
-      s.substring(0, 4) + '/' +
-      (+s.substring(4, 6) ) + '/' +
-      (+s.substring(6, 8) ) + ' ' +
-      (+s.substring(8, 10) ) + ':' +
-      s.substring(10, 12);
+    switch(format) {
+    case TimeFormat.Time :
+      return (+s.substring(8, 10) ) + ':' +
+        s.substring(10, 12);
+    case TimeFormat.MonthDateTime :
+      return (+s.substring(4, 6) ) + '/' +
+        (+s.substring(6, 8) ) + ' ' +
+        (+s.substring(8, 10) ) + ':' +
+        s.substring(10, 12);
+    default :
+      return s.substring(0, 4) + '/' +
+        (+s.substring(4, 6) ) + '/' +
+        (+s.substring(6, 8) ) + ' ' +
+        (+s.substring(8, 10) ) + ':' +
+        s.substring(10, 12);
+    }
   };
 
   var intersect = function(rect1 : Rect, rect2 : Rect) {
@@ -113,8 +135,7 @@ namespace wschat.client {
 
   export var createTimeTable = function(
     chat : Chat,
-    applyDecoration : ($target : JQuery) => JQuery,
-    getSortedUsers : () => User[]
+    util : ChatUtil
   ) : TimeTable {
 
     var style = {
@@ -653,8 +674,8 @@ namespace wschat.client {
       };
 
       var getMarkerText = function(timeFrom : string, timeTo : string) {
-        return formatTime(strToTime(timeFrom) ) + ' - ' +
-          formatTime(strToTime(timeTo), sameDate(timeFrom, timeTo) );
+        return formatTime(strToTime(timeFrom) ) + ' ~ ' +
+          formatTime(strToTime(timeTo), getTimeFormat(timeFrom, timeTo) );
       };
 
       mouseOp.mousemove = function(event : JQueryEventObject) {
@@ -896,7 +917,7 @@ namespace wschat.client {
             return;
           }
           model.text = text;
-          applyDecoration($label.text(text) );
+          util.applyDecoration($label.text(text) );
         },
         setColor : function(color : string) {
           if (model.color == color) {
@@ -1261,7 +1282,7 @@ namespace wschat.client {
 
         if (!status._cache) {
           status._cache = {
-            sameDate : sameDate(status.timeFrom, status.timeTo),
+            timeFormat : getTimeFormat(status.timeFrom, status.timeTo),
             timeFrom : strToTime(status.timeFrom),
             timeTo : strToTime(status.timeTo)
           };
@@ -1289,8 +1310,8 @@ namespace wschat.client {
         }
         newStatusUICache.push(statusUI);
 
-        var title = formatTime(status._cache.timeFrom) + ' - ' +
-          formatTime(status._cache.timeTo, status._cache.sameDate) + ' ' +
+        var title = formatTime(status._cache.timeFrom) + ' ~ ' +
+          formatTime(status._cache.timeTo, status._cache.timeFormat) + ' ' +
           status.comment;
         statusUI.$ui.data('model', { user : user, status : status});
         statusUI.setVisible(true);
@@ -1327,34 +1348,18 @@ namespace wschat.client {
         addUser(chat.user.uid, chat.user.nickname, true);
       }
       !function() {
-        var users = getSortedUsers();
+        var users = util.getSortedUsers();
         for (var i = 0; i < users.length; i += 1) {
           addUser(users[i].uid, users[i].nickname, false);
         }
       }();
-      for (var dataId in chat.userData) {
-        var userData = chat.userData[dataId];
-        if (userData.dataType != 'status') {
-          continue;
-        } else if (typeof userData.timeFrom != 'string') {
-          continue;
-        }
-        if (!statusMap[userData.uid]) {
-          statusMap[userData.uid] = [];
-        }
-        var status : any = {};
-        for (var k in userData) {
-          status[k] = userData[k];
-        }
-        statusMap[userData.uid].push(status);
-      }
+      statusMap = util.createStatusMap();
       model.days = chat.messages.DAY_LABELS.split(/,/g);
       model.users = users;
       model.statusMap = statusMap;
       updateUsers();
       update();
     };
-    update();
 
     return {
       refreshData : refreshData,
