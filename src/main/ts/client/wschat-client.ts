@@ -439,7 +439,7 @@ namespace wschat.client {
       userUpdate();
     }, chat.heartBeatInterval);
 
-    var getDefaultAvatar = function() {
+    var createDefaultAvatar = function() {
 
       var width = 120;
       var height = 120;
@@ -548,7 +548,7 @@ namespace wschat.client {
     };
 
     actions.avatar = function(data) {
-      chat.avatars[data.uid] = data.data || getDefaultAvatar();
+      chat.avatars[data.uid] = data.data || createDefaultAvatar();
       delete usersAvatarCache[data.uid];
       if (chat.user.uid == data.uid) {
         userUI.invalidate();
@@ -876,7 +876,7 @@ namespace wschat.client {
 
     var updateSelectedUsers = function() {
       $users.children().each(function() {
-        if (chat.selectedUids[$(this).attr('wschat-uid')]) {
+        if (chat.selectedUids[$(this).data('uid')]) {
           $(this).addClass('wschat-selected');
         } else {
           $(this).removeClass('wschat-selected');
@@ -948,7 +948,7 @@ namespace wschat.client {
         return;
       }
       updateThreadContent(function($cellsContent : JQuery) {
-        var sel = '[wschat-uid="'+ typingData.uid + '"]';
+        var sel = '[wschat-uid="' + typingData.uid + '"]';
         if (typingData.status == 'typing') {
           var $typing = $cellsContent.children(sel);
           if ($typing.length == 0) {
@@ -1676,11 +1676,13 @@ namespace wschat.client {
       var selectedUid : string = null;
       var users : { [uid : string] : User } = {};
       var updateSelectedUser = function() {
-        $result.children().removeClass('wschat-selected');
-        if (selectedUid != null) {
-          $result.children('[wschat-uid="' + selectedUid + '"]').
-            addClass('wschat-selected');
-        }
+        $result.children().each(function() {
+          if ($(this).data('uid') == selectedUid) {
+            $(this).addClass('wschat-selected');
+          } else {
+            $(this).removeClass('wschat-selected');
+          }
+        });
       };
       var search = function(keyword : string) {
         selectedUid = null;
@@ -1698,13 +1700,13 @@ namespace wschat.client {
               label += ' ' + user.nickname;
             }
             var $user = $('<div></div>').
-              attr('wschat-uid', user.uid).
               css('width', '240px').
               css('padding', '4px').
               css('cursor', 'default').
               css('white-space', 'nowrap').
               css('overflow', 'hidden').
               css('text-overflow', 'ellipsis').
+              data('uid', user.uid).
               on('mousedown', function(event) {
                 event.preventDefault();
               }).
@@ -1801,25 +1803,33 @@ namespace wschat.client {
           on('click', deleteContactHandler) );
     });
 
+
+    var userContactMenu = createMenu($chatUI, function($menu : JQuery) {
+
+      $menu.append(createMenuItem(chat.messages.DELETE_CONTACT).
+          on('click', function(event : JQueryEventObject) {
+            var user = chat.users[$menu.data('uid')];
+            var dlg = createDialog();
+            dlg.showDialog(createDialogContent(
+              dlg,
+              messageFormat(chat.messages.CONFIRM_DELETE_CONTACT,
+                  user.nickname || user.uid),
+              [chat.messages.CANCEL, chat.messages.OK]).
+              on('close', function(event, button) {
+                if (button != chat.messages.OK) {
+                  return;
+                }
+                removeContact(user.uid);
+              } ) );
+            userContactMenu.hideMenu();
+          }) );
+    });
+
     var deleteGroupContactHandler = function(event : JQueryEventObject) {
       var gid = getSelectedGid();
       var group = gid? chat.groups[gid] : null;
       if (group && util.getGroupContacts()[group.gid]) {
 
-      }
-    };
-    var addToContactListHandler = function(event : JQueryEventObject) {
-      var gid = getSelectedGid();
-      var group = gid? chat.groups[gid] : null;
-      if (group && !util.getGroupContacts()[group.gid]) {
-        send({
-          action : 'updateUserData',
-          userData : {
-            dataType : 'grpcont',
-            gid : group.gid
-          },
-          create : true
-        });
       }
     };
 
@@ -1830,95 +1840,21 @@ namespace wschat.client {
 
     var groupMenu = createMenu($chatUI, function($menu : JQuery) {
       $menu.append(createMenuItem(chat.messages.ADD_TO_GROUP_CONTACTS).
-          on('click', addToContactListHandler) );
+          on('click', function(event : JQueryEventObject) {
+            var gid = $menu.data('gid');
+            var group = chat.groups[gid];
+            if (!util.getGroupContacts()[group.gid]) {
+              send({
+                action : 'updateUserData',
+                userData : {
+                  dataType : 'grpcont',
+                  gid : group.gid
+                },
+                create : true
+              });
+            }
+          }) );
     });
-
-    var editor = function($parent : JQuery, width : number,
-      maxlength : number,
-      defaultMessage : string,
-      decorate : boolean
-    ) {
-      var lastValue = '';
-      var value = '';
-      var val = function(newValue? : string) : string {
-        if (arguments.length > 0) {
-          if (value != arguments[0]) {
-            value = trim(arguments[0] || '');
-            $parent.trigger('valueChange');
-          }
-          updateUI();
-        }
-        return value;
-      };
-      var setEdit = function(edit : boolean) {
-        $editor.css('display', edit? 'inline-block' : 'none');
-        $label.css('display', edit? 'none' : 'inline-block');
-      };
-      var commitEdit = function() {
-        setEdit(false);
-        val($(this).val() );
-      };
-      var $editor = $('<input type="text"/>').
-        addClass('wschat-editor').
-        addClass('wschat-mouse-enabled').
-        attr('maxlength', '' + maxlength).
-        css('width', width + 'px').
-        css('vertical-align', 'middle').
-        change(function(event) {
-          commitEdit.apply(this);
-        }).
-        blur(function(event) {
-          commitEdit.apply(this);
-        }).
-        keydown(function(event) {
-          if (event.keyCode == 13) {
-            commitEdit.apply(this);
-          } else if (event.keyCode == 27) {
-            $(this).val(lastValue);
-            commitEdit.apply(this);
-          }
-        });
-      $parent.append($editor);
-      var $label = $('<div></div>').
-        addClass('wschat-editor').
-        css('display', 'inline-block').
-        css('cursor', 'default').
-        css('overflow', 'hidden').
-        css('text-overflow', 'ellipsis').
-        css('white-space', 'nowrap').
-        css('border-style', 'none').
-        css('width', $editor.width() + 'px').
-        css('min-height', $editor.height() + 'px').
-        css('vertical-align', 'middle').
-        on('mousedown', function(event) {
-          event.preventDefault();
-          $editor.val(val());
-          lastValue = $editor.val();
-          setEdit(true);
-          $editor.focus();
-        });
-      var $text = $('<span></span>');
-      $label.append($text);
-      $parent.append($label);
-
-      var updateUI = function() {
-        if (val() ) {
-          $text.text(val()).css('color', '#000000');
-        } else {
-          $text.text(defaultMessage).css('color', '#cccccc');
-        }
-        if (decorate) {
-          $text.attr('title', $text.text() );
-          util.applyDecoration($text);
-        }
-        $editor.val(val());
-      };
-
-      setEdit(false);
-
-      $parent.data('controller',{val: val});
-      return $parent;
-    };
 
     var createUserView = function() {
       return $('<div></div>').
@@ -2043,7 +1979,8 @@ namespace wschat.client {
       ) {
         var $editor = $('<div></div>').css('margin', '2px 0px 2px 0px');
         $info.append($editor);
-        editor($editor, width, maxlength, defaultMessage, decorate);
+        editor($editor, width, maxlength,
+          defaultMessage, decorate? util : null);
         $editor.data('controller').val(value);
         return $editor;
       };
@@ -2175,12 +2112,12 @@ namespace wschat.client {
             text(user.message || '\u3000').
             attr('title', user.message) ) );
       return $('<div></div>').
-        attr('wschat-uid', user.uid).
         addClass('wschat-users-cell').
         addClass('wschat-mouse-enabled').
         css('width', (ui.leftWidth - ui.pad) + 'px').
         css('padding', '2px').
         css('cursor', 'default').
+        data('uid', user.uid).
         append(createUserAvatar(user, avatarCache) ).
         append($body).append($('<br/>').css('clear', 'both') );
     };
@@ -2233,10 +2170,12 @@ namespace wschat.client {
     var getGroupContacts = function() {
       var groupContacts : any[]= [];
       $.each(util.getGroupContacts(), function(gid, groupContact) {
-        groupContacts.push(groupContact);
-        groupContact.nickname = groupContact.nickname ||
-          getGroupInfo(chat.groups[groupContact.gid]).nickname;
-//        if (nickn
+        groupContacts.push({
+          uid : '$g$' + groupContact.gid,
+          gid : groupContact.gid,
+          nickname : groupContact.nickname ||
+            getGroupInfo(chat.groups[groupContact.gid]).nickname
+        });
       });
       return groupContacts;
     };
@@ -2250,8 +2189,8 @@ namespace wschat.client {
           }).
           on('click', function(event) {
             $msg.trigger('blur');
-          setSelectedUser(null);
-          setSelectedGid(user.gid);
+            setSelectedUser(null);
+            setSelectedGid(user.gid);
           });
         $users.append($cell);
       });
@@ -2298,10 +2237,6 @@ namespace wschat.client {
 
       var groupInfo = getGroupInfo(group);
 
-      /*
-      txt += ' ' + getDateLabel(group.maxDate);
-       */
-
       var $cell = $('<div></div>').
         addClass('wschat-groups-cell').
         addClass('wschat-mouse-enabled').
@@ -2311,6 +2246,7 @@ namespace wschat.client {
         css('overflow', 'hidden').
         css('text-overflow', 'ellipsis').
         css('white-space', 'nowrap').
+        data('gid', group.gid).
         on('mousedown', function(event) {
           event.preventDefault();
         }).
@@ -2528,6 +2464,7 @@ namespace wschat.client {
         addClass('wschat-thread-message').
         addClass('wschat-mouse-enabled').
         attr('wschat-mid', message.mid).
+        data('mid', message.mid).
         on('mousedown', function(event) {
           var message = $(this).data('message');
           chat.selectedMid = message.mid;
@@ -2589,7 +2526,7 @@ namespace wschat.client {
 
     $(document).on('contextmenu', function(event) {
       var $cell = $(event.target).closest('.wschat-thread-message');
-      var $users = $(event.target).closest('.wschat-users-frame');
+      var $users = $(event.target).closest('.wschat-users-cell');
       var $groups = $(event.target).closest('.wschat-groups-cell');
       if ($cell.length != 0) {
         event.preventDefault();
@@ -2601,14 +2538,26 @@ namespace wschat.client {
         }
       } else if ($users.length != 0) {
         event.preventDefault();
-        contactMenu.showMenu($users).
+        var uid = $users.data('uid');
+        userContactMenu.showMenu($users).
+          data('uid', uid).
           css('left', event.pageX + 'px').
           css('top', event.pageY + 'px');
       } else if ($groups.length != 0) {
         event.preventDefault();
-        groupMenu.showMenu($groups).
-          css('left', event.pageX + 'px').
-          css('top', event.pageY + 'px');
+        var gid = $groups.data('gid');
+        var userGid = false;
+        $.each(chat.users, function(uid, user) {
+          if (user.gid == gid) {
+            userGid = true;
+          }
+        });
+        if (!userGid) {
+          groupMenu.showMenu($groups).
+            data('gid', gid).
+            css('left', event.pageX + 'px').
+            css('top', event.pageY + 'px');
+        }
       } else if ($(event.target).closest('.wschat-menu').length != 0) {
         event.preventDefault();
       }
@@ -2851,20 +2800,24 @@ namespace wschat.client {
     };
 
     var updateSelectedThreadUser = function() {
-      $threadUsers.children().removeClass('wschat-selected');
-      if (chat.selectedUid) {
-        $threadUsers.children('[wschat-uid="'+ chat.selectedUid + '"]').
-          addClass('wschat-selected');
-      }
+      $threadUsers.children().each(function() {
+        if (chat.selectedUid == $(this).data('uid') ) {
+          $(this).addClass('wschat-selected');
+        } else {
+          $(this).removeClass('wschat-selected');
+        }
+      });
     };
 
     var updateSelectedThread = function() {
       var $cellsContent = getThreadCellsContent();
-      $cellsContent.children().removeClass('wschat-selected');
-      if (chat.selectedMid) {
-        $cellsContent.children('[wschat-mid="'+ chat.selectedMid + '"]').
-          addClass('wschat-selected');
-      }
+      $cellsContent.children().each(function() {
+        if (chat.selectedMid == $(this).data('mid') ) {
+          $(this).addClass('wschat-selected');
+        } else {
+          $(this).removeClass('wschat-selected');
+        }
+      });
     };
 
     var getThreadUsers = function(gid : string, group : Group) {
@@ -2907,10 +2860,10 @@ namespace wschat.client {
       var $user = $('<div></div>').
         addClass('wschat-thread-user').
         addClass('wschat-mouse-enabled').
-        attr('wschat-uid', uid).
         css('padding', ui.pad + 'px').
         css('display', 'inline-block').
         css('vertical-align', 'top').
+        data('uid', uid).
         on('dblclick', function(event) {
           if (!chat.users[uid]) {
             sendRequest({uid: uid, nickname: nickname});
@@ -2926,7 +2879,7 @@ namespace wschat.client {
           css('width', ui.avatarSize + 'px');
       } else {
         var $view = createUserView();
-        var avatar = chat.avatars[uid] || getDefaultAvatar();
+        var avatar = chat.avatars[uid] || createDefaultAvatar();
         appendImage($view, $('<img/>').attr('src', avatar) );
         $user.append($view);
       }
