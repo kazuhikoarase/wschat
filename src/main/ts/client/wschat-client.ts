@@ -2211,8 +2211,8 @@ namespace wschat.client {
         ctx.restore();
       };
 
-      draw(ui.smallAvatarSize - size, 0);
       draw(0, 0);
+      draw(ui.smallAvatarSize - size, 0);
       draw( (ui.smallAvatarSize - size) / 2,
          ui.smallAvatarSize - size);
 
