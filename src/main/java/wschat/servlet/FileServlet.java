@@ -64,7 +64,6 @@ public class FileServlet extends HttpServlet {
   @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
-
     service = ChatServiceHolder.getInstance(getServletContext() );
     messageExpireInDays = getIntParam(config,
         "messageExpireInDays", 31);
@@ -147,7 +146,7 @@ public class FileServlet extends HttpServlet {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings("deprecation")
   @Override
   protected void doPost(
     HttpServletRequest request,
@@ -298,17 +297,16 @@ public class FileServlet extends HttpServlet {
     }
     {
       int updateCount = executeUpdate(
-        "delete from USER_DATA where DATE<" +
+        "delete from USER_DATA where DATE<>0 and DATE<" +
         (System.currentTimeMillis() -
             DAY_IN_MILLIS * messageExpireInDays) );
       if (updateCount > 0) {
-        logger.info(updateCount + " messages are deleted.");
+        logger.info(updateCount + " user_data are deleted.");
       }
     }
   }
 
   protected int executeUpdate(String sql) {
-    //logger.info(sql);
     try {
       Connection conn = ConnManager.getInstance().getConnection();
       try {

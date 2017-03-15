@@ -72,7 +72,8 @@
   "COPY_TO_NEXT_WEEK": "Copy to next week",
   "COLOR": "Color",
 
-  "ADD_TO_CONTACT_LIST": "Add to the contact list",
+  "ADD_TO_GROUP_CONTACTS": "Add to group contacts",
+  "REMOVE_FROM_GROUP_CONTACTS": "Remove from group contacts",
 
   "TRAILER": ""
 }

@@ -417,8 +417,7 @@ extends UserService implements IChatService {
   @Override
   public void updateUserData(UserData userData, String date) throws Exception {
     final long time = date != null?
-        new SimpleDateFormat("yyyyMMddHHmm").parse(date).getTime() :
-        System.currentTimeMillis();
+        new SimpleDateFormat("yyyyMMddHHmm").parse(date).getTime() : 0L;
     int count = executeQuery("select DATA_ID from USER_DATA where DATA_ID=? for update",
         new Object[]{ stringToLong(userData.getDataId() )}, null);
     if (count == 0) {

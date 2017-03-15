@@ -70,7 +70,8 @@
   "COPY_TO_NEXT_WEEK": "翌週にコピー",
   "COLOR": "カラー",
 
-  "ADD_TO_CONTACT_LIST": "連絡先に追加",
+  "ADD_TO_GROUP_CONTACTS": "グループ連絡先に追加",
+  "REMOVE_FROM_GROUP_CONTACTS": "グループ連絡先から削除",
 
   "TRAILER": ""
 }

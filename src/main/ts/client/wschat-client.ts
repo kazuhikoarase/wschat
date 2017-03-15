@@ -67,6 +67,7 @@ namespace wschat.client {
       var userDataMap : { [dataId : string] : any } = {};
 
       var dataIdsByUserCache : { [uid : string] : string[] } = null;
+      var groupContactsByGidCache : { [gid : string] : any } = null;
 
       var getDataIdsByUser = function(uid : string) : string[] {
         if (!dataIdsByUserCache) {
@@ -109,14 +110,36 @@ namespace wschat.client {
         return statusMap;
       };
 
+      var getGroupContacts = function() {
+        if (!groupContactsByGidCache) {
+          groupContactsByGidCache = {};
+          if (chat.user) {
+            var dataIds = getDataIdsByUser(chat.user.uid);
+            for (var d = 0; d < dataIds.length; d += 1) {
+              var userData = userDataMap[dataIds[d]];
+              if (userData.dataType != 'grpcont') {
+                continue;
+              } else if (!chat.groups[userData.gid]) {
+                continue;
+              }
+              groupContactsByGidCache[userData.gid] = userData;
+            }
+          }
+        }
+        return groupContactsByGidCache;
+      };
+
       return {
         createStatusMap : createStatusMap,
+        getGroupContacts : getGroupContacts,
         putUserData : function(userData : any) {
           dataIdsByUserCache = null;
+          groupContactsByGidCache = null;
           userDataMap[userData.dataId] = userData;
         },
         deleteUserDataByDataId : function(dataId : string) {
           dataIdsByUserCache = null;
+          groupContactsByGidCache = null;
           delete userDataMap[dataId];
         },
         getUserDataByDataId(dataId : string) {
@@ -543,6 +566,9 @@ namespace wschat.client {
       }
       if (data.data.dataType == 'status') {
         statusUI.invalidate();
+      } else if (data.data.dataType == 'grpcont') {
+//        groupsUI.invalidate();
+        usersUI.invalidate();
       }
     };
 
@@ -567,6 +593,7 @@ namespace wschat.client {
       group.messages = chat.groups[group.gid]?
           chat.groups[group.gid].messages : {};
       chat.groups[group.gid] = group;
+      usersUI.invalidate();
       groupsUI.invalidate();
       threadUsersUI.invalidate();
       threadUI.invalidate();
@@ -1774,6 +1801,38 @@ namespace wschat.client {
           on('click', deleteContactHandler) );
     });
 
+    var deleteGroupContactHandler = function(event : JQueryEventObject) {
+      var gid = getSelectedGid();
+      var group = gid? chat.groups[gid] : null;
+      if (group && util.getGroupContacts()[group.gid]) {
+
+      }
+    };
+    var addToContactListHandler = function(event : JQueryEventObject) {
+      var gid = getSelectedGid();
+      var group = gid? chat.groups[gid] : null;
+      if (group && !util.getGroupContacts()[group.gid]) {
+        send({
+          action : 'updateUserData',
+          userData : {
+            dataType : 'grpcont',
+            gid : group.gid
+          },
+          create : true
+        });
+      }
+    };
+
+    var groupContactMenu = createMenu($chatUI, function($menu : JQuery) {
+      $menu.append(createMenuItem(chat.messages.DELETE_CONTACT).
+          on('click', deleteGroupContactHandler) );
+    });
+
+    var groupMenu = createMenu($chatUI, function($menu : JQuery) {
+      $menu.append(createMenuItem(chat.messages.ADD_TO_GROUP_CONTACTS).
+          on('click', addToContactListHandler) );
+    });
+
     var editor = function($parent : JQuery, width : number,
       maxlength : number,
       defaultMessage : string,
@@ -2171,8 +2230,31 @@ namespace wschat.client {
         ['add', 'reject']);
     };
 
+    var getGroupContacts = function() {
+      var groupContacts : any[]= [];
+      $.each(util.getGroupContacts(), function(gid, groupContact) {
+        groupContacts.push(groupContact);
+        groupContact.nickname = groupContact.nickname ||
+          getGroupInfo(chat.groups[groupContact.gid]).nickname;
+//        if (nickn
+      });
+      return groupContacts;
+    };
+
     usersUI.validate = function() {
       $users.children().remove();
+      $.each(getGroupContacts(), function(i, user) {
+        var $cell = createUser(user, usersAvatarCache).
+          on('mousedown', function(event) {
+            event.preventDefault();
+          }).
+          on('click', function(event) {
+            $msg.trigger('blur');
+          setSelectedUser(null);
+          setSelectedGid(user.gid);
+          });
+        $users.append($cell);
+      });
       $.each(util.getSortedUsers(), function(i, user) {
         var $cell = createUser(user, usersAvatarCache).
           on('mousedown', function(event) {
@@ -2190,8 +2272,7 @@ namespace wschat.client {
       updateSelectedUsers();
     };
 
-    var createGroup = function(group : Group) {
-
+    var getGroupInfo = function(group : Group) {
       var txt = '';
       var users : string[] = [];
       $.each(group.users, function(uid, user) {
@@ -2210,6 +2291,12 @@ namespace wschat.client {
             chat.users[uid].nickname : group.users[uid].nickname;
         txt += (nickname || uid);
       });
+      return { nickname : txt, users : users };
+    };
+
+    var createGroup = function(group : Group) {
+
+      var groupInfo = getGroupInfo(group);
 
       /*
       txt += ' ' + getDateLabel(group.maxDate);
@@ -2232,8 +2319,8 @@ namespace wschat.client {
           setSelectedUser(null);
           setSelectedGid(group.gid);
         });
-      if (users.length == 1) {
-        $cell.append(createUserState(chat.users[users[0]]));
+      if (groupInfo.users.length == 1) {
+        $cell.append(createUserState(chat.users[groupInfo.users[0]]));
       } else {
         $cell.append(createGroupState(group));
       }
@@ -2244,7 +2331,7 @@ namespace wschat.client {
           css('text-overflow', 'ellipsis').
           css('white-space', 'nowrap').
           css('vertical-align', 'middle').
-          text(txt) );
+          text(groupInfo.nickname) );
       $cell.append(createMessageState(group.newMsg) );
       if (group.newMsg) {
         $cell.addClass('wschat-new-msg');
@@ -2252,8 +2339,8 @@ namespace wschat.client {
       if (group.gid == getSelectedGid() ) {
         $cell.addClass('wschat-selected');
       }
-      if (users.length == 1) {
-        setAddToGroupAction($cell, chat.users[users[0]]);
+      if (groupInfo.users.length == 1) {
+        setAddToGroupAction($cell, chat.users[groupInfo.users[0]]);
       }
       return $cell;
     };
@@ -2503,6 +2590,7 @@ namespace wschat.client {
     $(document).on('contextmenu', function(event) {
       var $cell = $(event.target).closest('.wschat-thread-message');
       var $users = $(event.target).closest('.wschat-users-frame');
+      var $groups = $(event.target).closest('.wschat-groups-cell');
       if ($cell.length != 0) {
         event.preventDefault();
         var msgMenu = $cell.data('msgMenu');
@@ -2514,6 +2602,11 @@ namespace wschat.client {
       } else if ($users.length != 0) {
         event.preventDefault();
         contactMenu.showMenu($users).
+          css('left', event.pageX + 'px').
+          css('top', event.pageY + 'px');
+      } else if ($groups.length != 0) {
+        event.preventDefault();
+        groupMenu.showMenu($groups).
           css('left', event.pageX + 'px').
           css('top', event.pageY + 'px');
       } else if ($(event.target).closest('.wschat-menu').length != 0) {

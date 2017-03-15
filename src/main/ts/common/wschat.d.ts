@@ -139,6 +139,7 @@ declare module wschat {
     COPY_TO_NEXT_DAY : string
     COPY_TO_NEXT_WEEK : string
     COLOR : string
-    ADD_TO_CONTACT_LIST : string
+    ADD_TO_GROUP_CONTACTS : string
+    REMOVE_FROM_GROUP_CONTACTS : string
   }
 }

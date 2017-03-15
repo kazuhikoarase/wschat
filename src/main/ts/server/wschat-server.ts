@@ -629,6 +629,13 @@ namespace wschat.server {
               action: 'userData',
               data: userData
             });
+            if (userData.dataType == 'grpcont') {
+              var group = chatService.getGroup(chat.user.uid, userData.gid);
+              send({
+                action: 'group',
+                group: group
+              });
+            }
           }
         });
       };
