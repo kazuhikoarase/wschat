@@ -327,11 +327,13 @@ namespace wschat.server {
           JSON.stringify({})));
     };
     var updateGroup = function(uid : string, group : Group) {
+      var jsGroup : any = {};
+      jsGroup.nickname = group.nickname || null;
       var javaGroup = new (Java.type('wschat.Group'))();
       javaGroup.setGid(group.gid);
       javaGroup.setMinDate(group.minDate);
       javaGroup.setMaxDate(group.maxDate);
-      javaGroup.setJsonData(JSON.stringify({}) );
+      javaGroup.setJsonData(JSON.stringify(jsGroup) );
       $.each(group.users, function(uid, user) {
         javaGroup.getUsers().add(newJavaGroupUser(uid) );
       });
@@ -499,6 +501,7 @@ namespace wschat.server {
 
       newGroup: newGroup,
       getGroup: getGroup,
+      updateGroup : updateGroup,
       addToGroup: addToGroup,
       removeFromGroup: removeFromGroup,
       fetchGroups: fetchGroups,
@@ -855,6 +858,14 @@ namespace wschat.server {
       if (gid != null) {
         send(data, chat.user.uid);
       }
+    };
+
+    actions.group = function(data) {
+      var group = chatService.updateGroup(chat.user.uid, data.group);
+      send({
+        action: 'group',
+        group: group
+      });
     };
 
     actions.addToGroup = function(data) {

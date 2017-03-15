@@ -1,7 +1,7 @@
 'use strict';
 namespace wschat.client {
 
-  export var editor = function(
+  export var createEditor = function(
     $parent : JQuery,
     width : number,
     maxlength : number,
@@ -73,7 +73,7 @@ namespace wschat.client {
 
     var updateUI = function() {
       if (val() ) {
-        $text.text(val()).css('color', '#000000');
+        $text.text(val()).css('color', '');
       } else {
         $text.text(defaultMessage).css('color', '#cccccc');
       }

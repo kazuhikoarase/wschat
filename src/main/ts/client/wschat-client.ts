@@ -571,7 +571,6 @@ namespace wschat.client {
       if (data.data.dataType == 'status') {
         statusUI.invalidate();
       } else if (data.data.dataType == 'grpcont') {
-//        groupsUI.invalidate();
         usersUI.invalidate();
       }
     };
@@ -1837,10 +1836,9 @@ namespace wschat.client {
     });
 
     var groupContactMenu = createMenu($chatUI, function($menu : JQuery) {
-      $menu.append(createMenuItem(chat.messages.DELETE_CONTACT).
+      $menu.append(createMenuItem(chat.messages.REMOVE_FROM_GROUP_CONTACTS).
           on('click', function(event : JQueryEventObject) {
             var gid = $menu.data('gid');
-            console.log('delete:' + gid);
             var groupContact = util.getGroupContacts()[gid];
             if (groupContact) {
               send({
@@ -1863,6 +1861,7 @@ namespace wschat.client {
                 action : 'updateUserData',
                 userData : {
                   dataType : 'grpcont',
+                 'private' : true,
                   gid : gid
                 },
                 create : true
@@ -1995,7 +1994,7 @@ namespace wschat.client {
       ) {
         var $editor = $('<div></div>').css('margin', '2px 0px 2px 0px');
         $info.append($editor);
-        editor($editor, width, maxlength,
+        createEditor($editor, width, maxlength,
           defaultMessage, decorate? util : null);
         $editor.data('controller').val(value);
         return $editor;
@@ -2221,9 +2220,8 @@ namespace wschat.client {
     };
 
     var createGroupUser = function(
-      groupContact : { gid : string, nickname : string}
+      groupUser : { gid : string, nickname : string }
     ) {
-      var txt = groupContact.nickname;
       var $body = $('<span></span>').
         css('display', 'inline-block').
         css('vertical-align', 'middle').
@@ -2233,44 +2231,46 @@ namespace wschat.client {
         css('overflow', 'hidden').
         css('text-overflow', 'ellipsis').
         css('white-space', 'nowrap').
-        append(createGroupState(chat.groups[groupContact.gid]) ).
-        append($('<span></span>').css('vertical-align', 'middle').
-            text(txt) );
+        append(createGroupState(chat.groups[groupUser.gid]) ).
+        append($('<span></span>').
+          css('vertical-align', 'middle').
+          text(groupUser.nickname) );
       return $('<div></div>').
         addClass('wschat-group-users-cell').
         addClass('wschat-mouse-enabled').
         css('width', (ui.leftWidth - ui.pad) + 'px').
         css('padding', '2px').
         css('cursor', 'default').
-        data('gid', groupContact.gid).
+        data('gid', groupUser.gid).
         append(createGroupUserAvatar() ).
         append($body).append($('<br/>').css('clear', 'both') );
     };
 
-    var getGroupContacts = function() {
-      var groupContacts : any[]= [];
+    var getSortedGroupUsers = function() {
+      var groupUsers : any[]= [];
       $.each(util.getGroupContacts(), function(gid, groupContact) {
-        groupContacts.push({
-          uid : '$g$' + groupContact.gid,
+        groupUsers.push({
           gid : groupContact.gid,
-          nickname : groupContact.nickname ||
-            getGroupInfo(chat.groups[groupContact.gid]).nickname
+          nickname : getGroupInfo(chat.groups[groupContact.gid]).nickname
         });
       });
-      return groupContacts;
+      groupUsers.sort(function (g1, g2) {
+        return g1.nickname < g2.nickname? -1 : 1;
+      });
+      return groupUsers;
     };
 
     usersUI.validate = function() {
       $users.children().remove();
-      $.each(getGroupContacts(), function(i, groupContact) {
-        var $cell = createGroupUser(groupContact).
+      $.each(getSortedGroupUsers(), function(i, groupUser) {
+        var $cell = createGroupUser(groupUser).
           on('mousedown', function(event) {
             event.preventDefault();
           }).
           on('click', function(event) {
             $msg.trigger('blur');
             setSelectedUser(null);
-            setSelectedGid(groupContact.gid);
+            setSelectedGid(groupUser.gid);
           });
         $users.append($cell);
       });
@@ -2292,7 +2292,6 @@ namespace wschat.client {
     };
 
     var getGroupInfo = function(group : Group) {
-      var txt = '';
       var users : string[] = [];
       $.each(group.users, function(uid, user) {
         if (chat.user.uid != uid) {
@@ -2302,6 +2301,7 @@ namespace wschat.client {
       users.sort(function (u1, u2) {
         return u1 < u2? -1 : 1;
       });
+      var txt = '';
       $.each(users, function(i, uid) {
         if (txt) {
           txt += ', ';
@@ -2310,7 +2310,7 @@ namespace wschat.client {
             chat.users[uid].nickname : group.users[uid].nickname;
         txt += (nickname || uid);
       });
-      return { nickname : txt, users : users };
+      return { nickname : group.nickname || txt, users : users };
     };
 
     var createGroup = function(group : Group) {
@@ -2638,7 +2638,7 @@ namespace wschat.client {
             userGid = true;
           }
         });
-        if (!userGid) {
+        if (!userGid && !util.getGroupContacts()[gid]) {
           groupMenu.showMenu($groups).
             data('gid', gid).
             css('left', event.pageX + 'px').
@@ -3053,6 +3053,23 @@ namespace wschat.client {
       }();
 
       $thread.append(function() {
+        var $editor = $('<div></div>').
+          css('margin', '2px').
+          css('float', 'left');
+        /*
+        if (group) {
+          var nickname = getGroupInfo(group).nickname;
+          createEditor($editor, 200, 140, nickname, null);
+          $editor.data('controller').val(group.nickname || nickname);
+          $editor.on('valueChange', function(event) {
+              group.nickname = $(this).data('controller').val();
+              send({
+                action : 'group',
+                group : group
+              });
+            })
+        }
+        */
         var $btn = $('<span></span>').
           addClass('wschat-retire-button').
           css('display', 'inline-block').
@@ -3080,6 +3097,7 @@ namespace wschat.client {
         }
         return $('<div></div>').
           addClass('wschat-thread-toolbar').
+          append($editor).
           append($btn).
           append($('<br/>').css('clear', 'both') );
       }());

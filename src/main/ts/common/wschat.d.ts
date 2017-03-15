@@ -68,6 +68,7 @@ declare module wschat {
 
   interface Group {
     gid : string
+    nickname : string
     users : { [uid : string] : GroupUser }
     messages : { [mid : string] : Message }
     minDate : number

@@ -25,6 +25,7 @@ declare module wschat.server {
     createContactGroup: (uid1: string, uid2: string) => string;
     newGroup: (users: string[]) => string;
     getGroup: (uid: string, gid: string) => Group;
+    updateGroup: (uid : string, group : Group) => Group;
     addToGroup: (uid: string, group: Group, uidToAdd: string) => Group;
     removeFromGroup: (uid: string, group: Group, uidToRemove: string) => Group;
     fetchGroups: (uid: string, opts: FetchOptions) => {
@@ -54,6 +55,7 @@ declare module wschat.server {
     requestAddToContacts? : (data : any) => void
     acceptContact? : (data : any) => void
     removeContact? : (data : any) => void
+    group? : (data : any) => void
     addToGroup? : (data : any) => void
     removeFromGroup? : (data : any) => void
     exitFromGroup? : (data : any) => void
