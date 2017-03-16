@@ -1089,7 +1089,7 @@ namespace wschat.client {
     var TimeLineUtil = function() {
 
       var timeLine : TimeLine = null;
-      var refresh = function() {};
+      var _userFilter : (uid : string) => boolean = null;
 
       var timeLine_updateUserDataHandler = function(
         event : JQueryEventObject,
@@ -1198,12 +1198,8 @@ namespace wschat.client {
         if (timeLine != null) {
           timeLine.dlg.hideDialog();
         }
+        _userFilter = userFilter;
         timeLine = createTimeLine(chat, util);
-        refresh = function() {
-          if (timeLine != null) {
-            timeLine.refreshData(userFilter);
-          }
-        };
         timeLine.refreshData(userFilter);
         timeLine.$ui.on('updateUserData', timeLine_updateUserDataHandler);
         timeLine.dlg = createDialog($chatUI);
@@ -1217,7 +1213,14 @@ namespace wschat.client {
         var x = ($win.width() - $dlg.width() ) / 2;
         var y = ($win.height() - $dlg.height() ) / 2;
         $dlg.css('left', x + 'px').css('top', y + 'px');
-      }
+      };
+
+      var refresh = function() {
+        if (timeLine != null) {
+          timeLine.refreshData(_userFilter);
+        }
+      };
+
       return {
         show : show,
         refresh : refresh
