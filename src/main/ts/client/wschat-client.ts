@@ -1133,10 +1133,68 @@ namespace wschat.client {
         }
       };
 
-      var show = function(
-        userFilter : (uid : string) => boolean,
-        x : number, y : number
-      ) {
+      var show = function(userFilter : (uid : string) => boolean) {
+        var btnSize = 14;
+        var $closeButton = createSVG(btnSize, btnSize).
+          css('float', 'right').
+          css('padding', '3px').
+          css('vertical-align', 'top').
+          append(createSVGElement('rect').
+            css('stroke', 'none').css('fill', '#999999').
+            attr({ x : 0, y : 0, width : btnSize, height : btnSize }) ).
+          append(createSVGElement('path').
+            css('stroke', '#ffffff').
+            css('stroke-width', '2').css('fill', 'none').
+            attr('d', 'M2 2L12 12M2 12L12 2') ).
+            on('mouseover', function(event) {
+              $(this).css('opacity', '0.6');
+            }).
+            on('mouseout', function(event) {
+              $(this).css('opacity', '');
+            }).
+            on('mousedown', function(event) {
+              event.preventDefault();
+              event.stopImmediatePropagation();
+            }).
+            on('click', function(event) {
+              if (timeLine != null) {
+                timeLine.dlg.hideDialog();
+              }
+            });
+        var $title = $('<div></div>').
+            css('background-color', '#f0f0f0').
+            css('margin', '0px 0px 4px 0px').
+            css('vertical-align', 'middle').
+            css('line-height', '20px').
+          append($('<div></div>').
+              css('vertical-align', 'middle').
+              css('line-height', '20px').
+              css('cursor', 'default').
+              css('float', 'left').
+              css('padding', '0px 0px 0px 4px').
+              text(chat.messages.TIMELINE) ).
+          append($closeButton).
+          append($('<br/>').css('clear', 'both') ).
+          on('mousedown', function(event : JQueryEventObject) {
+            event.preventDefault();
+            var $dlg = $(event.target).closest('.wschat-dialog');
+            var off = $dlg.offset();
+            var dragPoint = {
+              x : off.left - event.pageX,
+              y : off.top - event.pageY
+            };
+            var doc_mousemoveHandler = function(event : JQueryEventObject) {
+              $dlg.css('left', (event.pageX + dragPoint.x) + 'px').
+                css('top', (event.pageY + dragPoint.y) + 'px');
+            };
+            var doc_mouseupHandler = function(event : JQueryEventObject) {
+              $(document).off('mousemove', doc_mousemoveHandler).
+                off('mouseup', doc_mouseupHandler);
+            };
+            $(document).on('mousemove', doc_mousemoveHandler).
+              on('mouseup', doc_mouseupHandler);
+          });
+
         if (timeLine != null) {
           timeLine.dlg.hideDialog();
         }
@@ -1149,10 +1207,16 @@ namespace wschat.client {
         timeLine.refreshData(userFilter);
         timeLine.$ui.on('updateUserData', timeLine_updateUserDataHandler);
         timeLine.dlg = createDialog($chatUI);
-        timeLine.dlg.showDialog(timeLine.$ui).
+        var $dlg = timeLine.dlg.showDialog($('<div></div>').
+          append($title).
+          append(timeLine.$ui) ).
           on('hideDialog', function() {
             timeLine = null;
-          }).parent().css({'left': x + 'px', 'top': y + 'px' });
+          }).parent();
+        var $win = $(window);
+        var x = ($win.width() - $dlg.width() ) / 2;
+        var y = ($win.height() - $dlg.height() ) / 2;
+        $dlg.css('left', x + 'px').css('top', y + 'px');
       }
       return {
         show : show,
@@ -1893,10 +1957,8 @@ namespace wschat.client {
             userContactMenu.hideMenu();
           }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
           on('click', function(event) {
-            TimeLineUtil.show(
-              (uid) => uid == $menu.data('uid'),
-              event.pageX, event.pageY);
-            groupContactMenu.hideMenu();
+            TimeLineUtil.show( (uid) => uid == $menu.data('uid') );
+            userContactMenu.hideMenu();
           }) );
     });
 
@@ -1916,9 +1978,7 @@ namespace wschat.client {
           }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
           on('click', function(event) {
             var gid = $menu.data('gid');
-            TimeLineUtil.show(
-              (uid) => !!chat.groups[gid].users[uid],
-              event.pageX, event.pageY);
+            TimeLineUtil.show( (uid) => !!chat.groups[gid].users[uid]);
             groupContactMenu.hideMenu();
           }) );
     });
@@ -1943,9 +2003,7 @@ namespace wschat.client {
           }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
           on('click', function(event) {
             var gid = $menu.data('gid');
-            TimeLineUtil.show(
-              (uid) => !!chat.groups[gid].users[uid],
-              event.pageX, event.pageY);
+            TimeLineUtil.show( (uid) => !!chat.groups[gid].users[uid]);
             groupMenu.hideMenu();
           }) );
     });
@@ -2092,24 +2150,22 @@ namespace wschat.client {
         userUI.invalidate();
         userUpdate();
       }).prepend(function() {
-              var $cv = $('<canvas width="9" height="9"></canvas>').
-                css('margin', '1px 1px 1px 2px').
-                css('vertical-align', 'middle').
-                attr('title', chat.messages.WHERE_ARE_YOU).
-                on('click', function(event) {
-                  var off = $cv.offset();
-                  TimeLineUtil.show( (uid) => true,
-                    off.left, off.top + $cv.outerHeight() );
-                });
-              var ctx = (<any>$cv)[0].getContext('2d');
-              ctx.fillStyle = '#999999';
-              ctx.fillRect(0, 0, 9, 9);
-              ctx.clearRect(1, 1, 7, 7);
-              for (var i = 2; i <= 6; i += 2) {
-                ctx.fillRect(2, i, 5, 1);
-              }
-              return $cv;
-            }() );
+        var $cv = $('<canvas width="9" height="9"></canvas>').
+          css('margin', '1px 1px 1px 2px').
+          css('vertical-align', 'middle').
+          attr('title', chat.messages.TIMELINE).
+          on('click', function(event) {
+            TimeLineUtil.show( (uid) => true );
+          });
+        var ctx = (<any>$cv)[0].getContext('2d');
+        ctx.fillStyle = '#999999';
+        ctx.fillRect(0, 0, 9, 9);
+        ctx.clearRect(1, 1, 7, 7);
+        for (var i = 2; i <= 6; i += 2) {
+          ctx.fillRect(2, i, 5, 1);
+        }
+        return $cv;
+      }() );
     };
 
     var createAvatarView = function() {

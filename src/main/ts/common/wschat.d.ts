@@ -137,7 +137,7 @@ declare module wschat {
     OFFLINE : string
     IDLE : string
     BUSY : string
-    WHERE_ARE_YOU : string
+    TIMELINE : string
     COPY_TO_NEXT_DAY : string
     COPY_TO_NEXT_WEEK : string
     COLOR : string
