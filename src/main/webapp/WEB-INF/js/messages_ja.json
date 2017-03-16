@@ -25,6 +25,7 @@
   "CONTACT_ADD_REQUEST": "{0} さん、連絡先に追加させてください。",
   "DBLCLICK_TO_SEND_CONTACT_ADD_REQUEST": "ダブルクリックして連絡先追加リクエストを送信",
 
+  "ADD_TO_CONTACTS": "連絡先に追加",
   "SELECT_CONTACT": "連絡先を選択してください。",
   "DELETE_CONTACT": "連絡先を削除",
   "CONFIRM_DELETE_CONTACT": "{0} を連絡先から削除しますか？",
@@ -69,9 +70,7 @@
   "COPY_TO_NEXT_DAY": "翌日にコピー",
   "COPY_TO_NEXT_WEEK": "翌週にコピー",
   "COLOR": "カラー",
-
-  "ADD_TO_GROUP_CONTACTS": "グループ連絡先に追加",
-  "REMOVE_FROM_GROUP_CONTACTS": "グループ連絡先から削除",
+  "SHOW_TIMELINE": "タイムラインを表示",
 
   "TRAILER": ""
 }

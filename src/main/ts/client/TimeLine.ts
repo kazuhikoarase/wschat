@@ -31,29 +31,29 @@ namespace wschat.client {
   }
 
   interface StatusModel {
-    status : TimeTableStatus
+    status : TimeLineStatus
   }
 
   interface PickerModel {
     target : string
   }
 
-  interface TimeTableUser {
+  interface TimeLineUser {
     uid : string
     nickname : string
     self : boolean
   }
 
-  interface TimeTableStatus {
+  interface TimeLineStatus {
     dataId : string
     uid : string
     timeFrom : string
     timeTo : string
     comment : string
     color? : string
-    _cache? : TimeTableStatusCache
+    _cache? : TimeLineStatusCache
   }
-  interface TimeTableStatusCache {
+  interface TimeLineStatusCache {
     timeFrom : number
     timeTo : number
     timeFormat : string
@@ -133,10 +133,10 @@ namespace wschat.client {
         rect1.y + rect1.height < rect2.y);
   };
 
-  export var createTimeTable = function(
+  export var createTimeLine = function(
     chat : Chat,
     util : ChatUtil
-  ) : TimeTable {
+  ) : TimeLine {
 
     var style = {
       colHeaderHeight : 20,
@@ -153,8 +153,8 @@ namespace wschat.client {
     var model = {
       timeOffset : -(new Date().getTime() - HOUR_IN_MILLIS * 12),
       userOffset : 0,
-      users : [] as TimeTableUser[],
-      statusMap : {} as { [ uid : string ] : TimeTableStatus[] },
+      users : [] as TimeLineUser[],
+      statusMap : {} as { [ uid : string ] : TimeLineStatus[] },
       minTimeStep : 15 * 60000, // 15min
       days : [] as string[]
     };
@@ -191,7 +191,7 @@ namespace wschat.client {
 
     var toFront = function(statusModel : StatusModel) {
       /*
-      var statusList : TimeTableStatus[] = [];
+      var statusList : TimeLineStatus[] = [];
       for (var i = 0; i < statusModel.user.statusList.length; i += 1) {
         if (statusModel.user.statusList[i].dataId != statusModel.status.dataId) {
           statusList.push(statusModel.user.statusList[i]);
@@ -1220,7 +1220,7 @@ namespace wschat.client {
       ctx.clearRect(0, 0, style.bodyWidth, style.bodyHeight);
       ctx.fillStyle = style.oddBgColor;
 
-      !function(updateUser : (u : number, user : TimeTableUser) => void) {
+      !function(updateUser : (u : number, user : TimeLineUser) => void) {
         for (var u = 0; u < model.users.length; u += 1) {
           var user = model.users[u];
           updateUser(u, user);
@@ -1265,7 +1265,7 @@ namespace wschat.client {
         return _newStatusUICache;
       }(statusUICache);
 
-      !function(updateStatus : (u : number, user : TimeTableUser, s : number, status : TimeTableStatus) => void) {
+      !function(updateStatus : (u : number, user : TimeLineUser, s : number, status : TimeLineStatus) => void) {
         for (var u = 0; u < model.users.length; u += 1) {
           var user = model.users[u];
           var statusList = model.statusMap[user.uid] || [];
@@ -1337,9 +1337,9 @@ namespace wschat.client {
       statusUICache = newStatusUICache;
     };
 
-    var refreshData = function() {
-      var users : TimeTableUser[] = [];
-      var statusMap : { [ uid : string] : TimeTableStatus[] } = {};
+    var refreshData = function(userFilter : (uid : string) => boolean) {
+      var users : TimeLineUser[] = [];
+      var statusMap : { [ uid : string] : TimeLineStatus[] } = {};
       var addUser = function(uid : string,
           nickname : string, self : boolean) {
         users.push({uid : uid, nickname : nickname, self : self });
@@ -1350,7 +1350,9 @@ namespace wschat.client {
       !function() {
         var users = util.getSortedUsers();
         for (var i = 0; i < users.length; i += 1) {
-          addUser(users[i].uid, users[i].nickname, false);
+          if (userFilter(users[i].uid) ) {
+            addUser(users[i].uid, users[i].nickname, false);
+          }
         }
       }();
       statusMap = util.createStatusMap(users);

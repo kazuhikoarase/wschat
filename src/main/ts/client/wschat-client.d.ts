@@ -68,9 +68,9 @@ declare module wschat.client {
     endEdit : (reason? : string, msg? : string) => void
   }
 
-  interface TimeTable {
+  interface TimeLine {
     $ui : JQuery,
-    refreshData : () => void,
+    refreshData : (userFilter : (uid : string) => boolean) => void,
     dlg? : Dialog
   }
 

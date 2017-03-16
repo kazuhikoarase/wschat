@@ -1080,14 +1080,85 @@ namespace wschat.client {
     var threadUsersUI = baseUI();
     var threadUI = baseUI();
     var msgUI = baseUI();
-
-    var timeTable : TimeTable = null;
     var statusUI = baseUI();
+
     statusUI.validate = function() {
-      if (timeTable != null) {
-        timeTable.refreshData();
-      }
+      TimeLineUtil.refresh();
     };
+
+    var TimeLineUtil = function() {
+
+      var timeLine : TimeLine = null;
+      var refresh = function() {};
+
+      var timeLine_updateUserDataHandler = function(
+        event : JQueryEventObject,
+        data : any
+      ) {
+        if (data.action == 'update') {
+          var userData = util.getUserDataByDataId(data.dataId);
+          var changed = false;
+          if (userData) {
+            for (var k in data.userData) {
+              changed = changed || userData[k] != data.userData[k];
+            }
+          }
+          if (userData && changed) {
+            for (var k in data.userData) {
+              userData[k] = data.userData[k];
+            }
+            send({
+              action : 'updateUserData',
+              date : userData.timeTo,
+              userData : userData
+            });
+          }
+        } else if (data.action == 'create') {
+          send({
+            action : 'updateUserData',
+            date : data.timeTo,
+            userData : data.userData,
+            create : true
+          });
+        } else if (data.action == 'delete') {
+          var userData = util.getUserDataByDataId(data.dataId);
+          if (userData && userData.uid == chat.user.uid) {
+            send({
+              action : 'updateUserData',
+              date : userData.timeTo,
+              userData : userData,
+              'delete' : true
+            });
+          }
+        }
+      };
+
+      var show = function(
+        userFilter : (uid : string) => boolean,
+        x : number, y : number
+      ) {
+        if (timeLine != null) {
+          timeLine.dlg.hideDialog();
+        }
+        timeLine = createTimeLine(chat, util);
+        refresh = function() {
+          if (timeLine != null) {
+            timeLine.refreshData(userFilter);
+          }
+        };
+        timeLine.refreshData(userFilter);
+        timeLine.$ui.on('updateUserData', timeLine_updateUserDataHandler);
+        timeLine.dlg = createDialog($chatUI);
+        timeLine.dlg.showDialog(timeLine.$ui).
+          on('hideDialog', function() {
+            timeLine = null;
+          }).parent().css({'left': x + 'px', 'top': y + 'px' });
+      }
+      return {
+        show : show,
+        refresh : refresh
+      }
+    }();
 
     // build ui
     var $user = $('<div></div>').addClass('wschat-user').
@@ -1319,7 +1390,7 @@ namespace wschat.client {
 
       var img_loadHandler = function($img : JQuery) {
 
-        var dlg = createDialog();
+        var dlg = createDialog($chatUI);
         dlg.showDialog($('<div></div>').
           append($('<div></div>').
               text(chat.messages.CONFIRM_ATTACH_IMAGE) ).
@@ -1642,42 +1713,6 @@ namespace wschat.client {
         updateActiveTime();
       });
 
-    var createDialog = function() {
-      var $dlg = $('<div></div>').
-        addClass('wschat-dialog').
-        addClass('wschat-mouse-enabled').
-        css('position', 'absolute').
-        css('display', 'none');
-      var mouseDownHandler = function(event : JQueryEventObject) {
-        if ($(event.target).closest('.wschat-dialog').length == 0) {
-          hideDialog();
-        }
-      };
-      var showDialog = function($content : JQuery) {
-        $dlg.children().remove();
-        $dlg.append($content);
-        $chatUI.append($dlg).
-          on('mousedown', mouseDownHandler);
-        var off = $chatUI.offset();
-        var x = off.left + ($chatUI.width() - $dlg.width() ) / 2;
-        var y = off.top + ($chatUI.height() - $dlg.height() ) / 2;
-        $dlg.css('display', 'block').
-          css('left', x + 'px').
-          css('top', y + 'px');
-        return $content;
-      };
-      var hideDialog = function() {
-        $dlg.children().trigger('hideDialog');
-        $dlg.remove();
-        $chatUI.off('mousedown', mouseDownHandler);
-      };
-      return {
-        showDialog: showDialog,
-        hideDialog: hideDialog
-      };
-    };
-
-
     var sendRequest = function(user : ContactRequest) {
       var $editor = $('<input type="text"/>').
         addClass('wschat-editor').
@@ -1701,7 +1736,7 @@ namespace wschat.client {
               submitDlg.hideDialog();
             }
           }));
-      var submitDlg = createDialog();
+      var submitDlg = createDialog($chatUI);
       submitDlg.showDialog($content);
       $editor.focus();
     };
@@ -1789,7 +1824,7 @@ namespace wschat.client {
         append(createButton(chat.messages.SEND_CONTACT_ADD_REQUEST).
           on('click', function(){
             if (selectedUid == null) {
-              var dlg = createDialog();
+              var dlg = createDialog($chatUI);
               dlg.showDialog(createDialogContent(
                   dlg,
                   chat.messages.SELECT_CONTACT,
@@ -1798,7 +1833,7 @@ namespace wschat.client {
               sendRequest(users[selectedUid]);
             }
           }));
-      var dlg = createDialog();
+      var dlg = createDialog($chatUI);
       dlg.showDialog($content);
       $editor.focus();
       contactMenu.hideMenu();
@@ -1807,14 +1842,14 @@ namespace wschat.client {
     var deleteContactHandler = function(event : JQueryEventObject) {
       var users = getSelectedUsers();
       if (users.length == 0) {
-        var dlg = createDialog();
+        var dlg = createDialog($chatUI);
         dlg.showDialog(createDialogContent(
             dlg,
             chat.messages.SELECT_CONTACT,
             [chat.messages.OK]) );
       } else {
         var user = chat.users[users[0]];
-        var dlg = createDialog();
+        var dlg = createDialog($chatUI);
         dlg.showDialog(createDialogContent(
           dlg,
           messageFormat(chat.messages.CONFIRM_DELETE_CONTACT,
@@ -1841,9 +1876,9 @@ namespace wschat.client {
     var userContactMenu = createMenu($chatUI, function($menu : JQuery) {
 
       $menu.append(createMenuItem(chat.messages.DELETE_CONTACT).
-          on('click', function(event : JQueryEventObject) {
+          on('click', function(event) {
             var user = chat.users[$menu.data('uid')];
-            var dlg = createDialog();
+            var dlg = createDialog($chatUI);
             dlg.showDialog(createDialogContent(
               dlg,
               messageFormat(chat.messages.CONFIRM_DELETE_CONTACT,
@@ -1856,11 +1891,17 @@ namespace wschat.client {
                 removeContact(user.uid);
               } ) );
             userContactMenu.hideMenu();
+          }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
+          on('click', function(event) {
+            TimeLineUtil.show(
+              (uid) => uid == $menu.data('uid'),
+              event.pageX, event.pageY);
+            groupContactMenu.hideMenu();
           }) );
     });
 
     var groupContactMenu = createMenu($chatUI, function($menu : JQuery) {
-      $menu.append(createMenuItem(chat.messages.REMOVE_FROM_GROUP_CONTACTS).
+      $menu.append(createMenuItem(chat.messages.DELETE_CONTACT).
           on('click', function(event : JQueryEventObject) {
             var gid = $menu.data('gid');
             var groupContact = util.getGroupContacts()[gid];
@@ -1872,12 +1913,19 @@ namespace wschat.client {
               });
             }
             groupContactMenu.hideMenu();
+          }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
+          on('click', function(event) {
+            var gid = $menu.data('gid');
+            TimeLineUtil.show(
+              (uid) => !!chat.groups[gid].users[uid],
+              event.pageX, event.pageY);
+            groupContactMenu.hideMenu();
           }) );
     });
 
     var groupMenu = createMenu($chatUI, function($menu : JQuery) {
-      $menu.append(createMenuItem(chat.messages.ADD_TO_GROUP_CONTACTS).
-          on('click', function(event : JQueryEventObject) {
+      $menu.append(createMenuItem(chat.messages.ADD_TO_CONTACTS).
+          on('click', function(event) {
             var gid = $menu.data('gid');
             var groupContact = util.getGroupContacts()[gid];
             if (!groupContact) {
@@ -1891,6 +1939,13 @@ namespace wschat.client {
                 create : true
               });
             }
+            groupMenu.hideMenu();
+          }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
+          on('click', function(event) {
+            var gid = $menu.data('gid');
+            TimeLineUtil.show(
+              (uid) => !!chat.groups[gid].users[uid],
+              event.pageX, event.pageY);
             groupMenu.hideMenu();
           }) );
     });
@@ -2042,57 +2097,9 @@ namespace wschat.client {
                 css('vertical-align', 'middle').
                 attr('title', chat.messages.WHERE_ARE_YOU).
                 on('click', function(event) {
-                  if (timeTable != null) {
-                    timeTable.dlg.hideDialog();
-                  }
                   var off = $cv.offset();
-                  timeTable = createTimeTable(chat, util);
-                  timeTable.refreshData();
-                  timeTable.$ui.on('updateUserData', function(event, data) {
-
-                    if (data.action == 'update') {
-                      var userData = util.getUserDataByDataId(data.dataId);
-                      var changed = false;
-                      if (userData) {
-                        for (var k in data.userData) {
-                          changed = changed || userData[k] != data.userData[k];
-                        }
-                      }
-                      if (userData && changed) {
-                        for (var k in data.userData) {
-                          userData[k] = data.userData[k];
-                        }
-                        send({
-                          action : 'updateUserData',
-                          date : userData.timeTo,
-                          userData : userData
-                        });
-                      }
-                    } else if (data.action == 'create') {
-                      send({
-                        action : 'updateUserData',
-                        date : data.timeTo,
-                        userData : data.userData,
-                        create : true
-                      });
-                    } else if (data.action == 'delete') {
-                      var userData = util.getUserDataByDataId(data.dataId);
-                      if (userData && userData.uid == chat.user.uid) {
-                        send({
-                          action : 'updateUserData',
-                          date : userData.timeTo,
-                          userData : userData,
-                          'delete' : true
-                        });
-                      }
-                    }
-                  });
-                  timeTable.dlg = createDialog();
-                  timeTable.dlg.showDialog(timeTable.$ui).
-                    on('hideDialog', function() {
-                      timeTable = null;
-                    }).parent().css({'left': off.left + 'px',
-                      'top': (off.top + $cv.outerHeight() ) + 'px' });
+                  TimeLineUtil.show( (uid) => true,
+                    off.left, off.top + $cv.outerHeight() );
                 });
               var ctx = (<any>$cv)[0].getContext('2d');
               ctx.fillStyle = '#999999';
@@ -2236,7 +2243,7 @@ namespace wschat.client {
       };
 
       draw(0, 0);
-      draw(ui.smallAvatarSize - size, 0);
+      draw(ui.smallAvatarSize - size, 2);
       draw( (ui.smallAvatarSize - size) / 2,
          ui.smallAvatarSize - size);
 
@@ -2270,35 +2277,64 @@ namespace wschat.client {
         append($body).append($('<br/>').css('clear', 'both') );
     };
 
-    var getSortedGroupUsers = function() {
-      var groupUsers : any[]= [];
-      $.each(util.getGroupContacts(), function(gid, groupContact) {
-        groupUsers.push({
-          gid : groupContact.gid,
-          nickname : getGroupInfo(chat.groups[groupContact.gid]).nickname
+    var usersUIUtil = {
+      getSortedContacts : function() {
+  
+        var contacts : any[] = [];
+        var sortId = '.sort';
+  
+        for (var uid in chat.users) {
+          var user : any = chat.users[uid];
+          user[sortId] = {
+            state : util.getUserStateOrder(getUserState(user) ),
+            nickname : util.getUserNickname(user)
+          };
+          contacts.push(user);
+        }
+  
+        var groupContacts = util.getGroupContacts();
+        for (var gid in groupContacts) {
+          var groupContact = groupContacts[gid];
+          var group = chat.groups[groupContact.gid];
+          var nickname = getGroupInfo(group).nickname;
+          var contact : any = {
+            gid : groupContact.gid,
+            nickname : nickname
+          };
+          contact[sortId] = {
+            state : usersUIUtil.getGroupState(group),
+            nickname : nickname
+          };
+          contacts.push(contact);
+        }
+  
+        contacts.sort(function (c1, c2) {
+          var s1 = c1[sortId];
+          var s2 = c2[sortId];
+          if (s1.state != s2.state) {
+            return s1.state < s2.state? -1 : 1;
+          }
+          return s1.nickname < s2.nickname? -1 : 1;
         });
-      });
-      groupUsers.sort(function (g1, g2) {
-        return g1.nickname < g2.nickname? -1 : 1;
-      });
-      return groupUsers;
-    };
-
-    usersUI.validate = function() {
-      $users.children().remove();
-      $.each(getSortedGroupUsers(), function(i, groupUser) {
-        var $cell = createGroupUser(groupUser).
-          on('mousedown', function(event) {
-            event.preventDefault();
-          }).
-          on('click', function(event) {
-            $msg.trigger('blur');
-            setSelectedUser(null);
-            setSelectedGid(groupUser.gid);
-          });
-        $users.append($cell);
-      });
-      $.each(util.getSortedUsers(), function(i, user) {
+  
+        for (var i = 0; i < contacts.length; i += 1) {
+          delete contacts[i][sortId];
+        }
+  
+        return contacts;
+      },
+      getGroupState : function(group : Group) {
+        var state = 1;
+        for (var uid in group.users) {
+          if (uid == chat.user.uid) {
+            continue;
+          }
+          var user = chat.users[uid];
+          state = Math.min(state, util.getUserStateOrder(getUserState(user) ) );
+        }
+        return state;
+      },
+      appendUserContact : function(user : User) {
         var $cell = createUser(user, usersAvatarCache).
           on('mousedown', function(event) {
             event.preventDefault();
@@ -2309,8 +2345,30 @@ namespace wschat.client {
             setSelectedUser(user.uid, event.ctrlKey || event.metaKey);
           });
         $users.append($cell);
-
         setAddToGroupAction($cell, user);
+      },
+      appendGroupContact : function(groupUser : any) {
+        var $cell = createGroupUser(groupUser).
+          on('mousedown', function(event) {
+            event.preventDefault();
+          }).
+          on('click', function(event) {
+            $msg.trigger('blur');
+            setSelectedUser(null);
+            setSelectedGid(groupUser.gid);
+          });
+        $users.append($cell);
+      }
+    };
+
+    usersUI.validate = function() {
+      $users.children().remove();
+      $.each(usersUIUtil.getSortedContacts(), function(i, contact) {
+        if (typeof contact.uid != 'undefined') {
+          usersUIUtil.appendUserContact(contact);
+        } else {
+          usersUIUtil.appendGroupContact(contact);
+        }
       });
       updateSelectedUsers();
     };
@@ -2655,19 +2713,22 @@ namespace wschat.client {
           css('top', event.pageY + 'px');
       } else if ($groups.length != 0) {
         event.preventDefault();
-        var gid = $groups.data('gid');
-        var userGid = false;
-        $.each(chat.users, function(uid, user) {
-          if (user.gid == gid) {
-            userGid = true;
+        !function($menu : JQuery) {
+          var gid = $groups.data('gid');
+          var userGid = false;
+          $.each(chat.users, function(uid, user) {
+            if (user.gid == gid) {
+              userGid = true;
+            }
+          });
+          var showAddToContacts = !userGid && !util.getGroupContacts()[gid];
+          if (!showAddToContacts) {
+            $menu.children().first().remove();
           }
-        });
-        if (!userGid && !util.getGroupContacts()[gid]) {
-          groupMenu.showMenu($groups).
-            data('gid', gid).
-            css('left', event.pageX + 'px').
-            css('top', event.pageY + 'px');
-        }
+        }(groupMenu.showMenu($groups).
+          data('gid', $groups.data('gid') ).
+          css('left', event.pageX + 'px').
+          css('top', event.pageY + 'px') );
       } else if ($(event.target).closest('.wschat-menu').length != 0) {
         event.preventDefault();
       }
@@ -3086,7 +3147,12 @@ namespace wschat.client {
           createEditor($editor, 200, 140, nickname, null);
           $editor.data('controller').val(group.nickname || nickname);
           $editor.on('valueChange', function(event) {
-              group.nickname = $(this).data('controller').val();
+              var val = $(this).data('controller').val();
+              if (val) {
+                group.nickname = val;
+              } else {
+                delete group.nickname;
+              }
               send({
                 action : 'group',
                 group : group
@@ -3105,7 +3171,7 @@ namespace wschat.client {
             event.preventDefault();
           }).
           on('click', function(event) {
-            var dlg = createDialog();
+            var dlg = createDialog($chatUI);
             dlg.showDialog(createDialogContent(
               dlg, chat.messages.COMFIRM_EXIT_FROM_THIS_GROUP,
               [chat.messages.CANCEL, chat.messages.OK]).

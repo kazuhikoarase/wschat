@@ -110,6 +110,7 @@ declare module wschat {
     FROM_FIRST : string
     SUBMIT : string
     CONTACT_ADD_REQUEST : string
+    ADD_TO_CONTACTS : string
     SEARCH_CONTACT : string
     SELECT_CONTACT : string
     DELETE_CONTACT : string
@@ -140,7 +141,6 @@ declare module wschat {
     COPY_TO_NEXT_DAY : string
     COPY_TO_NEXT_WEEK : string
     COLOR : string
-    ADD_TO_GROUP_CONTACTS : string
-    REMOVE_FROM_GROUP_CONTACTS : string
+    SHOW_TIMELINE : string
   }
 }

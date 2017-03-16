@@ -27,6 +27,7 @@
   "DBLCLICK_TO_SEND_CONTACT_ADD_REQUEST": 
     "Double click to send a contact adding request",
 
+  "ADD_TO_CONTACTS": "Add to contacts",
   "SELECT_CONTACT": "Select a contact",
   "DELETE_CONTACT": "Remove a contact",
   "CONFIRM_DELETE_CONTACT": "Do you remove {0} from your contacts?",
@@ -71,9 +72,7 @@
   "COPY_TO_NEXT_DAY": "Copy to next day",
   "COPY_TO_NEXT_WEEK": "Copy to next week",
   "COLOR": "Color",
-
-  "ADD_TO_GROUP_CONTACTS": "Add to group contacts",
-  "REMOVE_FROM_GROUP_CONTACTS": "Remove from group contacts",
+  "SHOW_TIMELINE": "Show timeline",
 
   "TRAILER": ""
 }

@@ -141,6 +141,41 @@ namespace wschat.client {
     };
   }();
 
+  export var createDialog = function($parent : JQuery) {
+    var $dlg = $('<div></div>').
+      addClass('wschat-dialog').
+      addClass('wschat-mouse-enabled').
+      css('position', 'absolute').
+      css('display', 'none');
+    var mouseDownHandler = function(event : JQueryEventObject) {
+      if ($(event.target).closest('.wschat-dialog').length == 0) {
+        hideDialog();
+      }
+    };
+    var showDialog = function($content : JQuery) {
+      $dlg.children().remove();
+      $dlg.append($content);
+      $parent.append($dlg).
+        on('mousedown', mouseDownHandler);
+      var off = $parent.offset();
+      var x = off.left + ($parent.width() - $dlg.width() ) / 2;
+      var y = off.top + ($parent.height() - $dlg.height() ) / 2;
+      $dlg.css('display', 'block').
+        css('left', x + 'px').
+        css('top', y + 'px');
+      return $content;
+    };
+    var hideDialog = function() {
+      $dlg.children().trigger('hideDialog');
+      $dlg.remove();
+      $parent.off('mousedown', mouseDownHandler);
+    };
+    return {
+      showDialog: showDialog,
+      hideDialog: hideDialog
+    };
+  };
+
   export var createCal = function() {
     var $cal = $('<canvas></canvas>').
       attr('width', '16').attr('height', '16').css('vertical-align', 'top');
