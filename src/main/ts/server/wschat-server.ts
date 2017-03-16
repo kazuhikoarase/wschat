@@ -326,9 +326,27 @@ namespace wschat.server {
       return toJsString(service.newGroup(javaUsers,
           JSON.stringify({})));
     };
+    var copyGroupProps = function() {
+      var groupProps : string[] = ['nickname'];
+      return function(src : any, dst : any) {
+        $.each(groupProps, function(i, prop) {
+          if (typeof src[prop] != 'undefined') {
+            dst[prop] = src[prop];
+          } else {
+            delete dst[prop];
+          }
+        });
+        return dst;
+      };
+    }();
+    var cloneGroup = function(uid : string, group : Group) {
+      var javaGroup = service.getGroup(uid, group.gid);
+      return copyGroupProps(
+        javaGroup != null? toJsGroup(javaGroup) : {},
+        JSON.parse(JSON.stringify(group) ) );
+    };
     var updateGroup = function(uid : string, group : Group) {
-      var jsGroup : any = {};
-      jsGroup.nickname = group.nickname || null;
+      var jsGroup : any = copyGroupProps(group, {});
       var javaGroup = new (Java.type('wschat.Group'))();
       javaGroup.setGid(group.gid);
       javaGroup.setMinDate(group.minDate);
@@ -373,7 +391,7 @@ namespace wschat.server {
         }
       }
       $.each(newUsers, function(i, uid) {
-        updateGroup(uid, group);
+        updateGroup(uid, cloneGroup(uid, group) );
       });
       return getGroup(uid, group.gid);
     };
@@ -383,7 +401,7 @@ namespace wschat.server {
       if (oldUsers.length > 2) {
         delete group.users[uidToRemove];
         $.each(oldUsers, function(i, uid) {
-          updateGroup(uid, group);
+          updateGroup(uid, cloneGroup(uid, group) );
         });
       }
       return getGroup(uid, group.gid);
@@ -881,7 +899,7 @@ namespace wschat.server {
           $.each(group.users, function(uid, user) {
             send({
               action: 'group',
-              group: group
+              group: chatService.getGroup(uid, group.gid)
             }, uid);
           });
           sendSystemMessage(group, messageFormat(
@@ -903,7 +921,7 @@ namespace wschat.server {
         $.each(oldGroup.users, function(uid, user) {
           send({
             action: 'group',
-            group: group
+            group: chatService.getGroup(uid, group.gid)
           }, uid);
         });
         sendSystemMessage(oldGroup, messageFormat(

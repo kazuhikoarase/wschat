@@ -3056,7 +3056,7 @@ namespace wschat.client {
         var $editor = $('<div></div>').
           css('margin', '2px').
           css('float', 'left');
-        /*
+
         if (group) {
           var nickname = getGroupInfo(group).nickname;
           createEditor($editor, 200, 140, nickname, null);
@@ -3069,7 +3069,7 @@ namespace wschat.client {
               });
             })
         }
-        */
+
         var $btn = $('<span></span>').
           addClass('wschat-retire-button').
           css('display', 'inline-block').
