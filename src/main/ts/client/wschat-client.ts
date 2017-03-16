@@ -62,6 +62,13 @@ namespace wschat.client {
       smallAvatarSize: 36
     };
 
+    var UserState = {
+      ONLINE : 'online',
+      IDLE : 'idle',
+      BUSY : 'busy',
+      OFFLINE : 'offline'
+    };
+
     var util = function() {
 
       var userDataMap : { [dataId : string] : any } = {};
@@ -151,23 +158,40 @@ namespace wschat.client {
           }
           return $target;
         },
+        getUserStateOrder : function(state : string) {
+          return (state == UserState.ONLINE || state == UserState.IDLE ||
+            state == UserState.BUSY)? 0 : 1;
+        },
         getSortedUsers : function() {
           var users : User[] = [];
-          $.each(chat.users, function(uid, user) {
+          var sort = '.sort';
+          for (var uid in chat.users) {
+            var user = chat.users[uid];
+            (<any>user)[sort] = {
+              state : util.getUserStateOrder(getUserState(user) ),
+              nickname : util.getUserNickname(user)
+            };
             users.push(user);
-          });
-          var getUserStateOrder = function(state : string) {
-            return (state == 'online' || state == 'idle')? 0 : 1;
-          };
+          }
           users.sort(function(u1, u2) {
-            var s1 = getUserStateOrder(getUserState(u1) );
-            var s2 = getUserStateOrder(getUserState(u2) );
-            if (s1 != s2) {
-              return s1 < s2? -1 : 1;
+            var s1 = (<any>u1)[sort];
+            var s2 = (<any>u2)[sort];
+            if (s1.state != s2.state) {
+              return s1.state < s2.state? -1 : 1;
             }
-            return u1.uid < u2.uid? -1 : 1;
+            return s1.nickname < s2.nickname? -1 : 1;
           });
+          for (var i = 0; i < users.length; i += 1) {
+            delete (<any>users[i])[sort];
+          }
           return users;
+        },
+        getUserNickname : function(user : User) {
+          var nickname = user.nickname || user.uid;
+          if (chat.groups[user.gid]) {
+            nickname = chat.groups[user.gid].nickname || nickname;
+          }
+          return nickname;
         }
       };
     }();
@@ -348,30 +372,30 @@ namespace wschat.client {
       if (user && chat.date != 0 &&
           (chat.date - user.date) < chat.offlineTimeout) {
         if (user.idleTime > chat.idleTimeout) {
-          return 'idle';
+          return UserState.IDLE;
         }
-        return 'online';
+        return UserState.ONLINE;
       }
-      return 'offline';
+      return UserState.OFFLINE;
     };
 
     var createUserState = function(user : User) {
       var userState = getUserState(user);
-      if (userState != 'offline' && user.state) {
+      if (userState != UserState.OFFLINE && user.state) {
         userState = user.state;
       }
       var color : string;
       var title : string;
       switch(userState) {
-      case 'online':
+      case UserState.ONLINE :
         color = '#00ff00';
         title = chat.messages.ONLINE;
         break;
-      case 'idle':
+      case UserState.IDLE :
         color = '#ffee00';
         title = chat.messages.IDLE;
         break;
-      case 'busy':
+      case UserState.BUSY :
         color = '#ff6633';
         title = chat.messages.BUSY;
         break;
@@ -1957,18 +1981,18 @@ namespace wschat.client {
       $user.append($info);
 
       var userState_clickHandler = function(event : JQueryEventObject) {
-        if (getUserState(chat.user) == 'offline') {
+        if (getUserState(chat.user) == UserState.OFFLINE) {
           return;
         }
         var items = [
-          { label : chat.messages.ONLINE, state : 'online'},
-          { label : chat.messages.IDLE, state : 'idle'},
-          { label : chat.messages.BUSY, state : 'busy'}
+          { label : chat.messages.ONLINE, state : UserState.ONLINE },
+          { label : chat.messages.IDLE, state : UserState.IDLE },
+          { label : chat.messages.BUSY, state : UserState.BUSY }
         ];
         var stateMenu = createMenu($chatUI, function($menu : JQuery) {
           $.each(items, function(i, item) {
             var $chk = createSVG(12, 12).css('vertical-align', 'middle');
-            var state = chat.user.state? chat.user.state : 'online';
+            var state = chat.user.state? chat.user.state : UserState.ONLINE;
             if (state == item.state) {
               $chk.append(createSVGElement('path').
                 attr('d', 'M 2 6 L 6 10 L 10 2').css('fill', 'none').
@@ -1979,7 +2003,7 @@ namespace wschat.client {
                 state : item.state,
                 date : chat.date
               }) ).prepend($chk).on('click', function(event) {
-                chat.user.state = item.state == 'online'? null : item.state;
+                chat.user.state = item.state == UserState.ONLINE? null : item.state;
                 userUI.invalidate();
                 userUpdate();
                 stateMenu.hideMenu();
@@ -2115,7 +2139,7 @@ namespace wschat.client {
 
     var createUser = function(user : User,
         avatarCache : { [uid : string] : JQuery}) {
-      var txt = user.nickname || user.uid;
+      var nickname = util.getUserNickname(user);
       var $body = $('<span></span>').
         css('display', 'inline-block').
         css('vertical-align', 'middle').
@@ -2127,7 +2151,7 @@ namespace wschat.client {
         css('white-space', 'nowrap').
         append(createUserState(user) ).
         append($('<span></span>').css('vertical-align', 'middle').
-            text(txt) ).
+            text(nickname) ).
         append($('<br/>') ).
         append(util.applyDecoration( $('<span></span>').
             text(user.message || '\u3000').
