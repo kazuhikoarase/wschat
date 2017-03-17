@@ -1960,7 +1960,8 @@ namespace wschat.client {
             userContactMenu.hideMenu();
           }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
           on('click', function(event) {
-            TimeLineUtil.show( (uid) => uid == $menu.data('uid') );
+            var currUid = $menu.data('uid');
+            TimeLineUtil.show( (uid) => uid == currUid );
             userContactMenu.hideMenu();
           }) );
     });
