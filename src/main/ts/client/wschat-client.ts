@@ -3219,10 +3219,24 @@ namespace wschat.client {
               } else {
                 delete group.nickname;
               }
+              var clone = function(src : any) {
+                return JSON.parse(JSON.stringify(src) );
+              };
+              var groupWithNoMsg : any = {};
+              for (var k in group) {
+                switch(k) {
+                case 'newMsg' :
+                case 'messages' :
+                  break;
+                default :
+                  groupWithNoMsg[k] = clone( (<any>group)[k]);
+                  break;
+                }
+              }
               send({
                 action : 'group',
                 changeGroupName : !groupInfo.contactGroup,
-                group : group
+                group : groupWithNoMsg
               });
             })
         }
