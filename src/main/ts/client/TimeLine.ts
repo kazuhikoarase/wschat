@@ -1354,13 +1354,18 @@ namespace wschat.client {
         addUser(chat.user.uid, chat.user.nickname, true);
       }
       !function() {
-        var users = util.getSortedUsers();
-        for (var i = 0; i < users.length; i += 1) {
-          if (userFilter(users[i].uid) ) {
-            addUser(users[i].uid, users[i].nickname, false);
+        for (var uid in chat.users) {
+          if (userFilter(uid) ) {
+            addUser(uid, util.getUserNickname(chat.users[uid]), false);
           }
         }
       }();
+      users.sort(function(u1, u2) {
+        if (u1.self != u2.self) {
+          return u1.self? 0 : 1;
+        }
+        return u1.nickname < u2.nickname? -1 : 1;
+      });
       statusMap = util.createStatusMap(users);
       model.days = chat.messages.DAY_LABELS.split(/,/g);
       model.users = users;
