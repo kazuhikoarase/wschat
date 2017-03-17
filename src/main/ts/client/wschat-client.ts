@@ -2451,7 +2451,12 @@ namespace wschat.client {
             chat.users[uid].nickname : group.users[uid].nickname;
         txt += (nickname || uid);
       });
-      return { nickname : group.nickname || txt, users : users };
+      return {
+        nickname : group.nickname || txt,
+        users : users,
+        contactGroup : users.length == 1 &&
+         group.gid == chat.users[users[0]].gid
+      };
     };
 
     var createGroup = function(group : Group) {
@@ -2476,7 +2481,7 @@ namespace wschat.client {
           setSelectedUser(null);
           setSelectedGid(group.gid);
         });
-      if (groupInfo.users.length == 1) {
+      if (groupInfo.contactGroup) {
         $cell.append(createUserState(chat.users[groupInfo.users[0]]));
       } else {
         $cell.append(createGroupState(group));
@@ -3202,7 +3207,8 @@ namespace wschat.client {
           css('float', 'left');
 
         if (group) {
-          var nickname = getGroupInfo(group).nickname;
+          var groupInfo = getGroupInfo(group);
+          var nickname = groupInfo.nickname;
           createEditor($editor, 200, 140, nickname, null);
           $editor.data('controller').val(group.nickname || nickname);
           $editor.on('valueChange', function(event) {
@@ -3214,6 +3220,7 @@ namespace wschat.client {
               }
               send({
                 action : 'group',
+                changeGroupName : !groupInfo.contactGroup,
                 group : group
               });
             })

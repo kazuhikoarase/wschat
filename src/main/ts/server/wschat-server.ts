@@ -879,6 +879,22 @@ namespace wschat.server {
     };
 
     actions.group = function(data) {
+
+      if (data.changeGroupName) {
+        $.each(data.group.users, function(uid : string, user : User) {
+          var group = chatService.updateGroup(uid, data.group);
+          send({
+            action: 'group',
+            group: group
+          }, uid);
+        });
+        sendSystemMessage(data.group, messageFormat(
+            chat.messages.CHANGE_GROUP_NAME,
+            getNickname(chat.user.uid),
+            data.group.nickname) );
+        return;
+      }
+
       var group = chatService.updateGroup(chat.user.uid, data.group);
       send({
         action: 'group',
