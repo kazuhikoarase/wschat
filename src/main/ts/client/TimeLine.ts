@@ -766,7 +766,13 @@ namespace wschat.client {
         left : style.rowHeaderWidth + 'px',
         top : style.colHeaderHeight + 'px' }) ).
       on('mousedown', tt_mousedownHandler).
-      on('contextmenu', tt_contextmenuHandler);
+      on('contextmenu', tt_contextmenuHandler).
+      on('wheel', function(event) {
+        $rowHeader.scrollTop($rowHeader.scrollTop() +
+          (<any>event.originalEvent).deltaY);
+//        if (event.originalEvent.deltaY < 0) {
+  //      } else if (event.originalEvent.deltaY > 0) {;
+      });
 
     var trimTime = function(time : number, timeStep = model.minTimeStep) {
       return Math.round(time / timeStep) * timeStep;
