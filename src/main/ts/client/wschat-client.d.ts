@@ -13,7 +13,7 @@ declare module wschat.client {
   }
 
   interface ChatUtil {
-    getSortedUsers : () => User[]
+    getUserNickname : (user : User) => string
     applyDecoration : ($target : JQuery) => JQuery
     createStatusMap : (users : { uid : string }[]) =>
       { [uid : string] : any[] }
