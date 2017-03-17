@@ -1362,7 +1362,7 @@ namespace wschat.client {
       }();
       users.sort(function(u1, u2) {
         if (u1.self != u2.self) {
-          return u1.self? 0 : 1;
+          return u1.self? -1 : 1;
         }
         return u1.nickname < u2.nickname? -1 : 1;
       });
