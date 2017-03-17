@@ -14,6 +14,7 @@
   "TODAYS_FEELING": "Today's feeling...?",
   "ENTER_HERE_A_MESSAGE": "Enter here a message",
   "CHANGE_GROUP_NAME": "{0} changed this group chat's name to {1}",
+  "DELETE_GROUP_NAME": "{0} deleted this group chat's name",
   "ADD_TO_GROUP": "{0} added {1}",
   "REMOVE_FROM_GROUP": "{0} remove {1}",
   "EXIT_FROM_GROUP": "{0} exit",

@@ -879,23 +879,36 @@ namespace wschat.server {
     };
 
     actions.group = function(data) {
-
+      var group = chatService.getGroup(chat.user.uid, data.group.gid);
+      $.each(data.group, function(k, v) {
+        if (v == null) {
+          delete (<any>group)[k];
+        } else {
+          (<any>group)[k] = v;
+        }
+      });
       if (data.changeGroupName) {
-        $.each(data.group.users, function(uid : string, user : User) {
-          var group = chatService.updateGroup(uid, data.group);
+        $.each(group.users, function(uid : string, user : User) {
+          group = chatService.updateGroup(uid, group);
           send({
             action: 'group',
             group: group
           }, uid);
         });
-        sendSystemMessage(data.group, messageFormat(
-            chat.messages.CHANGE_GROUP_NAME,
-            getNickname(chat.user.uid),
-            data.group.nickname) );
+        if (group.nickname) {
+          sendSystemMessage(group, messageFormat(
+              chat.messages.CHANGE_GROUP_NAME,
+              getNickname(chat.user.uid),
+              group.nickname) );
+        } else {
+          sendSystemMessage(group, messageFormat(
+              chat.messages.DELETE_GROUP_NAME,
+              getNickname(chat.user.uid) ) );
+        }
         return;
       }
 
-      var group = chatService.updateGroup(chat.user.uid, data.group);
+      group = chatService.updateGroup(chat.user.uid, group);
       send({
         action: 'group',
         group: group

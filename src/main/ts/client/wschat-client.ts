@@ -3210,33 +3210,16 @@ namespace wschat.client {
         if (group) {
           var groupInfo = getGroupInfo(group);
           var nickname = groupInfo.nickname;
-          createEditor($editor, 200, 140, nickname, null);
+          createEditor($editor, 200, 20, nickname, null);
           $editor.data('controller').val(group.nickname || nickname);
           $editor.on('valueChange', function(event) {
-              var val = $(this).data('controller').val();
-              if (val) {
-                group.nickname = val;
-              } else {
-                delete group.nickname;
-              }
-              var clone = function(src : any) {
-                return JSON.parse(JSON.stringify(src) );
-              };
-              var groupWithNoMsg : any = {};
-              for (var k in group) {
-                switch(k) {
-                case 'newMsg' :
-                case 'messages' :
-                  break;
-                default :
-                  groupWithNoMsg[k] = clone( (<any>group)[k]);
-                  break;
-                }
-              }
               send({
                 action : 'group',
                 changeGroupName : !groupInfo.contactGroup,
-                group : groupWithNoMsg
+                group : {
+                  gid : group.gid,
+                  nickname : $(this).data('controller').val() || null
+                }
               });
             })
         }

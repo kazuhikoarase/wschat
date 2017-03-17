@@ -14,6 +14,7 @@
   "TODAYS_FEELING": "今日の気分は...?",
   "ENTER_HERE_A_MESSAGE": "ここにメッセージを入力",
   "CHANGE_GROUP_NAME": "{0} がこのグループチャットの名前を {1} に変更しました。",
+  "DELETE_GROUP_NAME": "{0} がこのグループチャットの名前を削除しました。",
   "ADD_TO_GROUP": "{0} が {1} を追加しました。",
   "REMOVE_FROM_GROUP": "{0} が {1} を退出させました。",
   "EXIT_FROM_GROUP": "{0} が退出しました。",
