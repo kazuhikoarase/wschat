@@ -2455,7 +2455,7 @@ namespace wschat.client {
         nickname : group.nickname || txt,
         users : users,
         contactGroup : users.length == 1 &&
-         group.gid == chat.users[users[0]].gid
+          (!chat.users[users[0]] || chat.users[users[0]].gid == group.gid)
       };
     };
 
