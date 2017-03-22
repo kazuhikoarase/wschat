@@ -588,7 +588,7 @@ namespace wschat.client {
 
     actions.userData = function(data) {
       if (data['delete']) {
-        util.deleteUserDataByDataId(data.dataId || data.data.dataId);
+        util.deleteUserDataByDataId(data.data.dataId);
       } else {
         util.putUserData(data.data);
       }
@@ -2443,17 +2443,18 @@ namespace wschat.client {
       users.sort(function (u1, u2) {
         return u1 < u2? -1 : 1;
       });
-      var txt = '';
+      var defaultNickname = '';
       $.each(users, function(i, uid) {
-        if (txt) {
-          txt += ', ';
+        if (defaultNickname) {
+          defaultNickname += ', ';
         }
         var nickname = chat.users[uid]?
             chat.users[uid].nickname : group.users[uid].nickname;
-        txt += (nickname || uid);
+        defaultNickname += (nickname || uid);
       });
       return {
-        nickname : group.nickname || txt,
+        nickname : group.nickname || defaultNickname,
+        defaultNickname : defaultNickname,
         users : users,
         contactGroup : users.length == 1 &&
           (!chat.users[users[0]] || chat.users[users[0]].gid == group.gid)
@@ -2494,6 +2495,7 @@ namespace wschat.client {
           css('text-overflow', 'ellipsis').
           css('white-space', 'nowrap').
           css('vertical-align', 'middle').
+          attr('title', groupInfo.defaultNickname).
           text(groupInfo.nickname) );
       $cell.append(createMessageState(group.newMsg) );
       if (group.newMsg) {

@@ -727,7 +727,6 @@ namespace wschat.server {
 
       if (data['delete']) {
         chatService.deleteUserData(data.userData.dataId);
-        userData.dataId = data.userData.dataId; // TODO COMPAT will be deleted.
         userData.data = data.userData;
         userData['delete'] = true;
       } else if (data.create) {
