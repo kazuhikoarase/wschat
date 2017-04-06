@@ -79,12 +79,21 @@ namespace wschat.client {
       var getDataIdsByUser = function(uid : string) : string[] {
         if (!dataIdsByUserCache) {
           dataIdsByUserCache = {};
+          var put = function(dataId : string, uid : string) {
+            if (!dataIdsByUserCache[uid]) {
+              dataIdsByUserCache[uid] = [];
+            }
+            dataIdsByUserCache[uid].push(dataId);
+          };
           for (var dataId in userDataMap) {
             var userData = userDataMap[dataId];
-            if (!dataIdsByUserCache[userData.uid]) {
-              dataIdsByUserCache[userData.uid] = [];
+            put(dataId, userData.uid);
+            if (userData.gid && chat.groups[userData.uid]) {
+              var group = chat.groups[userData.uid];
+              for (var uid in group.users) {
+                put(dataId, uid);
+              }
             }
-            dataIdsByUserCache[userData.uid].push(dataId);
           }
         }
         return dataIdsByUserCache[uid] || [];
@@ -1089,6 +1098,7 @@ namespace wschat.client {
     var TimeLineUtil = function() {
 
       var timeLine : TimeLine = null;
+      var _gid : string = null;
       var _userFilter : (uid : string) => boolean = null;
 
       var timeLine_updateUserDataHandler = function(
@@ -1131,7 +1141,7 @@ namespace wschat.client {
         }
       };
 
-      var show = function(userFilter : (uid : string) => boolean) {
+      var show = function(gid : string, userFilter : (uid : string) => boolean) {
         var btnSize = 14;
         var $closeButton = createSVG(btnSize, btnSize).
           css('float', 'right').
@@ -1196,9 +1206,10 @@ namespace wschat.client {
         if (timeLine != null) {
           timeLine.dlg.hideDialog();
         }
+        _gid = gid;
         _userFilter = userFilter;
         timeLine = createTimeLine(chat, util);
-        timeLine.refreshData(userFilter);
+        timeLine.refreshData(gid, userFilter);
         timeLine.$ui.on('updateUserData', timeLine_updateUserDataHandler);
         timeLine.dlg = createDialog($chatUI);
         var $dlg = timeLine.dlg.showDialog($('<div></div>').
@@ -1215,7 +1226,7 @@ namespace wschat.client {
 
       var refresh = function() {
         if (timeLine != null) {
-          timeLine.refreshData(_userFilter);
+          timeLine.refreshData(_gid, _userFilter);
         }
       };
 
@@ -1959,7 +1970,7 @@ namespace wschat.client {
           }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
           on('click', function(event) {
             var currUid = $menu.data('uid');
-            TimeLineUtil.show( (uid) => uid == currUid );
+            TimeLineUtil.show(null, (uid) => uid == currUid);
             userContactMenu.hideMenu();
           }) );
     });
@@ -1980,7 +1991,7 @@ namespace wschat.client {
           }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
           on('click', function(event) {
             var gid = $menu.data('gid');
-            TimeLineUtil.show( (uid) => !!chat.groups[gid].users[uid]);
+            TimeLineUtil.show(gid, (uid) => !!chat.groups[gid].users[uid]);
             groupContactMenu.hideMenu();
           }) );
     });
@@ -2005,7 +2016,7 @@ namespace wschat.client {
           }) ).append(createMenuItem(chat.messages.SHOW_TIMELINE).
           on('click', function(event) {
             var gid = $menu.data('gid');
-            TimeLineUtil.show( (uid) => !!chat.groups[gid].users[uid]);
+            TimeLineUtil.show(gid,  (uid) => !!chat.groups[gid].users[uid]);
             groupMenu.hideMenu();
           }) );
     });
@@ -2157,7 +2168,7 @@ namespace wschat.client {
           css('vertical-align', 'middle').
           attr('title', chat.messages.TIMELINE).
           on('click', function(event) {
-            TimeLineUtil.show( (uid) => true );
+            TimeLineUtil.show(null, (uid) => true);
           });
         var ctx = (<any>$cv)[0].getContext('2d');
         ctx.fillStyle = '#999999';

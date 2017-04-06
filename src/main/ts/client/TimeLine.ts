@@ -153,6 +153,7 @@ namespace wschat.client {
     var model = {
       timeOffset : -(new Date().getTime() - HOUR_IN_MILLIS * 12),
       userOffset : 0,
+      gid : null as string,
       users : [] as TimeLineUser[],
       statusMap : {} as { [ uid : string ] : TimeLineStatus[] },
       minTimeStep : 15 * 60000, // 15min
@@ -432,6 +433,9 @@ namespace wschat.client {
       if ($status.length != 0) {
         event.preventDefault();
         var statusModel : StatusModel = $status.data('model');
+        if (statusModel.status.uid != chat.user.uid) {
+          return;
+        }
         var copyTo = function(offset : number) {
           $tt.trigger('updateUserData', {
             action : 'create',
@@ -1347,7 +1351,8 @@ namespace wschat.client {
       statusUICache = newStatusUICache;
     };
 
-    var refreshData = function(userFilter : (uid : string) => boolean) {
+    var refreshData = function(gid : string, userFilter : (uid : string) => boolean) {
+
       var users : TimeLineUser[] = [];
       var statusMap : { [ uid : string] : TimeLineStatus[] } = {};
       var addUser = function(uid : string,
@@ -1372,6 +1377,7 @@ namespace wschat.client {
       });
       statusMap = util.createStatusMap(users);
       model.days = chat.messages.DAY_LABELS.split(/,/g);
+      model.gid = gid;
       model.users = users;
       model.statusMap = statusMap;
       updateUsers();

@@ -70,7 +70,8 @@ declare module wschat.client {
 
   interface TimeLine {
     $ui : JQuery,
-    refreshData : (userFilter : (uid : string) => boolean) => void,
+    refreshData : (gid : string,
+      userFilter : (uid : string) => boolean) => void,
     dlg? : Dialog
   }
 
