@@ -432,13 +432,11 @@ namespace wschat.client {
       if ($status.length != 0) {
         event.preventDefault();
         var statusModel : StatusModel = $status.data('model');
-        if (statusModel.status.uid != chat.user.uid) {
-          return;
-        }
         var copyTo = function(offset : number) {
           $tt.trigger('updateUserData', {
             action : 'create',
             userData : {
+              uid : statusModel.status.uid,
               dataType : 'status',
               timeFrom : timeToStr(strToTime(
                 statusModel.status.timeFrom) + offset),
@@ -492,9 +490,11 @@ namespace wschat.client {
             css('top', (event.pageY - off.top) + 'px');
       } else if ($body.length != 0) {
         event.preventDefault();
-        if (contextPos.y - $body.offset().top > style.cellHeight) {
+        var index = ~~( (contextPos.y - $body.offset().top) /
+              style.cellHeight);
+        if (!(0 <= index && index < model.users.length) ) {
           return;
-        }
+        } 
         var menu = createMenu($tt, function($menu) {
           $menu.append(createMenuItem(chat.messages.NEW).
             on('mousedown', function(event) {
@@ -508,6 +508,7 @@ namespace wschat.client {
               $tt.trigger('updateUserData', {
                 action : 'create',
                 userData : {
+                  uid : model.users[index].uid,
                   dataType : 'status',
                   timeFrom : timeToStr(time),
                   timeTo : timeToStr(time + HOUR_IN_MILLIS * 4),
@@ -657,16 +658,14 @@ namespace wschat.client {
         if ($(event.target).closest('.wschat-tt-status').length == 1) {
           var $status = $(event.target).closest('.wschat-tt-status');
           statusModel = $status.data('model');
-          if (statusModel.status.uid == chat.user.uid) {
-            if (dblclick) {
-              toFront(statusModel);
-              editor.beginEdit($status);
-            } else {
-              move = true;
-              timeFrom = strToTime(statusModel.status.timeFrom);
-              timeTo = strToTime(statusModel.status.timeTo);
-              toFront(statusModel);
-            }
+          if (dblclick) {
+            toFront(statusModel);
+            editor.beginEdit($status);
+          } else {
+            move = true;
+            timeFrom = strToTime(statusModel.status.timeFrom);
+            timeTo = strToTime(statusModel.status.timeTo);
+            toFront(statusModel);
           }
         }
 
@@ -1325,7 +1324,7 @@ namespace wschat.client {
         statusUI.setText(status.comment);
         statusUI.setTitle(title);
         statusUI.setColor(status.color || 'hsl(240,100%,80%)');
-        statusUI.setEditable(status.uid == chat.user.uid);
+        statusUI.setEditable(true);
       });
 
       while (labelUICache.length > 0) {

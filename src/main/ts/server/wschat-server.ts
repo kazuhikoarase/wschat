@@ -731,7 +731,7 @@ namespace wschat.server {
         userData['delete'] = true;
       } else if (data.create) {
         data.userData.dataId = chatService.newDataId();
-        data.userData.uid = chat.user.uid;
+        data.userData.uid = data.userData.uid || chat.user.uid;
         chatService.updateUserData(data.userData, data.date);
         userData.data = chatService.getUserData(data.userData.dataId);
       } else {

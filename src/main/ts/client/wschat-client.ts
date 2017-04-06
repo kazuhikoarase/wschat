@@ -1122,14 +1122,12 @@ namespace wschat.client {
           });
         } else if (data.action == 'delete') {
           var userData = util.getUserDataByDataId(data.dataId);
-          if (userData && userData.uid == chat.user.uid) {
-            send({
-              action : 'updateUserData',
-              date : userData.timeTo,
-              userData : userData,
-              'delete' : true
-            });
-          }
+          send({
+            action : 'updateUserData',
+            date : userData.timeTo,
+            userData : userData,
+            'delete' : true
+          });
         }
       };
 
