@@ -494,7 +494,10 @@ namespace wschat.client {
               style.cellHeight);
         if (!(0 <= index && index < model.users.length) ) {
           return;
-        } 
+        }
+        if (index != 0) {
+          return;
+        }
         var menu = createMenu($tt, function($menu) {
           $menu.append(createMenuItem(chat.messages.NEW).
             on('mousedown', function(event) {
@@ -658,14 +661,16 @@ namespace wschat.client {
         if ($(event.target).closest('.wschat-tt-status').length == 1) {
           var $status = $(event.target).closest('.wschat-tt-status');
           statusModel = $status.data('model');
-          if (dblclick) {
-            toFront(statusModel);
-            editor.beginEdit($status);
-          } else {
-            move = true;
-            timeFrom = strToTime(statusModel.status.timeFrom);
-            timeTo = strToTime(statusModel.status.timeTo);
-            toFront(statusModel);
+          if (statusModel.status.uid == chat.user.uid) {
+            if (dblclick) {
+              toFront(statusModel);
+              editor.beginEdit($status);
+            } else {
+              move = true;
+              timeFrom = strToTime(statusModel.status.timeFrom);
+              timeTo = strToTime(statusModel.status.timeTo);
+              toFront(statusModel);
+            }
           }
         }
 
@@ -1324,7 +1329,7 @@ namespace wschat.client {
         statusUI.setText(status.comment);
         statusUI.setTitle(title);
         statusUI.setColor(status.color || 'hsl(240,100%,80%)');
-        statusUI.setEditable(true);
+        statusUI.setEditable(status.uid == chat.user.uid);
       });
 
       while (labelUICache.length > 0) {
