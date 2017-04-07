@@ -44,13 +44,15 @@
 
   "PREVIOUS_MESSAGE": "以前のメッセージ",
 
-  "NEW": "新規",
   "EDIT": "編集",
   "DELETE": "削除",
   "COPY_ALL": "一括コピー",
   "MODIFIED": "編集済",
   "DELETED": "メッセージは削除されました。",
   "QUOTE": "引用",
+
+  "NEW_SCHEDULE": "新規スケジュール",
+  "NEW_GROUP_SCHEDULE": "新規グループスケジュール",
 
   "DROP_HERE_A_FILE": "ここにファイルをドロップ",
   "FILE_NOT_AVAILABLE": "このファイルは利用できません。",

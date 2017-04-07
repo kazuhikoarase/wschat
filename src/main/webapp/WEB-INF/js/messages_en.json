@@ -46,13 +46,15 @@
 
   "PREVIOUS_MESSAGE": "old messages",
 
-  "NEW": "New",
   "EDIT": "Edit",
   "DELETE": "Delete",
   "COPY_ALL": "Copy all",
   "MODIFIED": "Modified",
   "DELETED": "Message deleted.",
   "QUOTE": "Quote",
+
+  "NEW_SCHEDULE": "New Schedule",
+  "NEW_GROUP_SCHEDULE": "New Group Schedule",
 
   "DROP_HERE_A_FILE": "Drop here a file",
   "FILE_NOT_AVAILABLE": "Not available",

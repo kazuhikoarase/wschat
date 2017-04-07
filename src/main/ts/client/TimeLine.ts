@@ -437,17 +437,22 @@ namespace wschat.client {
           return;
         }
         var copyTo = function(offset : number) {
+          var status : any = statusModel.status;
+          var userData : any = {};
+          for (var k in status) {
+            if (k == 'dataId' || k.charAt(0) == '_') {
+              continue;
+            }
+            userData[k] = status[k];
+          }
+          userData.timeFrom = timeToStr(strToTime(
+              statusModel.status.timeFrom) + offset);
+          userData.timeTo = timeToStr(strToTime(
+              statusModel.status.timeTo) + offset);
+
           $tt.trigger('updateUserData', {
             action : 'create',
-            userData : {
-              uid : statusModel.status.uid,
-              dataType : 'status',
-              timeFrom : timeToStr(strToTime(
-                statusModel.status.timeFrom) + offset),
-              timeTo : timeToStr(strToTime(
-                statusModel.status.timeTo) + offset),
-              comment : statusModel.status.comment
-            }
+            userData : userData
           });
         };
 
@@ -503,27 +508,44 @@ namespace wschat.client {
           return;
         }
         var menu = createMenu($tt, function($menu) {
-          $menu.append(createMenuItem(chat.messages.NEW).
+          var createSchedule = function(gid : string) {
+            var off = $body.offset();
+            var time = trimTime( (contextPos.x - off.left) *
+              HOUR_IN_MILLIS / style.hourInPixel - model.timeOffset,
+              HOUR_IN_MILLIS);
+            var userData : any =  {
+                uid : model.users[index].uid,
+                dataType : 'status',
+                timeFrom : timeToStr(time),
+                timeTo : timeToStr(time + HOUR_IN_MILLIS * 4),
+                comment : ''
+              };
+            if (gid) {
+              userData.gid = gid;
+            }
+            $tt.trigger('updateUserData', {
+              action : 'create',
+              userData : userData
+            });
+          };
+          $menu.append(createMenuItem(chat.messages.NEW_SCHEDULE).
             on('mousedown', function(event) {
               event.stopImmediatePropagation();
             } ).
             on('click', function(event) {
-              var off = $body.offset();
-              var time = trimTime( (contextPos.x - off.left) *
-                HOUR_IN_MILLIS / style.hourInPixel - model.timeOffset,
-                HOUR_IN_MILLIS);
-              $tt.trigger('updateUserData', {
-                action : 'create',
-                userData : {
-                  uid : model.users[index].uid,
-                  dataType : 'status',
-                  timeFrom : timeToStr(time),
-                  timeTo : timeToStr(time + HOUR_IN_MILLIS * 4),
-                  comment : ''
-                }
-              });
+              createSchedule(null);
               menu.hideMenu();
             } ) );
+          if (model.gid) {
+            $menu.append(createMenuItem(chat.messages.NEW_GROUP_SCHEDULE).
+              on('mousedown', function(event) {
+                event.stopImmediatePropagation();
+              } ).
+              on('click', function(event) {
+                createSchedule(model.gid);
+                menu.hideMenu();
+              } ) );
+          }
         });
         var off = $tt.offset();
         menu.showMenu($tt).

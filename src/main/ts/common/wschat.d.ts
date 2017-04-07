@@ -120,7 +120,6 @@ declare module wschat {
     APPROVE : string
     DELETE : string
     COPY_ALL : string
-    NEW : string
     EDIT : string
     QUOTE : string
     DBLCLICK_TO_SEND_CONTACT_ADD_REQUEST : string
@@ -142,5 +141,7 @@ declare module wschat {
     COPY_TO_NEXT_WEEK : string
     COLOR : string
     SHOW_TIMELINE : string
+    NEW_SCHEDULE: string
+    NEW_GROUP_SCHEDULE: string
   }
 }

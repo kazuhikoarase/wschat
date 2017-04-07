@@ -88,12 +88,13 @@ namespace wschat.client {
           for (var dataId in userDataMap) {
             var userData = userDataMap[dataId];
             put(dataId, userData.uid);
-            if (userData.gid && chat.groups[userData.uid]) {
-              var group = chat.groups[userData.uid];
+            /*
+            if (userData.gid && chat.groups[userData.gid]) {
+              var group = chat.groups[userData.gid];
               for (var uid in group.users) {
                 put(dataId, uid);
               }
-            }
+            }*/
           }
         }
         return dataIdsByUserCache[uid] || [];
@@ -101,6 +102,16 @@ namespace wschat.client {
 
       var createStatusMap = function(users : { uid : string }[]) {
         var statusMap : { [uid : string] : any[] } = {};
+        var put = function(uid : string, userData : any) {
+          if (!statusMap[uid]) {
+            statusMap[uid] = [];
+          }
+          var status : any = {};
+          for (var k in userData) {
+            status[k] = userData[k];
+          }
+          statusMap[uid].push(status);
+        };
         var putCloneStatus = function(dataId : string) {
           var userData = userDataMap[dataId];
           if (userData.dataType != 'status') {
@@ -108,14 +119,13 @@ namespace wschat.client {
           } else if (typeof userData.timeFrom != 'string') {
             return;
           }
-          if (!statusMap[userData.uid]) {
-            statusMap[userData.uid] = [];
+          if (userData.gid && chat.groups[userData.gid]) {
+            for (var uid in chat.groups[userData.gid].users) {
+              put(uid, userData);
+            }
+          } else {
+            put(userData.uid, userData);
           }
-          var status : any = {};
-          for (var k in userData) {
-            status[k] = userData[k];
-          }
-          statusMap[userData.uid].push(status);
         }
         for (var u = 0; u < users.length; u += 1) {
           var dataIds = getDataIdsByUser(users[u].uid);
@@ -633,6 +643,7 @@ namespace wschat.client {
       groupsUI.invalidate();
       threadUsersUI.invalidate();
       threadUI.invalidate();
+      statusUI.invalidate();
       fetchMessages(group.gid, {});
     };
 
