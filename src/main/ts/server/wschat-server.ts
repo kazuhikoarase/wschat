@@ -342,7 +342,7 @@ namespace wschat.server {
     var cloneGroup = function(uid : string, group : Group) {
       var javaGroup = service.getGroup(uid, group.gid);
       return copyGroupProps(
-        javaGroup != null? toJsGroup(javaGroup) : {},
+        javaGroup != null? toJsGroup(javaGroup) : group,
         JSON.parse(JSON.stringify(group) ) );
     };
     var updateGroup = function(uid : string, group : Group) {
