@@ -1536,10 +1536,9 @@ namespace wschat.client {
           }),
           url: opts.fileuploadUrl,
           data: fd,
-          cache: false,
           contentType: false,
           processData: false,
-          type: 'POST'
+          method: 'POST'
         }).done(function(data) {
           update(null);
           var file = data.fileList[0];
@@ -2090,10 +2089,9 @@ namespace wschat.client {
             }),
             url: opts.fileuploadUrl,
             data: fd,
-            cache: false,
             contentType: false,
             processData: false,
-            type: 'POST'
+            method: 'POST'
           }).done(function(data) {
             updateAvatar(data.fileList[0]);
           });
