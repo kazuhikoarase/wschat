@@ -34,13 +34,13 @@ namespace wschat.client {
       attr('maxlength', '' + maxlength).
       css('width', width + 'px').
       css('vertical-align', 'middle').
-      change(function(event) {
+      on('change', function(event) {
         commitEdit.apply(this);
       }).
-      blur(function(event) {
+      on('blur', function(event) {
         commitEdit.apply(this);
       }).
-      keydown(function(event) {
+      on('keydown', function(event) {
         if (event.keyCode == 13) {
           commitEdit.apply(this);
         } else if (event.keyCode == 27) {
