@@ -1030,7 +1030,7 @@ namespace wschat.client {
 
     var updateUploadProgress = function(
       progressData : ProgressData,
-      $xhr : any
+      $xhr : JQueryXHR
     ) {
       if (getThreadGid() != progressData.gid) {
         return;
@@ -1528,7 +1528,7 @@ namespace wschat.client {
           ~~(100 * event.loaded / event.total) + '%';
       };
 
-      var $xhr = $.ajax({
+      var $xhr = <JQueryXHR>$.ajax({
           xhr: xhr(function(event : ProgressEvent) {
             if (event.lengthComputable) {
               update(getProgress(event) );
