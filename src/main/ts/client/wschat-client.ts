@@ -133,8 +133,7 @@ namespace wschat.client {
             putCloneStatus(dataIds[d]);
           }
         }
-        for (var u = 0; u < users.length; u += 1) {
-          var uid = users[u].uid;
+        for (var uid in statusMap) {
           statusMap[uid].sort(function(s1, s2) {
             var uid1 = s1.uid == uid? 1 : 0;
             var uid2 = s2.uid == uid? 1 : 0;
