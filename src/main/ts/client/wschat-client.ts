@@ -784,11 +784,7 @@ namespace wschat.client {
       if (ws == null) {
         return;
       }
-      try {
-        ws.send(JSON.stringify(data) );
-      } catch(e) {
-        console.log(e);
-      }
+      ws.send(JSON.stringify(data) );
     };
 
     var userUpdate = function() {
@@ -3416,16 +3412,19 @@ namespace wschat.client {
     layout();
 
     var validateUI = function() {
+      try {
 
-      validateThreadMessages();
+        validateThreadMessages();
 
-      $.each(uiList, function(i, ui) {
-        if (!ui.valid) {
-          ui.validate();
-          ui.valid = true;
-        }
-      });
-      window.setTimeout(validateUI, 50);
+        $.each(uiList, function(i, ui) {
+          if (!ui.valid) {
+            ui.validate();
+            ui.valid = true;
+          }
+        });
+      } finally {
+        window.setTimeout(validateUI, 50);
+      }
     };
 
     validateUI();
