@@ -784,7 +784,10 @@ namespace wschat.client {
       if (ws == null) {
         return;
       }
-      ws.send(JSON.stringify(data) );
+      try {
+        ws.send(JSON.stringify(data) );
+      } catch(e) {
+      }
     };
 
     var userUpdate = function() {
