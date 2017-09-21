@@ -748,7 +748,12 @@ namespace wschat.client {
     };
 
     var onmessage = function(event : MessageEvent) {
-      var data = JSON.parse(event.data);
+      var data : any;
+      try {
+        data = JSON.parse(event.data);
+      } catch(e) {
+        return;
+      }
       var action = (<any>actions)[data.action];
       if (action) {
         action(data);
