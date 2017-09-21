@@ -787,6 +787,7 @@ namespace wschat.client {
       try {
         ws.send(JSON.stringify(data) );
       } catch(e) {
+        console.log(e);
       }
     };
 
