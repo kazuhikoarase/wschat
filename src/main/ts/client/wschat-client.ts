@@ -673,18 +673,21 @@ namespace wschat.client {
       var alive = false;
 
       var putMessageIndirect = function() {
-        var start = getTime();
-        while (queue.length > 0 && getTime() - start < 50) {
-          var data = queue.shift();
-          putMessage(data.gid, data.message);
-        }
-        window.setTimeout(function() {
-          if (queue.length == 0) {
-            alive = false;
-          } else {
-            putMessageIndirect();
+        try {
+          var start = getTime();
+          while (queue.length > 0 && getTime() - start < 50) {
+            var data = queue.shift();
+            putMessage(data.gid, data.message);
           }
-        }, 50);
+        } finally {
+          window.setTimeout(function() {
+            if (queue.length == 0) {
+              alive = false;
+            } else {
+              putMessageIndirect();
+            }
+          }, 50);
+        }
       };
 
       return function(data : any) {
