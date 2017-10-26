@@ -1076,6 +1076,9 @@ namespace wschat.client {
 
     var putMessage = function(gid : string, message : Message) {
       var group = chat.groups[gid];
+      if (!group) {
+        throw 'unknown gid:' + gid;
+      }
       group.messages[message.mid] = message;
       if (message.newMsg &&
           message.uid != chat.user.uid) {
