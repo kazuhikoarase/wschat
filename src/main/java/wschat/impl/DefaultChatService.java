@@ -51,8 +51,14 @@ extends UserService implements IChatService {
   }
 
   protected void updateSequence(final String seq, final long val) throws Exception {
-    int count = executeQuery("select SEQ_ID from SEQUENCES where SEQ_ID=? for update",
-        new Object[]{seq}, null);
+    final long[] value = new long[1];
+    final int count = executeQuery("select SEQ_VAL from SEQUENCES where SEQ_ID=? for update",
+        new Object[]{seq}, new ResultHandler() {
+          @Override
+          public void handle(ResultSet rs) throws Exception {
+            value[0] = rs.getLong(1);
+          }
+        });
     if (count == 0) {
       executeUpdate("insert into SEQUENCES (SEQ_ID,SEQ_VAL) values (?,?)",
           new Object[]{seq, val});
