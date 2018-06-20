@@ -15,7 +15,7 @@ public class PgSQLChatService extends DefaultChatService {
   @Override
   protected String getNextValue(final String seq) throws Exception {
     final long[] value = new long[1];
-    int count = executeQuery("select nextval('" + seq + "')",
+    final int count = executeQuery("select nextval('" + seq + "')",
         new Object[]{}, new ResultHandler() {
           @Override
           public void handle(ResultSet rs) throws Exception {
@@ -25,6 +25,7 @@ public class PgSQLChatService extends DefaultChatService {
     if (count != 1) {
       throw new IllegalStateException();
     }
+    updateSequence(seq, value[0]);
     return String.valueOf(value[0]);
   }
 }

@@ -8,6 +8,13 @@ create sequence SEQ_MID as bigint start with 1 increment by 1;
 drop sequence SEQ_DATA_ID if exists;
 create sequence SEQ_DATA_ID as bigint start with 1 increment by 1;
 
+drop table SEQUENCES if exists;
+create table SEQUENCES (
+  SEQ_ID varchar(32) not null,
+  SEQ_VAL bigint not null,
+  primary key (SEQ_ID)
+);
+
 drop table USERS if exists;
 create table USERS (
   UID varchar(32) not null,
