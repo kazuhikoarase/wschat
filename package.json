@@ -1,0 +1,28 @@
+{
+  "name": "wschat",
+  "version": "0.0.1",
+  "author": "Kazuhiko Arase",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazuhikoarase/wschat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kazuhikoarase/wschat/issues"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "^3.0.0",
+    "del": "^3.0.0",
+    "run-sequence": "^2.0.0",
+    "gulp-plumber": "^1.2.0",
+    "gulp-notify": "^3.2.0",
+    "gulp-order": "^1.0.0",
+    "gulp-concat": "^2.0.0",
+    "gulp-rename": "^1.0.0",
+    "gulp-jasmine": "^2.0.0",
+    "gulp-uglify": "^3.0.0",
+    "gulp-typescript": "^3.0.0",
+    "typescript": "^2.0.0",
+    "uglify": "^0.1.5"
+  }
+}

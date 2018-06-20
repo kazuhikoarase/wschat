@@ -35,7 +35,7 @@ extends UserService implements IChatService {
   }
 
   protected String getNextValue(final String seq) throws Exception {
-    final long[] value = new long[1];
+    final long[] value = { 0 };
     final int count = executeQuery("select next value for " + seq + " from DUAL",
         new Object[]{}, new ResultHandler() {
           @Override
@@ -46,11 +46,10 @@ extends UserService implements IChatService {
     if (count != 1) {
       throw new IllegalStateException("count:" + count);
     }
-    updateSequence(seq, value[0]);
-    return String.valueOf(value[0]);
+    return String.valueOf(updateSequence(seq, value[0]) );
   }
 
-  protected void updateSequence(final String seq, final long val) throws Exception {
+  protected long updateSequence(final String seq, final long val) throws Exception {
     final long[] value = new long[1];
     final int count = executeQuery("select SEQ_VAL from SEQUENCES where SEQ_ID=? for update",
         new Object[]{seq}, new ResultHandler() {
@@ -67,6 +66,7 @@ extends UserService implements IChatService {
           new Object[]{val, seq});
     }
     current().commit();
+    return val;
   }
 
   protected String getNextGid() throws Exception {
