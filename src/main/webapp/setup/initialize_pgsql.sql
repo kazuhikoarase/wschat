@@ -64,7 +64,7 @@ create table AVATARS (
   primary key (UID)
 );
 
-drop table USER_DATA if exists;
+drop table if exists USER_DATA;
 create table USER_DATA (
   DATA_ID bigint not null,
   DATA_TYPE varchar(8) not null,
@@ -80,7 +80,7 @@ create index MESSAGES_IDX1 on MESSAGES (DATE);
 drop index if exists MESSAGES_IDX2;
 create index MESSAGES_IDX2 on MESSAGES (DATE desc); 
 
-drop index USER_DATA_IDX1 if exists;
+drop index if exists USER_DATA_IDX1;
 create index USER_DATA_IDX1 on USER_DATA (UID); 
 
 drop table if exists DUAL;
