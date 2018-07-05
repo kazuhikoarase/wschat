@@ -223,7 +223,7 @@ namespace wschat.server {
     };
     var getRepository = function() {
       return new (Java.type('java.io.File'))($servletContext.
-          getAttribute('javax.servlet.context.tempdir') );
+          getInitParameter('wschat.tempdir') );
     };
     var updateAvatar = function(uid : string, file : AttachedFile) {
       var repo = getRepository();

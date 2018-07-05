@@ -199,8 +199,11 @@ public class FileServlet extends HttpServlet {
   }
 
   protected File getRepository() {
-    return (File)getServletContext().getAttribute(
-        "javax.servlet.context.tempdir");
+    File dir = new File(getServletContext().getInitParameter("wschat.tempdir") );
+    if (!dir.exists() ) {
+      dir.mkdirs();
+    }
+    return dir;
   }
 
   protected String stripFilename(String name) {
