@@ -1,15 +1,15 @@
 <project default="dist" basedir="../../">
-  <property name="build" location="build"/>
+  <property name="build-java" location="bin/main"/>
   <property name="dist" location="dist"/>
   <target name="dist">
     <mkdir dir="${dist}"/>
     <jar destfile="${dist}/ws.jar">
-      <zipfileset dir="${build}/java" >
+      <zipfileset dir="${build-java}" >
         <include name="ws/**/*"/>
       </zipfileset>
   	</jar>
     <jar destfile="${dist}/wschat.jar">
-      <zipfileset dir="${build}/java" >
+      <zipfileset dir="${build-java}" >
         <include name="wschat/**/*"/>
       </zipfileset>
     </jar>

@@ -1,4 +1,5 @@
-/dist
+/bin
 /build
+/dist
 /.gradle
 /node_modules

@@ -355,8 +355,37 @@ public class FileServlet extends HttpServlet {
         new String(filename.getBytes("MS932"), "ISO-8859-1") +
         "\"";
     }
-    return "filename*=UTF-8''" + 
-      URLEncoder.encode(filename, "UTF-8");
+    return "filename*=UTF-8''" + encodeURL(filename, "UTF-8");
+  }
+
+  /**
+   * an alternative of URLEncoder#encode
+   * @param bytes
+   * @return
+   */
+  public static String encodeURL(final String s, final String enc)
+  throws IOException {
+    return encodeURL(s.getBytes(enc) );
+  }
+
+  private static final String HEX_CHARS = "0123456789ABCDEF";
+  private static String encodeURL(final byte[] bytes) {
+    final StringBuilder buf = new StringBuilder();
+    for (final byte b : bytes) {
+      final int c = b & 0xff;
+      if ( ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') ||
+          ('0' <= c && c <= '9') ||
+          c == '-' || c == '_' || c == '.' || c == '*') {
+        // plain
+        buf.append( (char)c);
+      } else {
+        // encode %xx
+        buf.append('%');
+        buf.append(HEX_CHARS.charAt( (c >> 4) & 0xf) );
+        buf.append(HEX_CHARS.charAt(c & 0xf) );
+      }
+    }
+    return buf.toString();
   }
 
   protected static int getIntParam(ServletConfig config, String name,
