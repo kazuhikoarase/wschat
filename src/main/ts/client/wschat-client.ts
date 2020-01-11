@@ -2632,6 +2632,7 @@ namespace wschat.client {
         append($('<span></span>').addClass('wschat-thread-msg-icon').
             css('display', 'inline-block').
             css('width', ui.gap + 'px') ).
+        append($('<span></span>').text('\u000a') ).
         append($('<span></span>').addClass('wschat-thread-msg-body').
             css('display', 'inline-block').
             css('word-wrap', 'break-word').
@@ -2640,6 +2641,7 @@ namespace wschat.client {
             css('text-align', 'left').
             css('width', ui.bodyWidth + 'px').
             css('margin-right', ui.gap + 'px') ).
+        append($('<span></span>').text('\u000a') ).
         append($('<span></span>').addClass('wschat-thread-msg-date').
             css('display', 'inline-block').
             css('text-align', 'left').
