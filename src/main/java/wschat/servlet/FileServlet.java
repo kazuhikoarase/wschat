@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.ArrayList;
