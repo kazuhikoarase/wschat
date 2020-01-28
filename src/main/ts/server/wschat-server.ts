@@ -87,7 +87,8 @@ namespace wschat.server {
     for (var i = 1; i < arguments.length; i += 1) {
       args[i - 1] = new (Java.type('java.lang.String'))(arguments[i]);
     }
-    return '' + Java.type('java.text.MessageFormat').format(arguments[0], args);
+    return '' + Java.type('java.text.MessageFormat').format(
+      ('' + arguments[0]).replace(/'/g, '\'\''), args);
   };
 
   var getTime = function() {
