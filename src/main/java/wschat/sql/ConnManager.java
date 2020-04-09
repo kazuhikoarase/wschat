@@ -36,8 +36,6 @@ public class ConnManager {
 
   public Connection getConnection() throws Exception {
     Connection conn = dataSource.getConnection();
-    conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-    conn.setAutoCommit(false);
     return conn;
   }
 
