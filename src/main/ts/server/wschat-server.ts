@@ -1078,6 +1078,10 @@ namespace wschat.server {
       console.log('close/sid=' + $session.getId() );
       if (chat.user) {
         $.each(chat.user.contacts, function(uid, contact) {
+          var user = chatService.getUser(uid);
+          if (!user.contacts[chat.user.uid]) {
+            return; // not in contacts.
+          }
           send({
             action: 'user',
             user:{
